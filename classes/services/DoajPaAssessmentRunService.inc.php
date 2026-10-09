@@ -215,6 +215,42 @@ class DoajPaAssessmentRunService {
 		});
 	}
 
+	/**
+	 * Store the run's crawl coverage summary (JSON, at most 60,000 bytes) while the run is writable.
+	 * Part of the sealed snapshot once the run completes. Does not change lock_version (data, not state).
+	 */
+	public static function recordCoverage($contextId, $runId, $coverage, $actor) {
+		$json = DoajPaDb::json($coverage);
+		if (strlen($json) > 60000) throw new DoajPaValidationException('Coverage summary too large.');
+		return DoajPaDb::transaction(function () use ($contextId, $runId, $json) {
+			$run = self::lockRun($contextId, $runId);
+			if (!in_array($run->status, DoajPaSchema::RUN_WRITABLE, true)) throw new DoajPaStateException('Coverage can be recorded only while a run is running or in human review.');
+			DoajPaDb::table(DoajPaSchema::T_RUN)->where('run_id', '=', $runId)->where('context_id', '=', $contextId)
+				->update(array('coverage' => $json, 'updated_at_utc' => DoajPaDb::now()));
+			return true;
+		});
+	}
+
+	/**
+	 * Flag a writable run as having used the development-only network exception (ADR-005 R1.1).
+	 */
+	public static function markDevExceptionUsed($contextId, $runId) {
+		return DoajPaDb::transaction(function () use ($contextId, $runId) {
+			$run = self::lockRun($contextId, $runId);
+			if (!in_array($run->status, DoajPaSchema::RUN_WRITABLE, true)) throw new DoajPaStateException('Run is not writable.');
+			DoajPaDb::table(DoajPaSchema::T_RUN)->where('run_id', '=', $runId)->where('context_id', '=', $contextId)
+				->update(array('dev_exception_used' => true));
+			return true;
+		});
+	}
+
+	/** @return boolean Whether a resource with this URL is already stored for the run (crawl resume) */
+	public static function hasCrawlResource($contextId, $runId, $url) {
+		return DoajPaDb::table(DoajPaSchema::T_RESOURCE)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))
+			->where('run_id', '=', DoajPaDb::id($runId, 'run'))
+			->where('url_sha256', '=', hash('sha256', DoajPaFindingKey::normalizeUrl($url)))->exists();
+	}
+
 	//
 	// Completion and finding history
 	//

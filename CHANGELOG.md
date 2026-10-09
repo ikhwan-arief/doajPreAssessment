@@ -3,6 +3,27 @@
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
 They are not compliance-ready and do not contain DOAJ assessment rules.
 
+## [0.4.0.0] - 2026-10-09 (Stage 02.06, development build)
+
+### Added
+
+- Public website crawler for one journal (no user interface yet): starts from the journal homepage as OJS
+  routes it, stays on the same host, port and journal path, skips OJS backend and dynamic paths, honours
+  robots.txt, and applies limits on pages, issues, articles, files, depth, size and time.
+- SSRF protection: only http/https; strict host syntax; every resolved address must be public; the vetted
+  address is pinned for the connection; every redirect hop is re-checked; no proxy, cookies or credentials;
+  size caps after decompression. The crawler refuses to run when OJS is configured with an HTTP proxy.
+- HTML text and link extraction (scripts never executed or followed) and PDF text extraction with page
+  markers through the server's `pdftotext`, with explicit statuses for missing, inaccessible, unreadable,
+  scanned, encrypted, oversized and non-English content.
+- Results are stored through the existing services with URL, final URL, HTTP status, media type, SHA-256,
+  UTC time and extraction version; a coverage summary is stored on the run and a full manifest privately.
+
+### Security
+
+- A development-only exception for private test addresses exists only in unpackaged test code and needs an
+  exact switch value and exact host:port=ip entries; it is never part of this package.
+
 ## [0.3.0.0] - 2026-10-09 (Stage 02.05, development build)
 
 ### Added

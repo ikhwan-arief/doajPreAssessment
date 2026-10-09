@@ -172,12 +172,13 @@ Do not claim installation compatibility until it has been verified on a running 
 
 ## Development Build (Stage 02.02)
 
-Version `0.3.0.0` is a development build. It contains the access guard, the English-only gates, the database
-for assessment history and the backend views. **It performs no assessment and contains no DOAJ rules.**
+Version `0.4.0.0` is a development build. It contains the access guard, the English-only gates, the database
+for assessment history, the backend views and the public website crawler (not yet started from the user
+interface). **It performs no assessment and contains no DOAJ rules.**
 
 Install on OJS 3.3.0-23 (tested on PHP 7.3 and 8.2 in disposable stacks only):
 
-1. Build the archive: `tools/build-package.sh` → `dist/doajPreAssessment-0.3.0.0.tar.gz`.
+1. Build the archive: `tools/build-package.sh` → `dist/doajPreAssessment-0.4.0.0.tar.gz`.
 2. As the site administrator: Settings → Website → Plugins → Upload A New Plugin.
 3. Enable "DOAJ Pre-Assessment" for the journal (enabling is per journal).
 4. Open it from the backend menu entry "DOAJ Pre-Assessment", from the plugin's "Open DOAJ Pre-Assessment" action,
@@ -185,6 +186,11 @@ Install on OJS 3.3.0-23 (tested on PHP 7.3 and 8.2 in disposable stacks only):
 
 Uploading the archive creates the database tables. If the plugin is copied into `plugins/generic` by hand
 instead, run `php tools/upgrade.php upgrade` once on the server; until then the plugin answers HTTP 503.
+
+Server requirements for the crawler: PHP `curl`, `dom` and `mbstring`; for PDF text, the `pdftotext` program
+(poppler-utils) at `/usr/bin/pdftotext` or `/usr/local/bin/pdftotext`. Without it, PDFs are recorded as not
+extracted. The crawler contacts only public internet addresses, so a journal hosted on a private or intranet
+address cannot be assessed. It refuses to run when OJS is configured to use an HTTP proxy.
 
 Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin has no automatic data purge.
 
@@ -196,6 +202,7 @@ Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin ha
 - Stage 02.03: Authentication and authorization tested; see `docs/stage02/02.03-report.md`
 - Stage 02.04: Database and immutable assessment history; see `docs/stage02/02.04-report.md`
 - Stage 02.05: Backend dashboard and views; see `docs/stage02/02.05-report.md`
+- Stage 02.06: Public website crawler and extraction; see `docs/stage02/02.06-report.md`
 - DOAJ assessment rules: Not implemented
 - Production readiness: Not established
 

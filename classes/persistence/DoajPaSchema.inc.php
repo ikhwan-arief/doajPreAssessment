@@ -75,6 +75,6 @@ class DoajPaSchema {
 	const AUDIT_EVENTS = array(
 		'gate_acknowledged', 'access_denied', 'run_created', 'run_status_changed', 'run_completed',
 		'finding_transition', 'corrective_action_created', 'corrective_action_updated', 'report_export_recorded',
-		'criterion_definition_registered',
+		'criterion_definition_registered', 'crawl_started', 'crawl_finished', 'dev_private_destination_allowed',
 	);
 }
