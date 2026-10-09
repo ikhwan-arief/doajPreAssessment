@@ -32,6 +32,9 @@ Only the following authenticated users may access the plugin:
 default "Journal editor" and "Production editor" groups also carry the Manager role; they are **not**
 granted access by this plugin, nor is any custom group.
 
+Sessions opened with OJS "Login as" are always denied, whoever the original and impersonated users are.
+To use the plugin, sign out of "Login as" first.
+
 All other editorial roles, reviewers, authors, and public users are denied access.
 
 Authorization must be enforced server-side for every protected operation.
@@ -169,12 +172,12 @@ Do not claim installation compatibility until it has been verified on a running 
 
 ## Development Build (Stage 02.02)
 
-Version `0.1.0.0` is a development build. It contains the plugin bootstrap, the access guard and the
+Version `0.1.1.0` is a development build. It contains the plugin bootstrap, the access guard and the
 English-only first-use gate only. **It performs no assessment and contains no DOAJ rules.**
 
 Install on OJS 3.3.0-23 (tested on PHP 7.3 and 8.2 in disposable stacks only):
 
-1. Build the archive: `tools/build-package.sh` → `dist/doajPreAssessment-0.1.0.0.tar.gz`.
+1. Build the archive: `tools/build-package.sh` → `dist/doajPreAssessment-0.1.1.0.tar.gz`.
 2. As the site administrator: Settings → Website → Plugins → Upload A New Plugin.
 3. Enable "DOAJ Pre-Assessment" for the journal (enabling is per journal).
 4. Open it from the plugin's "Open DOAJ Pre-Assessment" action, or at `/index.php/{journalPath}/doajPreAssessment`.
@@ -186,6 +189,7 @@ Disabling or deleting the plugin keeps all plugin data. The plugin has no automa
 - Stage 01: Final design baseline v2.0.0
 - Stage 02.01: Compatibility reconnaissance complete (conditionally accepted)
 - Stage 02.02: Plugin bootstrap and lifecycle implemented; see `docs/stage02/02.02-report.md`
+- Stage 02.03: Authentication and authorization tested; see `docs/stage02/02.03-report.md`
 - DOAJ assessment rules: Not implemented
 - Production readiness: Not established
 

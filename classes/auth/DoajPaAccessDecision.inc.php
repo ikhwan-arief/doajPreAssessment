@@ -9,6 +9,7 @@
  *
  * PERMIT only when all of these hold:
  *  - an authenticated, non-disabled user;
+ *  - a session that is not an OJS "Login as" (impersonated) session (ADR-002 R1.3);
  *  - a journal context;
  *  - (user_id === 1 AND verified site administrator) OR member of that journal's default
  *    "Journal manager" group (ADR-002 R1.2).
@@ -23,11 +24,12 @@ class DoajPaAccessDecision {
 	const PERMIT_JOURNAL_MANAGER = 'permit_journal_manager';
 	const DENY_ANONYMOUS = 'deny_anonymous';
 	const DENY_USER_STATE = 'deny_user_disabled_or_unknown';
+	const DENY_IMPERSONATED = 'deny_impersonated_session';
 	const DENY_NO_CONTEXT = 'deny_no_context';
 	const DENY_NOT_AUTHORIZED = 'deny_not_authorized';
 
 	/**
-	 * @param $facts array userId (int|null), userDisabled (bool|null), contextId (int|null),
+	 * @param $facts array userId (int|null), userDisabled (bool|null), impersonated (bool|null), contextId (int|null),
 	 *  isSiteAdmin (bool), isJournalManager (bool)
 	 * @return array ['permit' => bool, 'reason' => string]
 	 */
@@ -37,6 +39,10 @@ class DoajPaAccessDecision {
 
 		if (!array_key_exists('userDisabled', $facts) || $facts['userDisabled'] !== false) {
 			return self::result(false, self::DENY_USER_STATE);
+		}
+
+		if (!array_key_exists('impersonated', $facts) || $facts['impersonated'] !== false) {
+			return self::result(false, self::DENY_IMPERSONATED);
 		}
 
 		$contextId = array_key_exists('contextId', $facts) ? $facts['contextId'] : null;

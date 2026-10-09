@@ -6,6 +6,7 @@
 {extends file="layouts/backend.tpl"}
 
 {block name="page"}
+<div lang="en" dir="ltr" class="doajPa__page">
 	<h1 class="app__pageHeading">{translate key="plugins.generic.doajPreAssessment.displayName"}</h1>
 
 	<div class="app__contentPanel doajPa">
@@ -35,4 +36,5 @@
 			<li><a href="https://doaj.org/apply/copyright-and-licensing/" rel="noopener noreferrer" target="_blank">{translate key="plugins.generic.doajPreAssessment.reference.copyright"}</a></li>
 		</ul>
 	</div>
+</div>
 {/block}

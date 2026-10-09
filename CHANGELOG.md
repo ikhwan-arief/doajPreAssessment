@@ -3,6 +3,18 @@
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
 They are not compliance-ready and do not contain DOAJ assessment rules.
 
+## [0.1.1.0] - 2026-10-09 (Stage 02.03, development build)
+
+### Security
+
+- Deny every OJS "Login as" (impersonated) session. Before this fix, a Journal editor or a non-root site
+  administrator could reach the plugin by using "Login as" on a default Journal manager (ADR-002 R1.3).
+
+### Fixed
+
+- `acknowledge` rejects non-string `warningSha256` input instead of casting it.
+- Plugin pages mark their content `lang="en"`, so it stays correctly labelled under a non-English interface locale.
+
 ## [0.1.0.0] - 2026-10-09 (Stage 02.02, development build)
 
 ### Added

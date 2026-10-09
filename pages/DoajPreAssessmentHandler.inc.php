@@ -93,8 +93,8 @@ class DoajPreAssessmentHandler extends Handler {
 	 */
 	public function acknowledge($args, $request) {
 		$confirmed = $request->getUserVar('confirmEnglishOnly') === '1';
-		$shownHash = (string) $request->getUserVar('warningSha256');
-		if (!$confirmed || !hash_equals(DoajPaEnglishGate::warningSha256(), $shownHash)) {
+		$shownHash = $request->getUserVar('warningSha256');
+		if (!$confirmed || !is_string($shownHash) || !hash_equals(DoajPaEnglishGate::warningSha256(), $shownHash)) {
 			http_response_code(400);
 			return $this->_displayGate($request, true);
 		}

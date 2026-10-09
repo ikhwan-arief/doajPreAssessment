@@ -6,6 +6,7 @@
 {extends file="layouts/backend.tpl"}
 
 {block name="page"}
+<div lang="en" dir="ltr" class="doajPa__page">
 	<h1 class="app__pageHeading">{translate key="plugins.generic.doajPreAssessment.gate.title"}</h1>
 
 	<div class="app__contentPanel doajPa">
@@ -29,4 +30,5 @@
 			<p><button type="submit" class="pkpButton">{translate key="plugins.generic.doajPreAssessment.gate.submit"}</button></p>
 		</form>
 	</div>
+</div>
 {/block}

@@ -62,6 +62,7 @@ class DoajPaAccessPolicy extends AuthorizationPolicy {
 		$facts = array(
 			'userId' => null,
 			'userDisabled' => null,
+			'impersonated' => null,
 			'contextId' => null,
 			'isSiteAdmin' => false,
 			'isJournalManager' => false,
@@ -73,10 +74,20 @@ class DoajPaAccessPolicy extends AuthorizationPolicy {
 			$facts['userDisabled'] = (bool) $user->getDisabled();
 		}
 
+		// OJS "Login as" stores the original user ID in the session variable 'signedInAs'
+		// (LoginHandler::signInAsUser()). Impersonated sessions are always denied (ADR-002 R1.3).
+		$session = $request->getSession();
+		if (is_object($session)) {
+			$signedInAs = $session->getSessionVar('signedInAs');
+			$facts['impersonated'] = !empty($signedInAs);
+		}
+
 		$context = $request->getContext();
 		if (is_a($context, 'Context')) $facts['contextId'] = (int) $context->getId();
 
-		if ($facts['userId'] === null || $facts['userDisabled'] !== false || !$facts['contextId']) return $facts;
+		if ($facts['userId'] === null || $facts['userDisabled'] !== false || $facts['impersonated'] !== false || !$facts['contextId']) {
+			return $facts;
+		}
 
 		if ($facts['userId'] === DoajPaAccessDecision::ROOT_USER_ID) {
 			$facts['isSiteAdmin'] = DoajPaRoleQuery::isSiteAdmin($facts['userId']);
