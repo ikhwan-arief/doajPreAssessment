@@ -13,6 +13,8 @@
  *  3. HTTP method allow-list (405), then CSRF on POST (403);
  *  4. schema present, otherwise 503 with remediation (manual-copy installs, ADR-004);
  *  5. English-only first-use gate before any other plugin function.
+ * Assessment runs are started and advanced only by POST ops (runStart, runStep, runResume, runCancel): each one
+ * is CSRF-protected, journal-scoped and bounded (one crawl step of at most STEP_SECONDS, or one evaluation).
  * Denials of authenticated users are written to the audit log (best effort; never changes the decision).
  */
 
@@ -25,6 +27,7 @@ require_once(dirname(__FILE__) . '/../classes/services/DoajPaAcknowledgementServ
 require_once(dirname(__FILE__) . '/../classes/services/DoajPaReadService.inc.php');
 require_once(dirname(__FILE__) . '/../classes/services/DoajPaCorrectiveActionService.inc.php');
 require_once(dirname(__FILE__) . '/../classes/ui/DoajPaLabels.inc.php');
+require_once(dirname(__FILE__) . '/../classes/framework/DoajPaAssessmentOrchestrator.inc.php');
 
 class DoajPreAssessmentHandler extends Handler {
 
@@ -36,6 +39,10 @@ class DoajPreAssessmentHandler extends Handler {
 		'index' => array('GET', 'HEAD'),
 		'acknowledge' => array('POST'),
 		'newAssessment' => array('GET', 'HEAD'),
+		'runStart' => array('POST'),
+		'runStep' => array('POST'),
+		'runResume' => array('POST'),
+		'runCancel' => array('POST'),
 		'findings' => array('GET', 'HEAD'),
 		'finding' => array('GET', 'HEAD'),
 		'evidence' => array('GET', 'HEAD'),
@@ -138,13 +145,10 @@ class DoajPreAssessmentHandler extends Handler {
 		));
 	}
 
-	/** New Assessment: per-run acknowledgement text; running assessments is not available in this build. */
+	/** New Assessment: the per-run English-only acknowledgement and the start form. */
 	public function newAssessment($args, $request) {
 		$this->_requireGate($request, $args);
-		return $this->_render($request, 'newAssessment.tpl', 'newAssessment', array(
-			'doajPaWarningText' => DoajPaEnglishGate::WARNING_TEXT,
-			'doajPaCheckboxText' => DoajPaEnglishGate::CHECKBOX_TEXT,
-		));
+		return $this->_renderNewAssessment($request, null, 200);
 	}
 
 	/** Criteria & Findings. */
@@ -190,10 +194,13 @@ class DoajPreAssessmentHandler extends Handler {
 		return $this->_render($request, 'evidence.tpl', 'evidence', array('doajPaRuns' => $runs, 'doajPaRun' => $run));
 	}
 
-	/** DOAJ Form Guide: not available until approved criteria exist (no invented answers). */
+	/** DOAJ Form Guide: FQ-01..FQ-20, each "Not yet assessed" until approved criteria exist (no invented answers). */
 	public function formGuide($args, $request) {
 		$this->_requireGate($request, $args);
-		return $this->_render($request, 'unavailable.tpl', 'formGuide', array('doajPaUnavailable' => 'formGuide'));
+		return $this->_render($request, 'formGuide.tpl', 'formGuide', array(
+			'doajPaFormGuide' => DoajPaReadService::formGuide(self::_contextId($request)),
+			'doajPaFormGuideNote' => DoajPaAssessmentOrchestrator::FQ_NOT_YET_ASSESSED,
+		));
 	}
 
 	/** Before You Apply: not available until approved criteria exist. */
@@ -229,16 +236,10 @@ class DoajPreAssessmentHandler extends Handler {
 		return $this->_render($request, 'history.tpl', 'history', array('doajPaRuns' => DoajPaReadService::runs(self::_contextId($request))));
 	}
 
-	/** One run: snapshot, coverage, criterion results and the run's own finding observations. */
+	/** One run: progress and controls while active; snapshot, coverage, results and observations. */
 	public function run($args, $request) {
 		$this->_requireGate($request, array());
-		$runId = self::_idArg($args);
-		try {
-			$run = DoajPaReadService::run(self::_contextId($request), $runId);
-		} catch (DoajPaNotFoundException $e) {
-			DoajPaResponse::notFound();
-		}
-		return $this->_render($request, 'run.tpl', 'history', array('doajPaRun' => $run));
+		return $this->_renderRun($request, self::_idArg($args), null, 200);
 	}
 
 	/** Compare two runs through their observations (?from=&to=). */
@@ -325,8 +326,133 @@ class DoajPreAssessmentHandler extends Handler {
 	}
 
 	//
+	// Assessment runs (POST + CSRF, checked in authorize()). Every run is created with its own acknowledgement.
+	//
+
+	/** Start a run: per-run English-only acknowledgement, target validation, then the first crawl action. */
+	public function runStart($args, $request) {
+		$this->_requireGate($request, $args);
+		$confirmed = $request->getUserVar('confirmEnglishOnly') === '1';
+		$shownHash = $request->getUserVar('warningSha256');
+		if (!$confirmed || !is_string($shownHash) || !hash_equals(DoajPaEnglishGate::warningSha256(), $shownHash)) {
+			return $this->_renderNewAssessment($request, 'acknowledgement', 400);
+		}
+		$contextId = self::_contextId($request);
+		if (DoajPaReadService::activeRun($contextId)) return $this->_renderNewAssessment($request, 'activeRun', 409);
+		self::_extendTimeLimit();
+		try {
+			$homepage = DoajPaAssessmentOrchestrator::target($request, $request->getContext());
+			$runId = DoajPaAssessmentOrchestrator::start($contextId, $homepage, self::_actor($request),
+				array('confirmed' => true, 'warningSha256' => $shownHash));
+		} catch (DoajPaStateException $e) {
+			return $this->_renderNewAssessment($request, DoajPaReadService::activeRun($contextId) ? 'activeRun' : 'cannotStart', 409);
+		} catch (DoajPaConcurrencyException $e) {
+			return $this->_renderNewAssessment($request, 'activeRun', 409);
+		}
+		$request->redirect(null, DoajPreAssessmentPlugin::PAGE, 'run', array((string) $runId), array('step' => 'started'));
+	}
+
+	/** One bounded step of a running run, then back to the run page (POST-redirect-GET). */
+	public function runStep($args, $request) {
+		$this->_requireGate($request, array());
+		$runId = self::_idArg($args);
+		self::_extendTimeLimit();
+		try {
+			$result = DoajPaAssessmentOrchestrator::advance(self::_contextId($request), $runId, self::_actor($request));
+		} catch (DoajPaNotFoundException $e) {
+			DoajPaResponse::notFound();
+		} catch (DoajPaStateException $e) {
+			$result = array('phase' => 'notLive');
+		}
+		$request->redirect(null, DoajPreAssessmentPlugin::PAGE, 'run', array((string) $runId), array('step' => $result['phase']));
+	}
+
+	/** Resume an interrupted run (optimistic lock). */
+	public function runResume($args, $request) {
+		return $this->_runChange($args, $request, 'resume');
+	}
+
+	/** Cancel an active run (optimistic lock). Records stay; the run is never sealed. */
+	public function runCancel($args, $request) {
+		return $this->_runChange($args, $request, 'cancel');
+	}
+
+	private function _runChange($args, $request, $change) {
+		$this->_requireGate($request, array());
+		$runId = self::_idArg($args);
+		$contextId = self::_contextId($request);
+		try {
+			DoajPaAssessmentRunService::getRun($contextId, $runId);
+		} catch (DoajPaNotFoundException $e) {
+			DoajPaResponse::notFound();
+		}
+		$lock = $request->getUserVar('lockVersion');
+		if (!is_string($lock) || !preg_match('/^(0|[1-9][0-9]{0,9})$/', $lock)) return $this->_renderRun($request, $runId, 'invalid', 400);
+		try {
+			if ($change === 'resume') DoajPaAssessmentOrchestrator::resume($contextId, $runId, (int) $lock, self::_actor($request));
+			else DoajPaAssessmentOrchestrator::cancel($contextId, $runId, (int) $lock, self::_actor($request));
+		} catch (DoajPaConcurrencyException $e) {
+			return $this->_renderRun($request, $runId, 'conflict', 409);
+		} catch (DoajPaStateException $e) {
+			return $this->_renderRun($request, $runId, 'state', 409);
+		}
+		$request->redirect(null, DoajPreAssessmentPlugin::PAGE, 'run', array((string) $runId), array('step' => $change === 'resume' ? 'resumed' : 'cancelled'));
+	}
+
+	//
 	// Helpers
 	//
+
+	/** Step outcomes shown on the run page after a redirect (anything else is ignored). */
+	const STEP_NOTICES = array('started', 'crawling', 'busy', 'completed', 'interrupted', 'conflict', 'notLive', 'resumed', 'cancelled');
+
+	private function _renderNewAssessment($request, $error, $status) {
+		$contextId = self::_contextId($request);
+		$problem = null;
+		try {
+			DoajPaAssessmentOrchestrator::target($request, $request->getContext());
+		} catch (DoajPaStateException $e) {
+			$problem = $e->getMessage();
+		}
+		$pdfTool = DoajPaPdfExtractor::toolVersion();
+		return $this->_render($request, 'newAssessment.tpl', 'newAssessment', array(
+			'doajPaWarningText' => DoajPaEnglishGate::WARNING_TEXT,
+			'doajPaCheckboxText' => DoajPaEnglishGate::CHECKBOX_TEXT,
+			'doajPaWarningSha256' => DoajPaEnglishGate::warningSha256(),
+			'doajPaActiveRun' => DoajPaReadService::activeRun($contextId),
+			'doajPaTargetProblem' => $problem,
+			'doajPaError' => $error,
+			'doajPaPdfTool' => $pdfTool,
+			'doajPaPdfAvailable' => $pdfTool !== 'unavailable',
+			'doajPaRulebook' => DoajPaAssessmentOrchestrator::LIVE_RULEBOOK,
+			'doajPaFutureModules' => DoajPaAssessmentOrchestrator::FUTURE_MODULES,
+		), $status);
+	}
+
+	private function _renderRun($request, $runId, $error, $status) {
+		$contextId = self::_contextId($request);
+		try {
+			$run = DoajPaReadService::run($contextId, $runId);
+		} catch (DoajPaNotFoundException $e) {
+			DoajPaResponse::notFound();
+		}
+		$notice = $request->getUserVar('step');
+		$active = in_array($run['status'], array('running', 'interrupted'), true);
+		return $this->_render($request, 'run.tpl', 'history', array(
+			'doajPaRun' => $run,
+			'doajPaProgress' => $active ? DoajPaCrawlService::progress($contextId, $runId) : null,
+			'doajPaStepNotice' => is_string($notice) && in_array($notice, self::STEP_NOTICES, true) ? $notice : null,
+			'doajPaError' => $error,
+			'doajPaCanAdvance' => $run['status'] === 'running' && $run['rulebook_version'] === DoajPaAssessmentOrchestrator::LIVE_RULEBOOK,
+			'doajPaCanCancel' => in_array($run['status'], DoajPaSchema::RUN_ACTIVE, true),
+			'doajPaFutureModules' => DoajPaAssessmentOrchestrator::FUTURE_MODULES,
+		), $status);
+	}
+
+	/** A step may wait on one slow fetch after its budget; do not let PHP stop it half-way. */
+	private static function _extendTimeLimit() {
+		if (function_exists('set_time_limit')) @set_time_limit(120);
+	}
 
 	/**
 	 * Common page rendering: backend layout, plugin stylesheet, navigation and labels.

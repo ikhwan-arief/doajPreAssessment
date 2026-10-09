@@ -31,7 +31,7 @@
 
 .doajPa-badge { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 3px; font-size: 0.875rem; font-weight: bold; color: #1e293b; background: #e2e8f0; border: 1px solid #64748b; }
 .doajPa-badge--open, .doajPa-badge--reopened, .doajPa-badge--fail, .doajPa-badge--failed, .doajPa-badge--contradiction, .doajPa-badge--inaccessible, .doajPa-badge--high { color: #7f1d1d; background: #fee2e2; border-color: #b91c1c; }
-.doajPa-badge--still_open, .doajPa-badge--warning, .doajPa-badge--needs_verification, .doajPa-badge--unverifiable, .doajPa-badge--not_found, .doajPa-badge--parse_failed, .doajPa-badge--interrupted, .doajPa-badge--changed { color: #78350f; background: #fef3c7; border-color: #b45309; }
+.doajPa-badge--not_implemented, .doajPa-badge--not_yet_assessed, .doajPa-badge--still_open, .doajPa-badge--warning, .doajPa-badge--needs_verification, .doajPa-badge--unverifiable, .doajPa-badge--not_found, .doajPa-badge--parse_failed, .doajPa-badge--interrupted, .doajPa-badge--changed { color: #78350f; background: #fef3c7; border-color: #b45309; }
 .doajPa-badge--resolved_verified, .doajPa-badge--verified, .doajPa-badge--retrieved, .doajPa-badge--completed, .doajPa-badge--pass, .doajPa-badge--done_pending_verification { color: #14532d; background: #dcfce7; border-color: #15803d; }
 
 .doajPa-quote { margin: 0.5rem 0 1rem; padding: 0.5rem 1rem; border-left: 4px solid #64748b; background: #f8fafc; white-space: pre-wrap; }

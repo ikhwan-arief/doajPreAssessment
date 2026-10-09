@@ -3,6 +3,35 @@
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
 They are not compliance-ready and do not contain DOAJ assessment rules.
 
+## [0.5.0.0] - 2026-10-10 (Stage 02.07, development build)
+
+### Added
+
+- Assessments can be started from New Assessment by a Journal Manager, with the English-only confirmation
+  required (and recorded) for every run. Runs advance in bounded, CSRF-protected steps (start, continue, resume,
+  cancel), with optimistic locking for resume and cancel, and one active run per journal.
+- Assessment framework: versioned criterion rule interface, an outcome check that only ever downgrades
+  (quotes must appear verbatim in stored evidence; a pass needs verified-English evidence; failed rules give
+  "unverifiable"), evaluation and sealing in one transaction, and reuse of a previous result only when the
+  rule's inputs are unchanged (fingerprints), re-checked against the new evidence.
+- No DOAJ rules: every criterion module is recorded and shown as NOT IMPLEMENTED; FQ-01 to FQ-20 are stored as
+  "Not yet assessed"; the DOAJ Form Guide lists them.
+- Run page: progress, interruption reason, coverage and gaps (including pages whose language is not verified
+  as English), changes since the previous run, and the framework summary.
+- Interrupted runs (for example an unwritable private directory) can be resumed without duplicate records.
+
+### Changed
+
+- Pages whose language the advisory check cannot establish are marked
+  `language_undetermined (advisory heuristic; not verified English)` and counted in the coverage summary.
+- The crawl time limit counts crawling time only, so a resumed run keeps its remaining time.
+- A failure to create the crawl lock file is an error (the run is interrupted) instead of a "busy" answer.
+
+### Documentation
+
+- Poppler `pdftotext` is an optional external prerequisite (not bundled); README describes its unavailable and
+  error behaviour.
+
 ## [0.4.0.0] - 2026-10-09 (Stage 02.06, development build)
 
 ### Added

@@ -14,6 +14,56 @@
 		{include file=$doajPaNotResult rulebook=$r.rulebook_version}
 		{if $r.dev_exception_used}<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.run.devException"}</strong></p>{/if}
 		{if $r.status != 'completed'}<p class="doajPa-notice doajPa-notice--info">{translate key="plugins.generic.doajPreAssessment.run.notCompleted"}</p>{/if}
+		{if $doajPaError}<p class="doajPa-notice doajPa-notice--error" role="alert"><strong>{translate key="plugins.generic.doajPreAssessment.run.errorLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.run.error.`$doajPaError`"}</p>{/if}
+		{if $doajPaStepNotice}<p class="doajPa-notice doajPa-notice--info" role="status">{translate key="plugins.generic.doajPreAssessment.run.step.`$doajPaStepNotice`"}</p>{/if}
+
+		{if $r.status == 'draft' || $r.status == 'queued' || $r.status == 'running' || $r.status == 'interrupted' || $r.status == 'human_review'}
+		<section class="doajPa-progress" aria-labelledby="doajPaProgressHeading">
+			<h2 id="doajPaProgressHeading">{translate key="plugins.generic.doajPreAssessment.run.progress"}</h2>
+			{if $doajPaProgress}
+				<p role="status">{translate key="plugins.generic.doajPreAssessment.run.pagesRead"}: <strong>{$doajPaProgress.fetched|escape}</strong>.
+				{translate key="plugins.generic.doajPreAssessment.run.queued"}: <strong>{$doajPaProgress.queued|escape}</strong>.
+				{if $doajPaProgress.done}{translate key="plugins.generic.doajPreAssessment.run.crawlDone"}{else}{translate key="plugins.generic.doajPreAssessment.run.crawlRunning"}{/if}</p>
+			{else}
+				<p role="status">{translate key="plugins.generic.doajPreAssessment.run.crawlNotStarted"}</p>
+			{/if}
+			{if $r.status == 'interrupted'}
+				<div class="doajPa-notice doajPa-notice--warning" role="note">
+					<p><strong>{translate key="plugins.generic.doajPreAssessment.run.interruptedLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.run.interrupted"}</p>
+					{if $r.interruptions}<p>{translate key="plugins.generic.doajPreAssessment.run.interruptedReason"}: <code>{$r.interruptions[0].reason|escape}</code> ({$r.interruptions[0].created_at_utc|escape} UTC)</p>{/if}
+				</div>
+				<form class="doajPa-form" method="post" action="{url page=$doajPaPage op="runResume" path=$r.run_id}">
+					{csrf}
+					<input type="hidden" name="lockVersion" value="{$r.lock_version|escape}" />
+					<button type="submit" class="pkpButton">{translate key="plugins.generic.doajPreAssessment.run.resume"}</button>
+				</form>
+			{/if}
+			{if $doajPaCanAdvance}
+				<form id="doajPaStepForm" class="doajPa-form" method="post" action="{url page=$doajPaPage op="runStep" path=$r.run_id}">
+					{csrf}
+					<p>{translate key="plugins.generic.doajPreAssessment.run.stepHelp"}</p>
+					<button type="submit" class="pkpButton">{translate key="plugins.generic.doajPreAssessment.run.continue"}</button>
+				</form>
+				<p><input type="checkbox" id="doajPaAutoContinue" checked /> <label for="doajPaAutoContinue">{translate key="plugins.generic.doajPreAssessment.run.autoContinue"}</label></p>
+				{literal}<script>
+				(function () {
+					var form = document.getElementById('doajPaStepForm'), box = document.getElementById('doajPaAutoContinue');
+					if (!form || !box) return;
+					try { if (window.sessionStorage.getItem('doajPaAutoContinue') === 'off') box.checked = false; } catch (e) {}
+					box.addEventListener('change', function () { try { window.sessionStorage.setItem('doajPaAutoContinue', box.checked ? 'on' : 'off'); } catch (e) {} });
+					window.setTimeout(function () { if (box.checked) form.submit(); }, 1500);
+				})();
+				</script>{/literal}
+			{/if}
+			{if $doajPaCanCancel}
+				<form class="doajPa-form" method="post" action="{url page=$doajPaPage op="runCancel" path=$r.run_id}">
+					{csrf}
+					<input type="hidden" name="lockVersion" value="{$r.lock_version|escape}" />
+					<button type="submit" class="pkpButton">{translate key="plugins.generic.doajPreAssessment.run.cancel"}</button>
+				</form>
+			{/if}
+		</section>
+		{/if}
 
 		<div class="doajPa-tableWrap">
 		<table class="doajPa-table">
@@ -31,6 +81,51 @@
 			</tbody>
 		</table>
 		</div>
+
+		{if $r.coverageData}
+		{assign var=c value=$r.coverageData}
+		<h2 id="doajPaCoverage">{translate key="plugins.generic.doajPreAssessment.run.coverage"}</h2>
+		<div class="doajPa-tableWrap">
+		<table class="doajPa-table" aria-labelledby="doajPaCoverage">
+			<tbody>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.run.pagesRead"}</th><td>{$c.counts.fetched|escape}</td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.run.gaps"}</th><td>{if $r.gapCount > 0}<span class="doajPa-badge doajPa-badge--interrupted">{$r.gapCount|escape}</span> {translate key="plugins.generic.doajPreAssessment.evidence.gaps"}{else}0{/if}</td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.run.languageNotVerified"}</th><td>{$r.languageNotVerifiedCount|escape}. {translate key="plugins.generic.doajPreAssessment.run.languageNote"}{if $c.languageCounts} ({foreach from=$c.languageCounts key=lang item=n name=lc}{$lang|escape}: {$n|escape}{if !$smarty.foreach.lc.last}, {/if}{/foreach}){/if}</td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.run.limitsHit"}</th><td>{foreach from=$c.limitsHit item=l name=lh}<code>{$l|escape}</code>{if !$smarty.foreach.lh.last}, {/if}{foreachelse}{translate key="plugins.generic.doajPreAssessment.common.none"}{/foreach}</td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.run.notFollowed"}</th><td>{foreach from=$c.skippedCounts key=k item=n name=sk}<code>{$k|escape}</code>: {$n|escape}{if !$smarty.foreach.sk.last}, {/if}{foreachelse}{translate key="plugins.generic.doajPreAssessment.common.none"}{/foreach}</td></tr>
+				<tr><th scope="row">robots.txt</th><td><code>{$c.robots|escape}</code></td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.run.pdfTool"}</th><td><code>{$c.pdfTool|escape}</code>{if $c.pdfTool == 'unavailable'} {translate key="plugins.generic.doajPreAssessment.run.pdfUnavailable"}{/if}</td></tr>
+			</tbody>
+		</table>
+		</div>
+		{/if}
+
+		{if $r.assessment}
+		{assign var=a value=$r.assessment}
+		<h2 id="doajPaAssessment">{translate key="plugins.generic.doajPreAssessment.run.assessment"}</h2>
+		{if $a.criteria == 'not_implemented'}
+			<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</strong> {translate key="plugins.generic.doajPreAssessment.run.criteriaNotImplemented"}</p>
+		{elseif $a.criteria == 'test_fixture_rules'}
+			<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.run.testRulesLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.run.testRules"}</p>
+		{/if}
+		<div class="doajPa-tableWrap">
+		<table class="doajPa-table" aria-labelledby="doajPaAssessment">
+			<tbody>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.run.rulesEvaluated"}</th><td>{$a.rulesEvaluated|escape} ({translate key="plugins.generic.doajPreAssessment.run.rulesReused"}: {$a.rulesReused|escape}; {translate key="plugins.generic.doajPreAssessment.run.rulesDowngraded"}: {$a.rulesDowngraded|escape})</td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.nav.formGuide"}</th><td>{$a.formGuide.questions|escape} {translate key="plugins.generic.doajPreAssessment.run.questions"}, {include file=$doajPaBadge group="formAnswer" code=$a.formGuide.answerStatus}</td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.common.evidence"}</th><td>{$a.evidence.items|escape} {translate key="plugins.generic.doajPreAssessment.run.items"};
+					{translate key="plugins.generic.doajPreAssessment.run.verifiedEnglish"}: {$a.evidence.verifiedEnglish|escape};
+					{translate key="plugins.generic.doajPreAssessment.run.languageNotVerified"}: {$a.evidence.languageNotVerified|escape};
+					{translate key="plugins.generic.doajPreAssessment.run.provenanceFailures"}: {$a.evidence.provenanceFailures|escape};
+					{translate key="plugins.generic.doajPreAssessment.run.manifest"}: {if $a.evidence.manifestVerified}{translate key="plugins.generic.doajPreAssessment.common.yes"}{else}<strong>{translate key="plugins.generic.doajPreAssessment.common.no"}</strong>{/if}</td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.run.diff"}</th><td>{if $a.diff.previousRunId}{foreach from=$a.diff.counts key=k item=n name=dc}{if isset($doajPaLabels.diff[$k])}{$doajPaLabels.diff[$k]|escape}{else}{$k|escape}{/if}: {$n|escape}{if !$smarty.foreach.dc.last}; {/if}{/foreach}{else}{translate key="plugins.generic.doajPreAssessment.run.noPrevious"}{/if}</td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.run.pipeline"}</th><td><code>{$a.pipelineVersion|escape}</code>: {foreach from=$a.pipeline item=st name=pl}{$st|escape}{if !$smarty.foreach.pl.last} &rarr; {/if}{/foreach}</td></tr>
+			</tbody>
+		</table>
+		</div>
+		<h3 id="doajPaNotImplemented">{translate key="plugins.generic.doajPreAssessment.run.notImplementedHeading"}</h3>
+		<ul aria-labelledby="doajPaNotImplemented">{foreach from=$a.notImplemented item=k}<li><span class="doajPa-badge doajPa-badge--not_implemented">{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</span> {if isset($doajPaFutureModules[$k])}{$doajPaFutureModules[$k]|escape}{else}{$k|escape}{/if}</li>{/foreach}</ul>
+		{/if}
 
 		<h2 id="doajPaObservations">{translate key="plugins.generic.doajPreAssessment.run.observations"}</h2>
 		<p>{translate key="plugins.generic.doajPreAssessment.run.observationsNote"}</p>

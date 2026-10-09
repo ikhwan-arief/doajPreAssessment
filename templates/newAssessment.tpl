@@ -1,7 +1,9 @@
 {**
  * templates/newAssessment.tpl
  *
- * New Assessment: shows the per-run acknowledgement that every run will require. Running is not available yet.
+ * New Assessment: per-run English-only acknowledgement (required for every run) and the start form.
+ * No approved DOAJ rules exist in this version: a run reads the public website and records evidence and
+ * coverage only; every planned module is shown as NOT IMPLEMENTED.
  *}
 {extends file="layouts/backend.tpl"}
 
@@ -10,18 +12,42 @@
 	<h1 class="app__pageHeading">{translate key="plugins.generic.doajPreAssessment.nav.newAssessment"}</h1>
 	{include file=$doajPaNav}
 	<div class="app__contentPanel doajPa">
-		<p class="doajPa-notice doajPa-notice--info" role="status"><strong>{translate key="plugins.generic.doajPreAssessment.unavailable.label"}</strong> {translate key="plugins.generic.doajPreAssessment.unavailable.newAssessment"}</p>
+		{include file=$doajPaNotResult rulebook=$doajPaRulebook}
+		{if $doajPaError}
+			<p class="doajPa-notice doajPa-notice--error" role="alert"><strong>{translate key="plugins.generic.doajPreAssessment.newAssessment.errorLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.newAssessment.error.`$doajPaError`"}</p>
+		{/if}
+		{if $doajPaActiveRun}
+			<p class="doajPa-notice doajPa-notice--info" role="status">{translate key="plugins.generic.doajPreAssessment.newAssessment.active"}
+			<a href="{url page=$doajPaPage op="run" path=$doajPaActiveRun.run_id}">{translate key="plugins.generic.doajPreAssessment.common.runNumber"} {$doajPaActiveRun.run_number|escape}</a>
+			({include file=$doajPaBadge group="run" code=$doajPaActiveRun.status})</p>
+		{/if}
+		{if $doajPaTargetProblem}
+			<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.newAssessment.targetLabel"}</strong> {$doajPaTargetProblem|escape}</p>
+		{/if}
+
+		<section aria-labelledby="doajPaScopeHeading">
+			<h2 id="doajPaScopeHeading">{translate key="plugins.generic.doajPreAssessment.newAssessment.scopeHeading"}</h2>
+			<p>{translate key="plugins.generic.doajPreAssessment.newAssessment.scope"}</p>
+			<p><strong>{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</strong> {translate key="plugins.generic.doajPreAssessment.newAssessment.notImplemented"}</p>
+			<ul>{foreach from=$doajPaFutureModules key=k item=title}<li><span class="doajPa-badge doajPa-badge--not_implemented">{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</span> {$title|escape}</li>{/foreach}</ul>
+			<p>{translate key="plugins.generic.doajPreAssessment.newAssessment.pdf"}
+			{if $doajPaPdfAvailable}<code>{$doajPaPdfTool|escape}</code>{else}<strong>{translate key="plugins.generic.doajPreAssessment.newAssessment.pdfUnavailable"}</strong>{/if}</p>
+		</section>
+
 		<section class="doajPa-notice doajPa-notice--warning" aria-labelledby="doajPaWarningHeading">
 			<h2 id="doajPaWarningHeading">{translate key="plugins.generic.doajPreAssessment.gate.warningLabel"}</h2>
 			<p><strong>{$doajPaWarningText|escape}</strong></p>
 		</section>
-		<form class="doajPa-form" aria-describedby="doajPaRunHelp">
+		{assign var=doajPaBlocked value=($doajPaActiveRun || $doajPaTargetProblem)}
+		<form class="doajPa-form" method="post" action="{url page=$doajPaPage op="runStart"}" aria-describedby="doajPaRunHelp">
+			{csrf}
+			<input type="hidden" name="warningSha256" value="{$doajPaWarningSha256|escape}" />
 			<p id="doajPaRunHelp">{translate key="plugins.generic.doajPreAssessment.newAssessment.perRun"}</p>
 			<p>
-				<input type="checkbox" id="doajPaRunAck" name="confirmEnglishOnly" value="1" disabled />
+				<input type="checkbox" id="doajPaRunAck" name="confirmEnglishOnly" value="1" required{if $doajPaBlocked} disabled{/if} />
 				<label for="doajPaRunAck">{$doajPaCheckboxText|escape}</label>
 			</p>
-			<p><button type="button" class="pkpButton" disabled>{translate key="plugins.generic.doajPreAssessment.newAssessment.start"}</button></p>
+			<p><button type="submit" class="pkpButton"{if $doajPaBlocked} disabled{/if}>{translate key="plugins.generic.doajPreAssessment.newAssessment.start"}</button></p>
 		</form>
 	</div>
 </div>

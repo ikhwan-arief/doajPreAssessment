@@ -27,6 +27,7 @@
 			{assign var=gaps value=0}
 			{foreach from=$r.resources item=res}{if $res.acquisition_status != 'retrieved'}{assign var=gaps value=$gaps+1}{/if}{/foreach}
 			{if $gaps > 0}<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.evidence.gapsLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.evidence.gaps"} ({$gaps|escape})</p>{/if}
+			{if $r.languageNotVerifiedCount > 0}<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.run.languageNotVerified"}:</strong> {$r.languageNotVerifiedCount|escape}. {translate key="plugins.generic.doajPreAssessment.run.languageNote"}</p>{/if}
 			<div class="doajPa-tableWrap">
 			<table class="doajPa-table" aria-labelledby="doajPaPages">
 				<thead><tr>

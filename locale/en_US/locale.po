@@ -45,7 +45,7 @@ msgid "plugins.generic.doajPreAssessment.overview.statusLabel"
 msgstr "Status:"
 
 msgid "plugins.generic.doajPreAssessment.overview.status"
-msgstr "Development build. No assessment functions are implemented yet, and no approved DOAJ rule set is installed."
+msgstr "Development build. No approved DOAJ rule set is installed: an assessment reads the public website and records evidence and coverage only; no DOAJ criterion is evaluated."
 
 msgid "plugins.generic.doajPreAssessment.overview.disclaimer"
 msgstr "DOAJ Pre-Assessment is an independent self-evaluation tool. It is not an official DOAJ evaluation and does not predict or guarantee acceptance. Only DOAJ decides on journal applications."
@@ -270,7 +270,7 @@ msgid "plugins.generic.doajPreAssessment.devBuild.label"
 msgstr "Development build."
 
 msgid "plugins.generic.doajPreAssessment.devBuild.text"
-msgstr "No approved DOAJ rule set is installed and no assessment can be run yet. Anything shown here is a development or test record, not a DOAJ assessment result."
+msgstr "No approved DOAJ rule set is installed, so no DOAJ criterion is evaluated (NOT IMPLEMENTED). Assessments record public website evidence and coverage only; nothing shown here is a DOAJ assessment result."
 
 msgid "plugins.generic.doajPreAssessment.evidence.excerpts"
 msgstr "Evidence excerpts"
@@ -590,5 +590,215 @@ msgstr "The DOAJ Form Guide needs approved DOAJ criteria and an approved mapping
 msgid "plugins.generic.doajPreAssessment.unavailable.label"
 msgstr "Not available yet."
 
-msgid "plugins.generic.doajPreAssessment.unavailable.newAssessment"
-msgstr "Assessments cannot be run in this development build: the public website reader and the approved DOAJ rules are not installed yet."
+msgid "plugins.generic.doajPreAssessment.common.notImplemented"
+msgstr "NOT IMPLEMENTED"
+
+msgid "plugins.generic.doajPreAssessment.common.yes"
+msgstr "Yes"
+
+msgid "plugins.generic.doajPreAssessment.common.no"
+msgstr "No"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.errorLabel"
+msgstr "The assessment was not started."
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.error.acknowledgement"
+msgstr "Confirm the English-only statement for this assessment. Each assessment needs its own confirmation."
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.error.activeRun"
+msgstr "Another assessment of this journal is still active. Finish, resume or cancel it first."
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.error.cannotStart"
+msgstr "The journal website cannot be read in this installation. See the message below."
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.active"
+msgstr "An assessment of this journal is active:"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.targetLabel"
+msgstr "The website reader cannot run here."
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.scopeHeading"
+msgstr "What an assessment does in this version"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.scope"
+msgstr "The plugin reads this journal's public website without logging in, in small steps that you can follow, pause and resume. It stores every page it read, every page it could not read and the extracted text, with addresses, times and fingerprints. The completed run is sealed and cannot be changed afterwards."
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.notImplemented"
+msgstr "No approved DOAJ criteria are installed in this version, so no criterion is evaluated and nothing is passed or failed. The DOAJ Form Guide questions FQ-01 to FQ-20 are recorded as not yet assessed. The following modules are planned and not available:"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.pdf"
+msgstr "PDF text extraction uses the optional external Poppler pdftotext program. On this server:"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.pdfUnavailable"
+msgstr "not installed. PDF files are still listed, but their text is not read; each one is recorded as a coverage gap (pdf_extractor_unavailable)."
+
+msgid "plugins.generic.doajPreAssessment.formGuide.fromRun"
+msgstr "Entries recorded by the latest completed run:"
+
+msgid "plugins.generic.doajPreAssessment.formGuide.noRun"
+msgstr "No completed run yet. Every question is not yet assessed."
+
+msgid "plugins.generic.doajPreAssessment.formGuide.caption"
+msgstr "DOAJ application form questions FQ-01 to FQ-20"
+
+msgid "plugins.generic.doajPreAssessment.formGuide.question"
+msgstr "Question"
+
+msgid "plugins.generic.doajPreAssessment.formGuide.answer"
+msgstr "Website-supported answer"
+
+msgid "plugins.generic.doajPreAssessment.formGuide.uncertainty"
+msgstr "Uncertainty"
+
+msgid "plugins.generic.doajPreAssessment.run.errorLabel"
+msgstr "Nothing was changed."
+
+msgid "plugins.generic.doajPreAssessment.run.error.invalid"
+msgstr "The request was incomplete. Reload the page and try again."
+
+msgid "plugins.generic.doajPreAssessment.run.error.conflict"
+msgstr "The run was changed by someone else. The page now shows its current state."
+
+msgid "plugins.generic.doajPreAssessment.run.error.state"
+msgstr "This action is not possible in the run's current state."
+
+msgid "plugins.generic.doajPreAssessment.run.step.started"
+msgstr "The assessment started. The website is read in steps of about ten seconds."
+
+msgid "plugins.generic.doajPreAssessment.run.step.crawling"
+msgstr "One more step of reading the website was completed."
+
+msgid "plugins.generic.doajPreAssessment.run.step.busy"
+msgstr "Another step of this run is in progress. Try again in a moment."
+
+msgid "plugins.generic.doajPreAssessment.run.step.completed"
+msgstr "The website reading is complete and the run was sealed."
+
+msgid "plugins.generic.doajPreAssessment.run.step.interrupted"
+msgstr "The last step failed and the run was interrupted. Nothing from the failed step was sealed. You can resume it."
+
+msgid "plugins.generic.doajPreAssessment.run.step.conflict"
+msgstr "The run was changed at the same time by another request. The next step continues it."
+
+msgid "plugins.generic.doajPreAssessment.run.step.notLive"
+msgstr "This run was created by test tooling and cannot be continued from this page."
+
+msgid "plugins.generic.doajPreAssessment.run.step.resumed"
+msgstr "The run was resumed. Pages already stored are not read again."
+
+msgid "plugins.generic.doajPreAssessment.run.step.cancelled"
+msgstr "The run was cancelled. Its stored records are kept; it was not sealed."
+
+msgid "plugins.generic.doajPreAssessment.run.progress"
+msgstr "Progress"
+
+msgid "plugins.generic.doajPreAssessment.run.pagesRead"
+msgstr "Pages and files read"
+
+msgid "plugins.generic.doajPreAssessment.run.queued"
+msgstr "Waiting to be read"
+
+msgid "plugins.generic.doajPreAssessment.run.crawlDone"
+msgstr "Reading is complete; the next step records the results and seals the run."
+
+msgid "plugins.generic.doajPreAssessment.run.crawlRunning"
+msgstr "Reading is in progress."
+
+msgid "plugins.generic.doajPreAssessment.run.crawlNotStarted"
+msgstr "Reading has not started yet; the next step starts it."
+
+msgid "plugins.generic.doajPreAssessment.run.interruptedLabel"
+msgstr "Interrupted."
+
+msgid "plugins.generic.doajPreAssessment.run.interrupted"
+msgstr "A step of this run failed. Resume continues where it stopped; pages that are already stored are not read again, and any page that was stored but not fully processed is listed as a coverage gap."
+
+msgid "plugins.generic.doajPreAssessment.run.interruptedReason"
+msgstr "Reason"
+
+msgid "plugins.generic.doajPreAssessment.run.resume"
+msgstr "Resume assessment"
+
+msgid "plugins.generic.doajPreAssessment.run.stepHelp"
+msgstr "Each step reads the website for about ten seconds and then returns to this page."
+
+msgid "plugins.generic.doajPreAssessment.run.continue"
+msgstr "Continue assessment"
+
+msgid "plugins.generic.doajPreAssessment.run.autoContinue"
+msgstr "Continue automatically"
+
+msgid "plugins.generic.doajPreAssessment.run.cancel"
+msgstr "Cancel assessment"
+
+msgid "plugins.generic.doajPreAssessment.run.coverage"
+msgstr "Coverage and gaps"
+
+msgid "plugins.generic.doajPreAssessment.run.gaps"
+msgstr "Pages not retrieved"
+
+msgid "plugins.generic.doajPreAssessment.run.languageNotVerified"
+msgstr "Language not verified as English"
+
+msgid "plugins.generic.doajPreAssessment.run.languageNote"
+msgstr "These pages were read, but the language check (an advisory heuristic) did not establish English: undetermined, mixed or other language. They are never treated as verified English evidence."
+
+msgid "plugins.generic.doajPreAssessment.run.limitsHit"
+msgstr "Limits reached"
+
+msgid "plugins.generic.doajPreAssessment.run.notFollowed"
+msgstr "Links not followed (by reason)"
+
+msgid "plugins.generic.doajPreAssessment.run.pdfTool"
+msgstr "PDF text tool"
+
+msgid "plugins.generic.doajPreAssessment.run.pdfUnavailable"
+msgstr "PDF text was not read; PDF files are coverage gaps (pdf_extractor_unavailable)."
+
+msgid "plugins.generic.doajPreAssessment.run.assessment"
+msgstr "Assessment framework"
+
+msgid "plugins.generic.doajPreAssessment.run.criteriaNotImplemented"
+msgstr "No approved DOAJ criteria exist in this version. No criterion was evaluated, and this run says nothing about DOAJ eligibility."
+
+msgid "plugins.generic.doajPreAssessment.run.testRulesLabel"
+msgstr "Test fixture rules."
+
+msgid "plugins.generic.doajPreAssessment.run.testRules"
+msgstr "This run was evaluated by development test rules. They are not DOAJ criteria and the results are not DOAJ assessment results."
+
+msgid "plugins.generic.doajPreAssessment.run.rulesEvaluated"
+msgstr "Rules evaluated"
+
+msgid "plugins.generic.doajPreAssessment.run.rulesReused"
+msgstr "reused because their inputs did not change"
+
+msgid "plugins.generic.doajPreAssessment.run.rulesDowngraded"
+msgstr "downgraded to unverifiable"
+
+msgid "plugins.generic.doajPreAssessment.run.questions"
+msgstr "questions"
+
+msgid "plugins.generic.doajPreAssessment.run.items"
+msgstr "excerpts"
+
+msgid "plugins.generic.doajPreAssessment.run.verifiedEnglish"
+msgstr "verified English"
+
+msgid "plugins.generic.doajPreAssessment.run.provenanceFailures"
+msgstr "failed provenance checks"
+
+msgid "plugins.generic.doajPreAssessment.run.manifest"
+msgstr "crawl manifest verified"
+
+msgid "plugins.generic.doajPreAssessment.run.diff"
+msgstr "Changes since the previous completed run"
+
+msgid "plugins.generic.doajPreAssessment.run.noPrevious"
+msgstr "No previous completed run."
+
+msgid "plugins.generic.doajPreAssessment.run.pipeline"
+msgstr "Pipeline"
+
+msgid "plugins.generic.doajPreAssessment.run.notImplementedHeading"
+msgstr "Not implemented in this version"

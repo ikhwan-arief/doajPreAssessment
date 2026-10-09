@@ -170,15 +170,18 @@ Record test commands, evidence, limitations, and unresolved findings.
 
 Do not claim installation compatibility until it has been verified on a running OJS 3.3.0-23 environment.
 
-## Development Build (Stage 02.02)
+## Development Build (Stage 02.07)
 
-Version `0.4.0.0` is a development build. It contains the access guard, the English-only gates, the database
-for assessment history, the backend views and the public website crawler (not yet started from the user
-interface). **It performs no assessment and contains no DOAJ rules.**
+Version `0.5.0.0` is a development build. It contains the access guard, the English-only gates, the database
+for assessment history, the backend views, the public website crawler and the assessment framework. A Journal
+Manager can start an assessment (with a fresh English-only confirmation for every run); the plugin reads the
+journal's public website in short steps and seals the run. **No DOAJ rules are included: every DOAJ criterion
+is shown as NOT IMPLEMENTED, the DOAJ Form Guide questions FQ-01 to FQ-20 are "Not yet assessed", and no run is
+a DOAJ assessment result.**
 
 Install on OJS 3.3.0-23 (tested on PHP 7.3 and 8.2 in disposable stacks only):
 
-1. Build the archive: `tools/build-package.sh` → `dist/doajPreAssessment-0.4.0.0.tar.gz`.
+1. Build the archive: `tools/build-package.sh` → `dist/doajPreAssessment-0.5.0.0.tar.gz`.
 2. As the site administrator: Settings → Website → Plugins → Upload A New Plugin.
 3. Enable "DOAJ Pre-Assessment" for the journal (enabling is per journal).
 4. Open it from the backend menu entry "DOAJ Pre-Assessment", from the plugin's "Open DOAJ Pre-Assessment" action,
@@ -187,10 +190,38 @@ Install on OJS 3.3.0-23 (tested on PHP 7.3 and 8.2 in disposable stacks only):
 Uploading the archive creates the database tables. If the plugin is copied into `plugins/generic` by hand
 instead, run `php tools/upgrade.php upgrade` once on the server; until then the plugin answers HTTP 503.
 
-Server requirements for the crawler: PHP `curl`, `dom` and `mbstring`; for PDF text, the `pdftotext` program
-(poppler-utils) at `/usr/bin/pdftotext` or `/usr/local/bin/pdftotext`. Without it, PDFs are recorded as not
-extracted. The crawler contacts only public internet addresses, so a journal hosted on a private or intranet
-address cannot be assessed. It refuses to run when OJS is configured to use an HTTP proxy.
+### Running an assessment
+
+New Assessment → confirm the English-only statement → Start assessment. The run page then continues the run in
+steps of about ten seconds of reading (each step is a separate, CSRF-protected request; the page submits the next
+step automatically while "Continue automatically" is ticked, or use "Continue assessment"). When reading is
+complete, the results, coverage and the 20 form-guide entries are stored and the run is sealed in one database
+transaction. Only one run per journal can be active.
+
+- If a step fails (for example the private files directory is not writable), the run becomes **Interrupted**
+  with the reason shown; **Resume assessment** continues it. Pages already stored are not read again; a page
+  that was stored but not fully processed is listed as a coverage gap (`interrupted_not_reprocessed`).
+- If the browser is closed, the run stays **Running**; open it from Assessment History and continue.
+- **Cancel assessment** ends an active run; its records stay, but it is never sealed.
+- Pages that could not be read, limits that were reached, links that were not followed and pages whose
+  language was not verified as English are listed under "Coverage and gaps" of the run. A page whose language
+  the advisory check could not establish is never treated as verified English.
+
+### Server requirements
+
+- PHP `curl`, `dom` and `mbstring`. Each step may take up to about 40 seconds on a slow website; the plugin asks
+  PHP for up to 120 seconds per step (`set_time_limit`), so a stricter limit set by the host may interrupt steps.
+- The crawler contacts only public internet addresses, so a journal hosted on a private or intranet address
+  cannot be assessed (its pages are recorded as inaccessible). It refuses to run when OJS is configured to use an
+  HTTP proxy, and when `disable_path_info` is On.
+- **Optional: Poppler `pdftotext`** (Debian/Ubuntu package `poppler-utils`), found at `/usr/bin/pdftotext` or
+  `/usr/local/bin/pdftotext`. It is a separate program installed by the server administrator; it is **not**
+  included in the plugin. The New Assessment page shows whether it was found. Behaviour:
+  - not installed: PDF files are still downloaded and recorded, but their text is not read; each PDF is a coverage
+    gap with status "Parse failed" and reason `unavailable: pdf_extractor_unavailable`;
+  - encrypted, corrupt, scanned (no text), timed out (30 s) or not really a PDF: status "Parse failed" with the
+    reason beginning with `encrypted`, `corrupt`, `no_text`, `timeout` or `not_a_pdf`; the PDF text is never guessed.
+  - Tested with pdftotext 25.03.0 (PHP 8.2 stack) and 20.09.0 (PHP 7.3 stack).
 
 Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin has no automatic data purge.
 
@@ -203,7 +234,8 @@ Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin ha
 - Stage 02.04: Database and immutable assessment history; see `docs/stage02/02.04-report.md`
 - Stage 02.05: Backend dashboard and views; see `docs/stage02/02.05-report.md`
 - Stage 02.06: Public website crawler and extraction; see `docs/stage02/02.06-report.md`
-- DOAJ assessment rules: Not implemented
+- Stage 02.07: Assessment framework and orchestration; see `docs/stage02/02.07-report.md`
+- DOAJ assessment rules: Not implemented (Stage 03)
 - Production readiness: Not established
 
 ## License and Copyright

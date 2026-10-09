@@ -29,6 +29,8 @@ class DoajPaLabels {
 			'level' => array('M' => 'Must', 'R' => 'Recommended', 'C' => 'Conditional', 'H' => 'Human judgement'),
 			'change' => array('unchanged' => 'Unchanged', 'changed' => 'Changed', 'not_observed_in_to' => 'Not observed in the later run',
 				'not_observed_in_from' => 'Not observed in the earlier run'),
+			'diff' => array('new' => 'New pages', 'unchanged' => 'Unchanged', 'changed' => 'Changed', 'notReadAgain' => 'Not read again',
+				'becameGap' => 'Now not retrieved'),
 			'formAnswer' => array('not_yet_assessed' => 'Not yet assessed', 'supported' => 'Supported', 'not_found' => 'Not found',
 				'needs_verification' => 'Needs verification'),
 		);

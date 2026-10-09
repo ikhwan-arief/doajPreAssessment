@@ -33,6 +33,8 @@ require_once(dirname(__FILE__) . '/../extract/DoajPaLanguageHeuristic.inc.php');
 class DoajPaCrawlService {
 
 	const STATE_VERSION = 1;
+	/** Stored on a retrieved resource whose language the heuristic could not establish (never verified English). */
+	const LANGUAGE_UNDETERMINED = 'language_undetermined (advisory heuristic; not verified English)';
 	const DEFAULT_LIMITS = array(
 		'maxPages' => 150, 'maxIssues' => 4, 'maxArticles' => 40, 'maxFiles' => 20, 'maxDepth' => 6,
 		'maxHtmlBytes' => 3145728, 'maxPdfBytes' => 20971520, 'maxSeconds' => 900, 'pauseMs' => 250,
@@ -70,7 +72,7 @@ class DoajPaCrawlService {
 		$dir = self::workDir($contextId, $runId);
 		if (is_file($dir . '/state.json')) throw new DoajPaStateException('A crawl was already started for this run.');
 		$state = array('version' => self::STATE_VERSION, 'contextId' => $contextId, 'runId' => $runId, 'homepage' => $scope->target()['homepage'],
-			'limits' => $limits, 'startedAtUtc' => gmdate('Y-m-d H:i:s'), 'deadline' => time() + $limits['maxSeconds'],
+			'limits' => $limits, 'startedAtUtc' => gmdate('Y-m-d H:i:s'), 'elapsed' => 0.0,
 			'queue' => array(), 'seq' => 0, 'seen' => array(), 'counts' => array('fetched' => 0, 'issues' => 0, 'articles' => 0, 'files' => 0),
 			'statusCounts' => array(), 'typeCounts' => array(), 'skipped' => array(), 'skippedCounts' => array(), 'limitsHit' => array(),
 			'robots' => array('status' => null, 'rules' => array()), 'devException' => false, 'skippedKeys' => array(), 'canonicals' => array(), 'contentHashes' => array(),
@@ -99,26 +101,39 @@ class DoajPaCrawlService {
 		$run = DoajPaAssessmentRunService::getRun($contextId, $runId);
 		if ($run->status !== 'running') throw new DoajPaStateException('A crawl can continue only while the run is running.');
 		$dir = self::workDir($contextId, $runId);
-		$lock = fopen($dir . '/state.lock', 'c');
-		if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) return array('busy' => true);
+		$lock = @fopen($dir . '/state.lock', 'c');
+		if (!$lock) throw new DoajPaStateException('Cannot open the crawl lock.');
+		if (!flock($lock, LOCK_EX | LOCK_NB)) { fclose($lock); return array('busy' => true); }
 		try {
 			$state = self::loadState($dir);
 			if ($state['done']) return self::summary($state);
 			$scope = new DoajPaCrawlScope($state['homepage']);
 			$robotsRules = $state['robots']['rules'];
 			$fetcher = self::fetcher($scope, $state['limits'], $options);
-			$until = microtime(true) + max(1, (int) $budgetSeconds);
+			// maxSeconds counts crawling time only, so a run resumed after an interruption keeps its remaining budget.
+			$began = microtime(true);
+			$elapsedBefore = isset($state['elapsed']) ? (float) $state['elapsed'] : 0.0;
+			$until = $began + max(1, (int) $budgetSeconds);
 			while (microtime(true) < $until) {
-				if (time() > $state['deadline']) { $state['limitsHit']['maxSeconds'] = true; break; }
+				$state['elapsed'] = $elapsedBefore + (microtime(true) - $began);
+				if ($state['elapsed'] > $state['limits']['maxSeconds']) { $state['limitsHit']['maxSeconds'] = true; break; }
 				if ($state['counts']['fetched'] >= $state['limits']['maxPages']) { if ($state['queue']) $state['limitsHit']['maxPages'] = true; break; }
 				$item = self::dequeue($state);
 				if ($item === null) break;
 				if (!self::robotsAllow($robotsRules, $item['u'])) { self::skip($state, $item['u'], 'robots_disallow', $item['from']); continue; }
-				if (DoajPaAssessmentRunService::hasCrawlResource($contextId, $runId, $item['u'])) continue;
+				if (DoajPaAssessmentRunService::hasCrawlResource($contextId, $runId, $item['u'])) {
+					// Stored by a step that stopped before saving its state: not fetched again (no duplicate record);
+					// its links and language were not recorded, so it is reported as a coverage gap.
+					self::skip($state, $item['u'], 'interrupted_not_reprocessed', $item['from']);
+					$state['notes'][] = 'interrupted_not_reprocessed: ' . $item['u'];
+					continue;
+				}
 				self::process($contextId, $runId, $actor, $state, $scope, $fetcher, $item);
+				$state['elapsed'] = $elapsedBefore + (microtime(true) - $began);
 				self::saveState($dir, $state);
 				usleep($state['limits']['pauseMs'] * 1000);
 			}
+			$state['elapsed'] = $elapsedBefore + (microtime(true) - $began);
 			if (!$state['queue'] || isset($state['limitsHit']['maxPages']) || isset($state['limitsHit']['maxSeconds'])) {
 				if ($state['queue']) foreach ($state['queue'] as $left) self::skip($state, $left['u'], 'not_fetched_limit_reached', $left['from']);
 				$state['queue'] = array();
@@ -190,6 +205,7 @@ class DoajPaCrawlService {
 			if ($language !== null) {
 				$acq = $language['verdict'] === 'non_english' ? 'unsupported_language' : ($language['verdict'] === 'mixed' ? 'ambiguous' : 'retrieved');
 				if ($acq !== 'retrieved') $reason = 'language_' . $language['verdict'] . ($language['detected'] ? ':' . $language['detected'] : '') . ' (advisory heuristic)';
+				elseif ($language['verdict'] !== 'english') $reason = self::LANGUAGE_UNDETERMINED;
 			}
 		}
 
@@ -316,11 +332,36 @@ class DoajPaCrawlService {
 		$coverage = array('manifestSha256' => hash('sha256', $json), 'homepage' => $state['homepage'], 'limits' => $state['limits'],
 			'limitsHit' => $manifest['limitsHit'], 'robots' => $state['robots']['status'], 'pdfTool' => $state['pdfTool'], 'extractor' => $state['extractor'],
 			'devExceptionUsed' => $state['devException'], 'counts' => $state['counts'], 'statusCounts' => $state['statusCounts'],
-			'typeCounts' => $state['typeCounts'], 'skippedCounts' => $state['skippedCounts'], 'startedAtUtc' => $state['startedAtUtc'],
+			'typeCounts' => $state['typeCounts'], 'skippedCounts' => $state['skippedCounts'], 'languageCounts' => self::languageCounts($state['resources']),
+			'crawlSeconds' => isset($state['elapsed']) ? round($state['elapsed'], 1) : null, 'startedAtUtc' => $state['startedAtUtc'],
 			'finishedAtUtc' => $state['finishedAtUtc']);
 		DoajPaAssessmentRunService::recordCoverage($contextId, $runId, $coverage, $actor);
 		DoajPaAuditService::record($contextId, 'crawl_finished', $actor, $runId, 'run', $runId,
 			array('fetched' => $state['counts']['fetched'], 'statusCounts' => $state['statusCounts'], 'limitsHit' => $manifest['limitsHit'], 'manifestSha256' => $coverage['manifestSha256']));
+	}
+
+	/** @return array Language verdict => number of resources ("none" = no text extracted) */
+	private static function languageCounts($resources) {
+		$counts = array();
+		foreach ($resources as $r) self::increment($counts, $r['language'] === null ? 'none' : $r['language']['verdict']);
+		ksort($counts);
+		return $counts;
+	}
+
+	/** @return boolean Whether a crawl was started for the run (its state file exists) */
+	public static function isStarted($contextId, $runId) {
+		return is_file(self::workDir($contextId, $runId) . '/state.json');
+	}
+
+	/**
+	 * Read-only progress of a started crawl, for display. Null when no crawl was started.
+	 * @return array|null done, fetched, queued, statusCounts, limitsHit, devException
+	 */
+	public static function progress($contextId, $runId) {
+		$file = self::workDir($contextId, $runId) . '/state.json';
+		if (!is_file($file)) return null;
+		$state = json_decode((string) @file_get_contents($file), true);
+		return is_array($state) && isset($state['counts']) ? self::summary($state) : null;
 	}
 
 	private static function fetcher($scope, $limits, $options) {
@@ -353,7 +394,8 @@ class DoajPaCrawlService {
 
 	private static function atomicWrite($file, $content) {
 		$tmp = $file . '.tmp-' . bin2hex(random_bytes(6));
-		if (file_put_contents($tmp, $content, LOCK_EX) === false || !rename($tmp, $file)) {
+		// Failures are reported by the exception below, not as PHP warnings.
+		if (@file_put_contents($tmp, $content, LOCK_EX) === false || !@rename($tmp, $file)) {
 			@unlink($tmp);
 			throw new DoajPaStateException('Cannot write crawl state.');
 		}

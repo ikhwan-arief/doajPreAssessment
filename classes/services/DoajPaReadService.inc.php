@@ -94,7 +94,59 @@ class DoajPaReadService {
 		$detail['observations'] = self::observationsForRun($ctx, $runId);
 		$detail['formAnswers'] = self::rowsArray(DoajPaDb::table(DoajPaSchema::T_FORM_ANSWER)->where('context_id', '=', $ctx)
 			->where('run_id', '=', $runId)->orderBy('question_key')->get()->all());
+		$coverage = $run->coverage === null ? null : json_decode((string) $run->coverage, true);
+		$detail['coverageData'] = is_array($coverage) ? $coverage : null;
+		$detail['assessment'] = is_array($coverage) && isset($coverage['assessment']) && is_array($coverage['assessment']) ? $coverage['assessment'] : null;
+		$detail['gapCount'] = (int) DoajPaDb::table(DoajPaSchema::T_RESOURCE)->where('context_id', '=', $ctx)->where('run_id', '=', $runId)
+			->where('acquisition_status', '!=', 'retrieved')->count();
+		$detail['languageNotVerifiedCount'] = self::languageNotVerifiedCount($ctx, $runId);
+		$detail['interruptions'] = self::rowsArray(DoajPaDb::table(DoajPaSchema::T_AUDIT)->where('context_id', '=', $ctx)->where('run_id', '=', $runId)
+			->where('event_type', '=', 'run_interrupted')->orderBy('event_id', 'desc')->limit(20)->get(array('created_at_utc', 'details', 'actor_username'))->all());
+		foreach ($detail['interruptions'] as &$event) {
+			$details = json_decode((string) $event['details'], true);
+			$event['reason'] = is_array($details) && isset($details['reason']) ? (string) $details['reason'] : '';
+		}
+		unset($event);
 		return $detail;
+	}
+
+	/**
+	 * Resources whose text was read but whose language is not verified English: retrieved pages the heuristic
+	 * could not classify, mixed-language and other-language pages (Stage 02.07; never treated as English).
+	 * @return int
+	 */
+	public static function languageNotVerifiedCount($contextId, $runId) {
+		return (int) DoajPaDb::table(DoajPaSchema::T_RESOURCE)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))
+			->where('run_id', '=', DoajPaDb::id($runId, 'run'))->where('skip_reason', 'like', 'language\\_%')->count();
+	}
+
+	/** @return array|null The journal's active run (at most one), or null */
+	public static function activeRun($contextId) {
+		return self::rowArray(DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))
+			->whereIn('status', DoajPaSchema::RUN_ACTIVE)->orderBy('run_id', 'desc')->first(array('run_id', 'run_number', 'status', 'lock_version')));
+	}
+
+	/**
+	 * FQ-01..FQ-20 entries from the latest completed run (every stored answer is "not yet assessed" in this
+	 * version); questions without a stored answer are shown as not yet assessed as well. No answer is invented.
+	 * @return array run (or null) and entries
+	 */
+	public static function formGuide($contextId) {
+		$ctx = DoajPaDb::id($contextId, 'context');
+		$latest = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $ctx)->where('status', '=', 'completed')->orderBy('run_id', 'desc')->first();
+		$stored = array();
+		if ($latest) {
+			foreach (DoajPaDb::table(DoajPaSchema::T_FORM_ANSWER)->where('context_id', '=', $ctx)->where('run_id', '=', (int) $latest->run_id)
+				->orderBy('answer_id')->get()->all() as $a) $stored[$a->question_key] = (array) $a;
+		}
+		$entries = array();
+		for ($i = 1; $i <= 20; $i++) {
+			$key = sprintf('FQ-%02d', $i);
+			$a = isset($stored[$key]) ? $stored[$key] : null;
+			$entries[] = array('questionKey' => $key, 'answerStatus' => $a ? $a['answer_status'] : 'not_yet_assessed',
+				'answerText' => $a ? $a['answer_text'] : null, 'uncertainty' => $a ? $a['uncertainty'] : null, 'stored' => $a !== null);
+		}
+		return array('run' => $latest ? self::runSummary($latest, false) : null, 'entries' => $entries);
 	}
 
 	/** @return array Resources (pages read) of one run */
