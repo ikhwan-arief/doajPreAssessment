@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE install SYSTEM "../../../lib/pkp/dtd/install.dtd">
+<!--
+  * upgrade.xml
+  *
+  * DOAJ Pre-Assessment schema. Each migration is idempotent and runs unconditionally.
+  * Deliberately NO version attribute and NO <upgrade minversion/maxversion> conditions: in plugin mode
+  * the OJS 3.3 installer compares both with the OJS *core* version (Installer::preInstall(),
+  * Installer::updateVersion()), not with the plugin version.
+  -->
+<install>
+	<migration class="plugins.generic.doajPreAssessment.classes.migration.DoajPaSchemaMigration" />
+</install>

@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 RELEASE=$(sed -n 's:.*<release>\(.*\)</release>.*:\1:p' version.xml)
 [ -n "$RELEASE" ] || { echo "no <release> in version.xml"; exit 1; }
-INCLUDE=(index.php version.xml DoajPreAssessmentPlugin.inc.php classes pages templates locale README.md CHANGELOG.md)
+INCLUDE=(index.php version.xml install.xml upgrade.xml DoajPreAssessmentPlugin.inc.php classes pages templates locale README.md CHANGELOG.md)
 STAGE="$(mktemp -d)"
 trap 'rm -rf -- "$STAGE"' EXIT
 mkdir "$STAGE/doajPreAssessment"

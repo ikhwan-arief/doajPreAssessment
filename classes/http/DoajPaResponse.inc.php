@@ -32,6 +32,12 @@ class DoajPaResponse {
 		self::terminate(403, '403 Forbidden. You are not authorized to use DOAJ Pre-Assessment for this journal.');
 	}
 
+	public static function schemaMissing() {
+		self::terminate(503, '503 Service Unavailable. The DOAJ Pre-Assessment database tables are not installed. '
+			. 'Install the plugin through Settings > Website > Plugins > Upload A New Plugin, or run "php tools/upgrade.php upgrade" '
+			. 'on the server after copying the plugin into plugins/generic.');
+	}
+
 	public static function notFound() {
 		self::terminate(404, '404 Not Found.');
 	}

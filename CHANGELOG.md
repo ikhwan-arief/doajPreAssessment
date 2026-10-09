@@ -3,6 +3,25 @@
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
 They are not compliance-ready and do not contain DOAJ assessment rules.
 
+## [0.2.0.0] - 2026-10-09 (Stage 02.04, development build)
+
+### Added
+
+- Plugin-owned schema (13 `doaj_` tables) with an idempotent migration run by `install.xml`, `upgrade.xml`
+  and the OJS install/upgrade path. Journal isolation is enforced by composite foreign keys.
+- Service layer for assessment runs, crawl resources, evidence, criterion results, form answers, findings
+  with stable IDs, append-only observations and transitions, corrective actions, report-export metadata,
+  acknowledgements and audit events.
+- Completed runs are sealed with a SHA-256 snapshot digest and are never modified.
+- A per-run English-only acknowledgement is required to create a run. The first-use acknowledgement and
+  authenticated access denials are recorded in the audit log.
+- Plugin requests answer HTTP 503 with remediation text when the schema is missing (manual-copy installs).
+
+### Not included
+
+- Crawling, DOAJ rules, findings from real assessments and any user interface for history. The history
+  engine is exercised only by test fixtures.
+
 ## [0.1.1.0] - 2026-10-09 (Stage 02.03, development build)
 
 ### Security

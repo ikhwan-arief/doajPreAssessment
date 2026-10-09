@@ -37,6 +37,16 @@ class DoajPreAssessmentPlugin extends GenericPlugin {
 	}
 
 	/**
+	 * Schema for the OJS install/upgrade path (Installer::postInstall). Upload installs and plugin upgrades
+	 * use install.xml/upgrade.xml. The migration is idempotent (ADR-004).
+	 * @copydoc Plugin::getInstallMigration()
+	 */
+	public function getInstallMigration() {
+		$this->import('classes.migration.DoajPaSchemaMigration');
+		return new DoajPaSchemaMigration();
+	}
+
+	/**
 	 * @copydoc Plugin::getDisplayName()
 	 */
 	public function getDisplayName() {
