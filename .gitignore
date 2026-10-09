@@ -1,0 +1,15 @@
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Local test runtime (disposable OJS stack, never committed)
+tools/runtime/.work/
+tools/runtime/*.tar.gz
+
+# Build output
+dist/
+build/
+
+# Test output
+tests/output/
