@@ -28,6 +28,10 @@ Only the following authenticated users may access the plugin:
 - Root Administrator with User ID 1, subject to administrator-role verification.
 - Journal Managers assigned to the current journal context.
 
+"Journal Manager" means a member of the journal's default **Journal manager** user group. In OJS 3.3 the
+default "Journal editor" and "Production editor" groups also carry the Manager role; they are **not**
+granted access by this plugin, nor is any custom group.
+
 All other editorial roles, reviewers, authors, and public users are denied access.
 
 Authorization must be enforced server-side for every protected operation.
@@ -37,6 +41,12 @@ Authorization must be enforced server-side for every protected operation.
 The plugin supports only journals whose relevant public website content and publication policies are written in English.
 
 A prominent compatibility warning and explicit acknowledgment must appear during installation or activation and before starting each assessment.
+
+> **ENGLISH-ONLY JOURNAL CONTENT.** This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. Do not rely on its findings for policies written in other languages. If essential non-English content is encountered, the affected check will be marked Unsupported Language / Needs Verification. This limitation applies to the plugin, not to DOAJ eligibility.
+
+OJS 3.3 has no installer or pre-activation hook for custom warnings. The warning therefore appears in the
+plugin description (visible before enabling), as a notification right after enabling, and on a mandatory
+first-use acknowledgement page that blocks the plugin for each journal until it is confirmed.
 
 English-only is a limitation of this plugin, not a DOAJ application requirement.
 
@@ -157,11 +167,26 @@ Record test commands, evidence, limitations, and unresolved findings.
 
 Do not claim installation compatibility until it has been verified on a running OJS 3.3.0-23 environment.
 
+## Development Build (Stage 02.02)
+
+Version `0.1.0.0` is a development build. It contains the plugin bootstrap, the access guard and the
+English-only first-use gate only. **It performs no assessment and contains no DOAJ rules.**
+
+Install on OJS 3.3.0-23 (tested on PHP 7.3 and 8.2 in disposable stacks only):
+
+1. Build the archive: `tools/build-package.sh` → `dist/doajPreAssessment-0.1.0.0.tar.gz`.
+2. As the site administrator: Settings → Website → Plugins → Upload A New Plugin.
+3. Enable "DOAJ Pre-Assessment" for the journal (enabling is per journal).
+4. Open it from the plugin's "Open DOAJ Pre-Assessment" action, or at `/index.php/{journalPath}/doajPreAssessment`.
+
+Disabling or deleting the plugin keeps all plugin data. The plugin has no automatic data purge.
+
 ## Project Status
 
 - Stage 01: Final design baseline v2.0.0
-- Stage 02: Development planned
-- Native plugin implementation: Not yet verified
+- Stage 02.01: Compatibility reconnaissance complete (conditionally accepted)
+- Stage 02.02: Plugin bootstrap and lifecycle implemented; see `docs/stage02/02.02-report.md`
+- DOAJ assessment rules: Not implemented
 - Production readiness: Not established
 
 ## License and Copyright

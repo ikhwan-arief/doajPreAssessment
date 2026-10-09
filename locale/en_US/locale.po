@@ -1,0 +1,84 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-09T00:00:00+00:00\n"
+"PO-Revision-Date: 2026-10-09T00:00:00+00:00\n"
+"Language: en_US\n"
+
+msgid "plugins.generic.doajPreAssessment.displayName"
+msgstr "DOAJ Pre-Assessment"
+
+msgid "plugins.generic.doajPreAssessment.description"
+msgstr "Independent, backend-only self-assessment of a journal's public website before an initial DOAJ application. Not an official DOAJ evaluation; it does not predict or guarantee acceptance. Development build: assessment rules are not yet implemented. ENGLISH-ONLY JOURNAL CONTENT: this plugin evaluates only publicly accessible English-language journal websites, uses deterministic rules (no Artificial Intelligence or automatic translation), and this limitation applies to the plugin, not to DOAJ eligibility."
+
+msgid "plugins.generic.doajPreAssessment.action.open"
+msgstr "Open DOAJ Pre-Assessment"
+
+msgid "plugins.generic.doajPreAssessment.error.forbidden"
+msgstr "You are not authorized to use DOAJ Pre-Assessment for this journal."
+
+msgid "plugins.generic.doajPreAssessment.gate.title"
+msgstr "DOAJ Pre-Assessment: English-only acknowledgement"
+
+msgid "plugins.generic.doajPreAssessment.gate.warningLabel"
+msgstr "Warning: English-only journal content"
+
+msgid "plugins.generic.doajPreAssessment.gate.intro"
+msgstr "You must confirm this before the plugin can be used for this journal. A separate confirmation will also be required before every assessment."
+
+msgid "plugins.generic.doajPreAssessment.gate.errorLabel"
+msgstr "Error:"
+
+msgid "plugins.generic.doajPreAssessment.gate.error"
+msgstr "The confirmation was not recorded. Tick the checkbox and submit the form again."
+
+msgid "plugins.generic.doajPreAssessment.gate.submit"
+msgstr "Confirm and continue"
+
+msgid "plugins.generic.doajPreAssessment.overview.statusLabel"
+msgstr "Status:"
+
+msgid "plugins.generic.doajPreAssessment.overview.status"
+msgstr "Stage 02 foundation build. No assessment functions are implemented yet, and no findings exist."
+
+msgid "plugins.generic.doajPreAssessment.overview.disclaimer"
+msgstr "DOAJ Pre-Assessment is an independent self-evaluation tool. It is not an official DOAJ evaluation and does not predict or guarantee acceptance. Only DOAJ decides on journal applications."
+
+msgid "plugins.generic.doajPreAssessment.overview.diagnostics"
+msgstr "Diagnostics"
+
+msgid "plugins.generic.doajPreAssessment.overview.journal"
+msgstr "Journal"
+
+msgid "plugins.generic.doajPreAssessment.overview.pluginVersion"
+msgstr "Plugin version"
+
+msgid "plugins.generic.doajPreAssessment.overview.ojsVersion"
+msgstr "OJS version"
+
+msgid "plugins.generic.doajPreAssessment.overview.phpVersion"
+msgstr "PHP version"
+
+msgid "plugins.generic.doajPreAssessment.overview.acknowledgedBy"
+msgstr "English-only acknowledgement"
+
+msgid "plugins.generic.doajPreAssessment.overview.references"
+msgstr "Official DOAJ references"
+
+msgid "plugins.generic.doajPreAssessment.reference.guide"
+msgstr "DOAJ Guide to Applying"
+
+msgid "plugins.generic.doajPreAssessment.reference.primary"
+msgstr "(primary reference)"
+
+msgid "plugins.generic.doajPreAssessment.reference.transparency"
+msgstr "Principles of Transparency and Best Practice in Scholarly Publishing"
+
+msgid "plugins.generic.doajPreAssessment.reference.copyright"
+msgstr "DOAJ Licensing and Copyright"

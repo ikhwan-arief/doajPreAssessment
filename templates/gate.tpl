@@ -1,0 +1,32 @@
+{**
+ * templates/gate.tpl
+ *
+ * Mandatory English-only first-use gate (Stage 01 F1, PROD-05).
+ *}
+{extends file="layouts/backend.tpl"}
+
+{block name="page"}
+	<h1 class="app__pageHeading">{translate key="plugins.generic.doajPreAssessment.gate.title"}</h1>
+
+	<div class="app__contentPanel doajPa">
+		<section class="doajPa__warning" role="region" aria-labelledby="doajPaWarningHeading" style="border:2px solid #b45309;padding:1rem;margin-bottom:1rem;">
+			<h2 id="doajPaWarningHeading">{translate key="plugins.generic.doajPreAssessment.gate.warningLabel"}</h2>
+			<p><strong>{$doajPaWarningText|escape}</strong></p>
+			<p>{translate key="plugins.generic.doajPreAssessment.gate.intro"}</p>
+		</section>
+
+		{if $doajPaShowError}
+			<p class="doajPa__error" role="alert"><strong>{translate key="plugins.generic.doajPreAssessment.gate.errorLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.gate.error"}</p>
+		{/if}
+
+		<form method="post" action="{url page="doajPreAssessment" op="acknowledge"}">
+			{csrf}
+			<input type="hidden" name="warningSha256" value="{$doajPaWarningSha256|escape}" />
+			<p>
+				<input type="checkbox" id="doajPaConfirmEnglishOnly" name="confirmEnglishOnly" value="1" required />
+				<label for="doajPaConfirmEnglishOnly">{$doajPaCheckboxText|escape}</label>
+			</p>
+			<p><button type="submit" class="pkpButton">{translate key="plugins.generic.doajPreAssessment.gate.submit"}</button></p>
+		</form>
+	</div>
+{/block}
