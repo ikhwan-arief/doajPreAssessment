@@ -10,6 +10,14 @@
 
 class DoajPaSchema {
 
+	/**
+	 * Approved DOAJ rule sets and criterion datasets. Stage 02 has none: every stored run and definition is a
+	 * development or test record and the UI labels it "not a DOAJ assessment result". Stage 03 adds the
+	 * approved, pinned versions here after review (Stage 01 F2).
+	 */
+	const APPROVED_RULEBOOKS = array();
+	const APPROVED_DATASETS = array();
+
 	/** Schema level written by DoajPaSchemaMigration (plugin_settings, context 0, 'schemaVersion'). */
 	const VERSION = 1;
 

@@ -32,6 +32,7 @@ class DoajPreAssessmentPlugin extends GenericPlugin {
 
 		if ($this->getEnabled($mainContextId)) {
 			HookRegistry::register('LoadHandler', array($this, 'callbackLoadHandler'));
+			HookRegistry::register('TemplateManager::setupBackendPage', array($this, 'callbackSetupBackendPage'));
 		}
 		return true;
 	}
@@ -100,6 +101,29 @@ class DoajPreAssessmentPlugin extends GenericPlugin {
 	public function manage($args, $request) {
 		import('lib.pkp.classes.core.JSONMessage');
 		return new JSONMessage(false, __('plugins.generic.doajPreAssessment.error.forbidden'));
+	}
+
+	/**
+	 * Add the plugin to the backend menu, only for users the plugin authorizes. The menu is cosmetic: every
+	 * request is authorized by the handler (ADR-002).
+	 * @param $hookName string
+	 * @param $args array
+	 * @return boolean
+	 */
+	public function callbackSetupBackendPage($hookName, $args) {
+		$request = Application::get()->getRequest();
+		if (!$request->getContext()) return false;
+		$this->import('classes.auth.DoajPaAccessPolicy');
+		if (!DoajPaAccessPolicy::isRequestAuthorized($request)) return false;
+		$templateMgr = TemplateManager::getManager($request);
+		$menu = (array) $templateMgr->getState('menu');
+		$menu['doajPreAssessment'] = array(
+			'name' => __('plugins.generic.doajPreAssessment.displayName'),
+			'url' => $request->getDispatcher()->url($request, ROUTE_PAGE, null, self::PAGE),
+			'isCurrent' => $request->getRequestedPage() === self::PAGE,
+		);
+		$templateMgr->setState(array('menu' => $menu));
+		return false;
 	}
 
 	/**

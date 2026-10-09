@@ -3,6 +3,24 @@
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
 They are not compliance-ready and do not contain DOAJ assessment rules.
 
+## [0.3.0.0] - 2026-10-09 (Stage 02.05, development build)
+
+### Added
+
+- Backend views (Stage 01 F8 navigation): Overview, New Assessment, Criteria & Findings, finding detail,
+  Evidence, DOAJ Form Guide, Before You Apply, Corrective Actions (create and edit), Assessment History,
+  run detail, run comparison, Reports and Settings (including the audit log).
+- Historical statuses are read from each run's own observations; comparisons flag different criterion versions.
+- Every run is labelled "Not a DOAJ assessment result" while no approved DOAJ rule set is installed.
+- Corrective-action edits use optimistic locking: a concurrent change gives HTTP 409 and saves nothing.
+- Backend menu entry, shown only to users the plugin authorizes.
+- Stylesheet: text-labelled badges, visible focus, layouts that fit narrow screens.
+
+### Not included
+
+- Running assessments, report generation and downloads, the Form Guide and Before You Apply content.
+  These pages say so and show nothing generated.
+
 ## [0.2.0.0] - 2026-10-09 (Stage 02.04, development build)
 
 ### Added

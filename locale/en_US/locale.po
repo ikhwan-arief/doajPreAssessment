@@ -45,7 +45,7 @@ msgid "plugins.generic.doajPreAssessment.overview.statusLabel"
 msgstr "Status:"
 
 msgid "plugins.generic.doajPreAssessment.overview.status"
-msgstr "Stage 02 foundation build. No assessment functions are implemented yet, and no findings exist."
+msgstr "Development build. No assessment functions are implemented yet, and no approved DOAJ rule set is installed."
 
 msgid "plugins.generic.doajPreAssessment.overview.disclaimer"
 msgstr "DOAJ Pre-Assessment is an independent self-evaluation tool. It is not an official DOAJ evaluation and does not predict or guarantee acceptance. Only DOAJ decides on journal applications."
@@ -82,3 +82,513 @@ msgstr "Principles of Transparency and Best Practice in Scholarly Publishing"
 
 msgid "plugins.generic.doajPreAssessment.reference.copyright"
 msgstr "DOAJ Licensing and Copyright"
+
+msgid "plugins.generic.doajPreAssessment.actions.action"
+msgstr "Action"
+
+msgid "plugins.generic.doajPreAssessment.actions.addForFinding"
+msgstr "Add a corrective action for this finding"
+
+msgid "plugins.generic.doajPreAssessment.actions.completionEvidence"
+msgstr "Completion note (what was changed, and where)"
+
+msgid "plugins.generic.doajPreAssessment.actions.conflict"
+msgstr "This action was changed by someone else after you opened it. Your changes were not saved. The form below shows the current values; review them and save again."
+
+msgid "plugins.generic.doajPreAssessment.actions.conflictLabel"
+msgstr "Not saved:"
+
+msgid "plugins.generic.doajPreAssessment.actions.create"
+msgstr "Add action"
+
+msgid "plugins.generic.doajPreAssessment.actions.dueDate"
+msgstr "Due date"
+
+msgid "plugins.generic.doajPreAssessment.actions.invalid"
+msgstr "Some values are not valid. Check the recommendation, the target URL (http or https only), the due date and the other fields."
+
+msgid "plugins.generic.doajPreAssessment.actions.invalidFinding"
+msgstr "The selected finding does not exist in this journal."
+
+msgid "plugins.generic.doajPreAssessment.actions.lastUpdated"
+msgstr "Last updated"
+
+msgid "plugins.generic.doajPreAssessment.actions.new"
+msgstr "New corrective action"
+
+msgid "plugins.generic.doajPreAssessment.actions.noFinding"
+msgstr "Not linked to a finding"
+
+msgid "plugins.generic.doajPreAssessment.actions.none"
+msgstr "No corrective actions have been recorded for this journal."
+
+msgid "plugins.generic.doajPreAssessment.actions.notEvidence"
+msgstr "Marking an action as done does not resolve a finding. A finding is resolved only when a new assessment finds public evidence that the problem is corrected."
+
+msgid "plugins.generic.doajPreAssessment.actions.owner"
+msgstr "Responsible person or team (free text)"
+
+msgid "plugins.generic.doajPreAssessment.actions.ownerHelp"
+msgstr "Free text only. Naming someone here does not give them access to this plugin."
+
+msgid "plugins.generic.doajPreAssessment.actions.priority"
+msgstr "Priority"
+
+msgid "plugins.generic.doajPreAssessment.actions.recommendation"
+msgstr "Recommendation"
+
+msgid "plugins.generic.doajPreAssessment.actions.register"
+msgstr "Corrective action register"
+
+msgid "plugins.generic.doajPreAssessment.actions.saved"
+msgstr "Saved:"
+
+msgid "plugins.generic.doajPreAssessment.actions.statusHelp"
+msgstr "Status of the work only. It does not change any finding."
+
+msgid "plugins.generic.doajPreAssessment.actions.targetUrl"
+msgstr "Page to change (URL)"
+
+msgid "plugins.generic.doajPreAssessment.common.approved"
+msgstr "Approved"
+
+msgid "plugins.generic.doajPreAssessment.common.cancel"
+msgstr "Cancel"
+
+msgid "plugins.generic.doajPreAssessment.common.completed"
+msgstr "Completed"
+
+msgid "plugins.generic.doajPreAssessment.common.count"
+msgstr "Count"
+
+msgid "plugins.generic.doajPreAssessment.common.created"
+msgstr "Created"
+
+msgid "plugins.generic.doajPreAssessment.common.criterion"
+msgstr "Criterion"
+
+msgid "plugins.generic.doajPreAssessment.common.evidence"
+msgstr "Evidence"
+
+msgid "plugins.generic.doajPreAssessment.common.executor"
+msgstr "Started by"
+
+msgid "plugins.generic.doajPreAssessment.common.finding"
+msgstr "Finding"
+
+msgid "plugins.generic.doajPreAssessment.common.level"
+msgstr "Level"
+
+msgid "plugins.generic.doajPreAssessment.common.none"
+msgstr "None"
+
+msgid "plugins.generic.doajPreAssessment.common.notApproved"
+msgstr "Not approved"
+
+msgid "plugins.generic.doajPreAssessment.common.observation"
+msgstr "Observation in this run"
+
+msgid "plugins.generic.doajPreAssessment.common.retrieved"
+msgstr "retrieved"
+
+msgid "plugins.generic.doajPreAssessment.common.ruleSet"
+msgstr "Rule set"
+
+msgid "plugins.generic.doajPreAssessment.common.run"
+msgstr "Run"
+
+msgid "plugins.generic.doajPreAssessment.common.runNumber"
+msgstr "Run"
+
+msgid "plugins.generic.doajPreAssessment.common.save"
+msgstr "Save"
+
+msgid "plugins.generic.doajPreAssessment.common.show"
+msgstr "Show"
+
+msgid "plugins.generic.doajPreAssessment.common.snapshotFailed"
+msgstr "Snapshot verification FAILED"
+
+msgid "plugins.generic.doajPreAssessment.common.snapshotVerified"
+msgstr "Snapshot verified"
+
+msgid "plugins.generic.doajPreAssessment.common.sourceState"
+msgstr "Source state"
+
+msgid "plugins.generic.doajPreAssessment.common.status"
+msgstr "Status"
+
+msgid "plugins.generic.doajPreAssessment.common.target"
+msgstr "Affected page or item"
+
+msgid "plugins.generic.doajPreAssessment.common.time"
+msgstr "Time"
+
+msgid "plugins.generic.doajPreAssessment.compare.caption"
+msgstr "Finding status in each run, taken from each run's own record"
+
+msgid "plugins.generic.doajPreAssessment.compare.change"
+msgstr "Change"
+
+msgid "plugins.generic.doajPreAssessment.compare.crossVersion"
+msgstr "Different criterion versions: not directly comparable"
+
+msgid "plugins.generic.doajPreAssessment.compare.differentRulebooks"
+msgstr "These runs used different rule sets. Their results are not directly comparable."
+
+msgid "plugins.generic.doajPreAssessment.compare.empty"
+msgstr "Neither run recorded any finding."
+
+msgid "plugins.generic.doajPreAssessment.compare.from"
+msgstr "Earlier run"
+
+msgid "plugins.generic.doajPreAssessment.compare.submit"
+msgstr "Compare"
+
+msgid "plugins.generic.doajPreAssessment.compare.title"
+msgstr "Compare two runs"
+
+msgid "plugins.generic.doajPreAssessment.compare.to"
+msgstr "Later run"
+
+msgid "plugins.generic.doajPreAssessment.criteria.dataset"
+msgstr "Criteria dataset"
+
+msgid "plugins.generic.doajPreAssessment.criteria.notApproved"
+msgstr "This criterion is not from an approved DOAJ criteria dataset. Dataset:"
+
+msgid "plugins.generic.doajPreAssessment.criteria.notAssessed"
+msgstr "No approved DOAJ criteria are installed in this build, so no criterion has been assessed. Criteria listed below, if any, come from development or test datasets."
+
+msgid "plugins.generic.doajPreAssessment.criteria.title"
+msgstr "Criteria"
+
+msgid "plugins.generic.doajPreAssessment.crossCheck"
+msgstr "Cross-check with DOAJ:"
+
+msgid "plugins.generic.doajPreAssessment.devBuild.label"
+msgstr "Development build."
+
+msgid "plugins.generic.doajPreAssessment.devBuild.text"
+msgstr "No approved DOAJ rule set is installed and no assessment can be run yet. Anything shown here is a development or test record, not a DOAJ assessment result."
+
+msgid "plugins.generic.doajPreAssessment.evidence.excerpts"
+msgstr "Evidence excerpts"
+
+msgid "plugins.generic.doajPreAssessment.evidence.gaps"
+msgstr "Some pages could not be read in this run. Findings that depend on them stay unverified."
+
+msgid "plugins.generic.doajPreAssessment.evidence.gapsLabel"
+msgstr "Coverage gaps:"
+
+msgid "plugins.generic.doajPreAssessment.evidence.location"
+msgstr "location"
+
+msgid "plugins.generic.doajPreAssessment.evidence.mediaType"
+msgstr "Media type"
+
+msgid "plugins.generic.doajPreAssessment.evidence.method"
+msgstr "method"
+
+msgid "plugins.generic.doajPreAssessment.evidence.none"
+msgstr "No evidence was recorded in this run."
+
+msgid "plugins.generic.doajPreAssessment.evidence.pages"
+msgstr "Pages read"
+
+msgid "plugins.generic.doajPreAssessment.evidence.skipReason"
+msgstr "Reason not read"
+
+msgid "plugins.generic.doajPreAssessment.evidence.url"
+msgstr "URL"
+
+msgid "plugins.generic.doajPreAssessment.finding.actor"
+msgstr "By"
+
+msgid "plugins.generic.doajPreAssessment.finding.criterionVersion"
+msgstr "criterion version"
+
+msgid "plugins.generic.doajPreAssessment.finding.from"
+msgstr "From"
+
+msgid "plugins.generic.doajPreAssessment.finding.identity"
+msgstr "Finding identity"
+
+msgid "plugins.generic.doajPreAssessment.finding.key"
+msgstr "Stable key"
+
+msgid "plugins.generic.doajPreAssessment.finding.lineage"
+msgstr "lineage"
+
+msgid "plugins.generic.doajPreAssessment.finding.noEvidence"
+msgstr "No evidence was recorded for this observation."
+
+msgid "plugins.generic.doajPreAssessment.finding.reason"
+msgstr "Reason"
+
+msgid "plugins.generic.doajPreAssessment.finding.subtype"
+msgstr "Issue type"
+
+msgid "plugins.generic.doajPreAssessment.finding.timeline"
+msgstr "Status in each run"
+
+msgid "plugins.generic.doajPreAssessment.finding.timelineNote"
+msgstr "Each entry is the status this run recorded. Later runs never change earlier entries."
+
+msgid "plugins.generic.doajPreAssessment.finding.to"
+msgstr "To"
+
+msgid "plugins.generic.doajPreAssessment.finding.transitions"
+msgstr "Status changes"
+
+msgid "plugins.generic.doajPreAssessment.findings.current"
+msgstr "Current status"
+
+msgid "plugins.generic.doajPreAssessment.findings.lastObserved"
+msgstr "Last recorded status"
+
+msgid "plugins.generic.doajPreAssessment.findings.none"
+msgstr "No findings have been recorded for this journal."
+
+msgid "plugins.generic.doajPreAssessment.findings.note"
+msgstr "The original and last recorded statuses come from the runs' own records; the current status is the latest of them."
+
+msgid "plugins.generic.doajPreAssessment.findings.original"
+msgstr "Original status"
+
+msgid "plugins.generic.doajPreAssessment.findings.title"
+msgstr "Findings"
+
+msgid "plugins.generic.doajPreAssessment.history.caption"
+msgstr "Assessment runs, newest first"
+
+msgid "plugins.generic.doajPreAssessment.history.gaps"
+msgstr "Pages not read"
+
+msgid "plugins.generic.doajPreAssessment.history.intro"
+msgstr "Completed runs are sealed and never change. Open a run to see its own record, or compare two completed runs."
+
+msgid "plugins.generic.doajPreAssessment.nav.actions"
+msgstr "Corrective Actions"
+
+msgid "plugins.generic.doajPreAssessment.nav.beforeYouApply"
+msgstr "Before You Apply"
+
+msgid "plugins.generic.doajPreAssessment.nav.evidence"
+msgstr "Evidence"
+
+msgid "plugins.generic.doajPreAssessment.nav.findings"
+msgstr "Criteria & Findings"
+
+msgid "plugins.generic.doajPreAssessment.nav.formGuide"
+msgstr "DOAJ Form Guide"
+
+msgid "plugins.generic.doajPreAssessment.nav.history"
+msgstr "Assessment History"
+
+msgid "plugins.generic.doajPreAssessment.nav.label"
+msgstr "DOAJ Pre-Assessment sections"
+
+msgid "plugins.generic.doajPreAssessment.nav.newAssessment"
+msgstr "New Assessment"
+
+msgid "plugins.generic.doajPreAssessment.nav.overview"
+msgstr "Overview"
+
+msgid "plugins.generic.doajPreAssessment.nav.reports"
+msgstr "Reports"
+
+msgid "plugins.generic.doajPreAssessment.nav.settings"
+msgstr "Settings"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.perRun"
+msgstr "Before every assessment you will have to confirm the statement below again. The confirmation is recorded with your name and the time."
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.start"
+msgstr "Start assessment"
+
+msgid "plugins.generic.doajPreAssessment.notResult.label"
+msgstr "Not a DOAJ assessment result."
+
+msgid "plugins.generic.doajPreAssessment.notResult.ruleSet"
+msgstr "Rule set:"
+
+msgid "plugins.generic.doajPreAssessment.notResult.short"
+msgstr "Not a DOAJ result"
+
+msgid "plugins.generic.doajPreAssessment.notResult.text"
+msgstr "This run did not use an approved DOAJ rule set. Its records are development or test data and must not be read as a DOAJ assessment of this journal."
+
+msgid "plugins.generic.doajPreAssessment.overview.activeRun"
+msgstr "An assessment is in progress or incomplete:"
+
+msgid "plugins.generic.doajPreAssessment.overview.coverage"
+msgstr "Pages read in the latest completed run"
+
+msgid "plugins.generic.doajPreAssessment.overview.current"
+msgstr "Findings: current status"
+
+msgid "plugins.generic.doajPreAssessment.overview.currentNote"
+msgstr "Current status across all runs. Each run's own record is in Assessment History."
+
+msgid "plugins.generic.doajPreAssessment.overview.latest"
+msgstr "Latest completed run"
+
+msgid "plugins.generic.doajPreAssessment.overview.latestFindings"
+msgstr "Finding status recorded by the latest completed run"
+
+msgid "plugins.generic.doajPreAssessment.overview.noCompleted"
+msgstr "No run has been completed yet."
+
+msgid "plugins.generic.doajPreAssessment.overview.noFindingsInRun"
+msgstr "This run recorded no findings."
+
+msgid "plugins.generic.doajPreAssessment.overview.noPages"
+msgstr "No pages were recorded."
+
+msgid "plugins.generic.doajPreAssessment.overview.noRuns.text"
+msgstr "No assessment has been run for this journal."
+
+msgid "plugins.generic.doajPreAssessment.overview.noRuns.title"
+msgstr "No assessments yet"
+
+msgid "plugins.generic.doajPreAssessment.overview.partial"
+msgstr "Partial result: this run is not complete."
+
+msgid "plugins.generic.doajPreAssessment.reference.forThisCriterion"
+msgstr "reference for this criterion"
+
+msgid "plugins.generic.doajPreAssessment.reference.primaryShort"
+msgstr "primary reference"
+
+msgid "plugins.generic.doajPreAssessment.reports.file"
+msgstr "File"
+
+msgid "plugins.generic.doajPreAssessment.reports.format"
+msgstr "Format"
+
+msgid "plugins.generic.doajPreAssessment.reports.none"
+msgstr "No report exports have been recorded."
+
+msgid "plugins.generic.doajPreAssessment.reports.recorded"
+msgstr "Recorded report exports"
+
+msgid "plugins.generic.doajPreAssessment.reports.unavailable"
+msgstr "Report generation and download are not available in this development build."
+
+msgid "plugins.generic.doajPreAssessment.reports.unavailableLabel"
+msgstr "Export unavailable."
+
+msgid "plugins.generic.doajPreAssessment.run.acknowledgement"
+msgstr "English-only confirmation"
+
+msgid "plugins.generic.doajPreAssessment.run.compareWith"
+msgstr "Compare with run"
+
+msgid "plugins.generic.doajPreAssessment.run.devException"
+msgstr "This run used a development-only network exception and is not a valid assessment."
+
+msgid "plugins.generic.doajPreAssessment.run.evidenceLink"
+msgstr "Show the pages read and the evidence of this run"
+
+msgid "plugins.generic.doajPreAssessment.run.extraction"
+msgstr "Extraction version"
+
+msgid "plugins.generic.doajPreAssessment.run.humanStatus"
+msgstr "human confirmation"
+
+msgid "plugins.generic.doajPreAssessment.run.limit"
+msgstr "Interpretation limit"
+
+msgid "plugins.generic.doajPreAssessment.run.machineStatus"
+msgstr "Machine status"
+
+msgid "plugins.generic.doajPreAssessment.run.noResults"
+msgstr "No criterion results were recorded in this run."
+
+msgid "plugins.generic.doajPreAssessment.run.notCompleted"
+msgstr "This run is not completed. Its records are incomplete and not sealed."
+
+msgid "plugins.generic.doajPreAssessment.run.notSealed"
+msgstr "Not sealed (run not completed)"
+
+msgid "plugins.generic.doajPreAssessment.run.observations"
+msgstr "Findings recorded by this run"
+
+msgid "plugins.generic.doajPreAssessment.run.observationsNote"
+msgstr "Statuses as this run recorded them. They do not change when later runs are made."
+
+msgid "plugins.generic.doajPreAssessment.run.previous"
+msgstr "Previous completed run"
+
+msgid "plugins.generic.doajPreAssessment.run.rationale"
+msgstr "Rationale"
+
+msgid "plugins.generic.doajPreAssessment.run.results"
+msgstr "Criterion results"
+
+msgid "plugins.generic.doajPreAssessment.run.snapshot"
+msgstr "Sealed snapshot"
+
+msgid "plugins.generic.doajPreAssessment.run.statusInRun"
+msgstr "Status in this run"
+
+msgid "plugins.generic.doajPreAssessment.run.summary"
+msgstr "Run details"
+
+msgid "plugins.generic.doajPreAssessment.settings.acknowledgements"
+msgstr "English-only confirmations for this journal"
+
+msgid "plugins.generic.doajPreAssessment.settings.audit"
+msgstr "Audit log"
+
+msgid "plugins.generic.doajPreAssessment.settings.auditNote"
+msgstr "The latest 100 events for this journal, newest first. The log cannot be edited."
+
+msgid "plugins.generic.doajPreAssessment.settings.details"
+msgstr "Details"
+
+msgid "plugins.generic.doajPreAssessment.settings.editable"
+msgstr "Editable settings"
+
+msgid "plugins.generic.doajPreAssessment.settings.event"
+msgstr "Event"
+
+msgid "plugins.generic.doajPreAssessment.settings.noEditable"
+msgstr "None in this development build."
+
+msgid "plugins.generic.doajPreAssessment.settings.noRuleSets"
+msgstr "None. No approved DOAJ rule set is installed in this build."
+
+msgid "plugins.generic.doajPreAssessment.settings.ruleSets"
+msgstr "Approved DOAJ rule sets"
+
+msgid "plugins.generic.doajPreAssessment.settings.schema"
+msgstr "Database schema level"
+
+msgid "plugins.generic.doajPreAssessment.settings.schemaOk"
+msgstr "Complete"
+
+msgid "plugins.generic.doajPreAssessment.settings.schemaProblems"
+msgstr "Problems:"
+
+msgid "plugins.generic.doajPreAssessment.settings.status"
+msgstr "Plugin status"
+
+msgid "plugins.generic.doajPreAssessment.settings.system"
+msgstr "System"
+
+msgid "plugins.generic.doajPreAssessment.settings.textHash"
+msgstr "Statement fingerprint (SHA-256)"
+
+msgid "plugins.generic.doajPreAssessment.unavailable.beforeYouApply"
+msgstr "The Before You Apply task list needs approved DOAJ criteria, which are not installed in this build. Nothing is generated or estimated here."
+
+msgid "plugins.generic.doajPreAssessment.unavailable.formGuide"
+msgstr "The DOAJ Form Guide needs approved DOAJ criteria and an approved mapping to the DOAJ application questions, which are not installed in this build. No answers are generated here."
+
+msgid "plugins.generic.doajPreAssessment.unavailable.label"
+msgstr "Not available yet."
+
+msgid "plugins.generic.doajPreAssessment.unavailable.newAssessment"
+msgstr "Assessments cannot be run in this development build: the public website reader and the approved DOAJ rules are not installed yet."

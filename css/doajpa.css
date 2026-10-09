@@ -1,0 +1,58 @@
+/**
+ * css/doajpa.css
+ *
+ * DOAJ Pre-Assessment backend styles. Badges always carry a text label; colours meet WCAG 2.1 AA contrast
+ * (4.5:1) against their backgrounds. Layout reflows on narrow screens; wide tables scroll inside their wrapper.
+ * Note: below about 768 px the OJS 3.3 backend keeps its side menu, leaving the page content a narrow column
+ * (about 103 px at 375 px wide, the same for core OJS pages); plugin content must still fit inside it.
+ */
+.doajPa__page { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+.doajPa__page select, .doajPa__page input, .doajPa__page textarea, .doajPa__page button { max-width: 100%; box-sizing: border-box; }
+.doajPa { overflow-wrap: anywhere; }
+.doajPa h2 { margin-top: 1.5rem; }
+
+.doajPa-nav__list { display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; list-style: none; margin: 0 0 1rem; padding: 0; }
+.doajPa-nav__link { display: inline-block; padding: 0.4rem 0.7rem; border: 1px solid #1d4ed8; border-radius: 4px; color: #1d4ed8; background: #ffffff; text-decoration: none; }
+.doajPa-nav__link[aria-current="page"] { background: #1d4ed8; color: #ffffff; font-weight: bold; }
+.doajPa a:focus, .doajPa-nav__link:focus, .doajPa button:focus, .doajPa input:focus, .doajPa select:focus, .doajPa textarea:focus,
+.doajPa__page a:focus { outline: 3px solid #b45309; outline-offset: 2px; }
+
+.doajPa-notice { border-left: 6px solid #1d4ed8; background: #eff6ff; color: #1e293b; padding: 0.75rem 1rem; margin: 0 0 1rem; }
+.doajPa-notice--warning { border-color: #b45309; background: #fffbeb; }
+.doajPa-notice--error { border-color: #b91c1c; background: #fef2f2; }
+.doajPa-notice--success { border-color: #15803d; background: #f0fdf4; }
+.doajPa-empty { padding: 1rem; border: 1px dashed #64748b; }
+
+.doajPa-tableWrap { overflow-x: auto; margin: 0 0 1rem; }
+.doajPa-table { border-collapse: collapse; width: 100%; min-width: 32rem; }
+.doajPa-table caption { text-align: left; font-weight: bold; padding: 0.5rem 0; }
+.doajPa-table th, .doajPa-table td { border: 1px solid #cbd5e1; padding: 0.4rem 0.5rem; text-align: left; vertical-align: top; }
+.doajPa-table thead th { background: #f1f5f9; }
+
+.doajPa-badge { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 3px; font-size: 0.875rem; font-weight: bold; color: #1e293b; background: #e2e8f0; border: 1px solid #64748b; }
+.doajPa-badge--open, .doajPa-badge--reopened, .doajPa-badge--fail, .doajPa-badge--failed, .doajPa-badge--contradiction, .doajPa-badge--inaccessible, .doajPa-badge--high { color: #7f1d1d; background: #fee2e2; border-color: #b91c1c; }
+.doajPa-badge--still_open, .doajPa-badge--warning, .doajPa-badge--needs_verification, .doajPa-badge--unverifiable, .doajPa-badge--not_found, .doajPa-badge--parse_failed, .doajPa-badge--interrupted, .doajPa-badge--changed { color: #78350f; background: #fef3c7; border-color: #b45309; }
+.doajPa-badge--resolved_verified, .doajPa-badge--verified, .doajPa-badge--retrieved, .doajPa-badge--completed, .doajPa-badge--pass, .doajPa-badge--done_pending_verification { color: #14532d; background: #dcfce7; border-color: #15803d; }
+
+.doajPa-quote { margin: 0.5rem 0 1rem; padding: 0.5rem 1rem; border-left: 4px solid #64748b; background: #f8fafc; white-space: pre-wrap; }
+.doajPa-url { word-break: break-all; }
+.doajPa-digest, .doajPa-details { word-break: break-all; font-size: 0.8rem; }
+.doajPa-counts { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
+.doajPa-timeline > li { margin-bottom: 1rem; }
+.doajPa-crosscheck { margin-top: 1rem; }
+.doajPa-crosscheck__label { font-weight: bold; }
+.doajPa-criterion { border-top: 1px solid #cbd5e1; padding-top: 0.5rem; }
+
+.doajPa-form fieldset { border: 1px solid #cbd5e1; padding: 0.75rem; }
+.doajPa-field { margin-bottom: 0.75rem; }
+.doajPa-field label { display: block; font-weight: bold; margin-bottom: 0.25rem; }
+.doajPa-field input[type="text"], .doajPa-field input[type="url"], .doajPa-field textarea, .doajPa-field select { width: 100%; max-width: 40rem; box-sizing: border-box; }
+.doajPa-help { font-size: 0.875rem; color: #334155; margin: 0.25rem 0 0; }
+
+.doajPa-visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+@media (max-width: 40rem) {
+	.doajPa-nav__list { flex-direction: column; }
+	.doajPa-nav__link { display: block; padding: 0.3rem 0.4rem; overflow-wrap: anywhere; }
+	.doajPa-table { min-width: 0; }
+}

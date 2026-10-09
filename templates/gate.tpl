@@ -10,14 +10,14 @@
 	<h1 class="app__pageHeading">{translate key="plugins.generic.doajPreAssessment.gate.title"}</h1>
 
 	<div class="app__contentPanel doajPa">
-		<section class="doajPa__warning" role="region" aria-labelledby="doajPaWarningHeading" style="border:2px solid #b45309;padding:1rem;margin-bottom:1rem;">
+		<section class="doajPa-notice doajPa-notice--warning" role="region" aria-labelledby="doajPaWarningHeading">
 			<h2 id="doajPaWarningHeading">{translate key="plugins.generic.doajPreAssessment.gate.warningLabel"}</h2>
 			<p><strong>{$doajPaWarningText|escape}</strong></p>
 			<p>{translate key="plugins.generic.doajPreAssessment.gate.intro"}</p>
 		</section>
 
 		{if $doajPaShowError}
-			<p class="doajPa__error" role="alert"><strong>{translate key="plugins.generic.doajPreAssessment.gate.errorLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.gate.error"}</p>
+			<p class="doajPa-notice doajPa-notice--error" role="alert"><strong>{translate key="plugins.generic.doajPreAssessment.gate.errorLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.gate.error"}</p>
 		{/if}
 
 		<form method="post" action="{url page="doajPreAssessment" op="acknowledge"}">

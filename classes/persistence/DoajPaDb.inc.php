@@ -56,6 +56,14 @@ class DoajPaDb {
 	}
 
 	/**
+	 * @param $expression string Constant SQL fragment (never user input)
+	 * @return \Illuminate\Database\Query\Expression
+	 */
+	public static function raw($expression) {
+		return Capsule::raw($expression);
+	}
+
+	/**
 	 * @param $value mixed
 	 * @return string
 	 */
