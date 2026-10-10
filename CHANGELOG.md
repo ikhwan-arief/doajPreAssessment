@@ -15,9 +15,13 @@ Stage 02 framework; normative DOAJ assessment rules are not yet complete. See `R
 - README: installation, activation, deactivation, upgrade, rollback, uninstall, reinstall and recovery for OJS 3.3.0-23;
   the English-only warning at the top.
 
-### Changed
+### Fixed
 
-- No plugin code changes.
+- After a database restore (rollback), a new run could receive the ID of a discarded run whose private crawl files
+  were still present; the crawl then refused to start and the run could not be completed. The private crawl state is
+  now bound to its run: stale files are moved aside (never deleted) and recorded in the audit log, and a step refuses
+  a state that belongs to another run or is ahead of the stored records. Crawl states written by 0.5.0.0 are accepted
+  for their own runs.
 
 ## [0.5.0.0] - 2026-10-10 (Stage 02.07, development build)
 

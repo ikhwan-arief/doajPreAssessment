@@ -229,7 +229,9 @@ Completed assessment runs stay sealed across upgrades; each run page shows wheth
 
 Restore both backups taken before the upgrade: the database (which also restores OJS's record of the installed plugin
 version) and the plugin directory. Anything recorded after the backup, such as runs started after the upgrade, is
-lost by the restore. Restoring only the files of an older version over a newer database is not supported.
+lost by the restore. Restoring only the files of an older version over a newer database is not supported. After a database restore, OJS may give new runs the IDs of discarded ones; the plugin then moves the discarded runs'
+private crawl files (under `files_dir/doajPreAssessment/`) aside instead of reusing them, and refuses to continue a run
+whose private files are newer than its stored records (cancel such a run and start a new one).
 
 ### Uninstall and reinstall
 

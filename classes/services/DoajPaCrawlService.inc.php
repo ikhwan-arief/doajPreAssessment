@@ -17,6 +17,9 @@
  *    stored only for successfully retrieved and extracted documents.
  *  - Working state (queue, seen set) is a private JSON file under files_dir, written atomically under an
  *    exclusive lock; a step that finds a URL already stored skips it, so an interrupted step can be resumed.
+ *  - The state is bound to its run's identity (context, ID, number, creation time). Restoring a database backup can
+ *    give a new run the ID of a discarded one whose private files remain: start() moves such a stale directory
+ *    aside, and step() refuses a state that belongs to another run or is ahead of the stored records.
  */
 
 require_once(dirname(__FILE__) . '/../persistence/DoajPaDb.inc.php');
@@ -70,8 +73,15 @@ class DoajPaCrawlService {
 		$limits = self::DEFAULT_LIMITS;
 		foreach ($limits as $k => $v) if (isset($options[$k]) && is_int($options[$k]) && $options[$k] > 0) $limits[$k] = min($options[$k], $v * 4);
 		$dir = self::workDir($contextId, $runId);
-		if (is_file($dir . '/state.json')) throw new DoajPaStateException('A crawl was already started for this run.');
-		$state = array('version' => self::STATE_VERSION, 'contextId' => $contextId, 'runId' => $runId, 'homepage' => $scope->target()['homepage'],
+		$retired = null;
+		if (is_file($dir . '/state.json')) {
+			$old = json_decode((string) @file_get_contents($dir . '/state.json'), true);
+			if (is_array($old) && self::belongsTo($old, $run)) throw new DoajPaStateException('A crawl was already started for this run.');
+			$retired = self::retire($dir);
+			$dir = self::workDir($contextId, $runId);
+		}
+		$state = array('version' => self::STATE_VERSION, 'contextId' => $contextId, 'runId' => $runId, 'runIdentity' => self::runIdentity($run),
+			'homepage' => $scope->target()['homepage'],
 			'limits' => $limits, 'startedAtUtc' => gmdate('Y-m-d H:i:s'), 'elapsed' => 0.0,
 			'queue' => array(), 'seq' => 0, 'seen' => array(), 'counts' => array('fetched' => 0, 'issues' => 0, 'articles' => 0, 'files' => 0),
 			'statusCounts' => array(), 'typeCounts' => array(), 'skipped' => array(), 'skippedCounts' => array(), 'limitsHit' => array(),
@@ -87,9 +97,10 @@ class DoajPaCrawlService {
 		}
 		if ($robots['devException']) self::recordDevException($contextId, $runId, $actor, $robots['devHosts'], $state);
 		self::enqueue($state, $scope, $state['homepage'], 0, 'start', 'nav', 'Journal homepage');
+		if ($retired !== null) $state['notes'][] = 'stale_private_state_retired: ' . $retired;
 		self::saveState($dir, $state);
 		DoajPaAuditService::record($contextId, 'crawl_started', $actor, $runId, 'run', $runId,
-			array('homepage' => $state['homepage'], 'limits' => $limits, 'robots' => $state['robots']['status']));
+			array('homepage' => $state['homepage'], 'limits' => $limits, 'robots' => $state['robots']['status'], 'retiredStaleState' => $retired));
 		return self::summary($state);
 	}
 
@@ -106,6 +117,13 @@ class DoajPaCrawlService {
 		if (!flock($lock, LOCK_EX | LOCK_NB)) { fclose($lock); return array('busy' => true); }
 		try {
 			$state = self::loadState($dir);
+			if (!self::belongsTo($state, $run)) {
+				throw new DoajPaStateException('The private crawl state does not belong to this run (for example after a database restore). Cancel this run and start a new one.');
+			}
+			if (!isset($state['runIdentity'])) $state['runIdentity'] = self::runIdentity($run); // state written before 0.6.0.0
+			if (!self::recordsMatch($contextId, $runId, $state)) {
+				throw new DoajPaStateException('The private crawl state is ahead of the stored records (for example after a database restore). Cancel this run and start a new one.');
+			}
 			if ($state['done']) return self::summary($state);
 			$scope = new DoajPaCrawlScope($state['homepage']);
 			$robotsRules = $state['robots']['rules'];
@@ -348,9 +366,44 @@ class DoajPaCrawlService {
 		return $counts;
 	}
 
-	/** @return boolean Whether a crawl was started for the run (its state file exists) */
+	/** @return boolean Whether a crawl was started for this run (a state file that belongs to it exists) */
 	public static function isStarted($contextId, $runId) {
-		return is_file(self::workDir($contextId, $runId) . '/state.json');
+		$file = self::workDir($contextId, $runId) . '/state.json';
+		if (!is_file($file)) return false;
+		$state = json_decode((string) @file_get_contents($file), true);
+		return is_array($state) && self::belongsTo($state, DoajPaAssessmentRunService::getRun($contextId, $runId));
+	}
+
+	/** @return string Identity of a run for its private files (IDs can repeat after a database restore) */
+	private static function runIdentity($run) {
+		return hash('sha256', implode('|', array((int) $run->context_id, (int) $run->run_id, (int) $run->run_number, (string) $run->created_at_utc)));
+	}
+
+	/**
+	 * Whether a stored state belongs to this run. States written before 0.6.0.0 carry no identity; for them the crawl
+	 * must not have started before the run was created.
+	 * @return boolean
+	 */
+	private static function belongsTo($state, $run) {
+		if ((int) ($state['contextId'] ?? 0) !== (int) $run->context_id || (int) ($state['runId'] ?? 0) !== (int) $run->run_id) return false;
+		if (isset($state['runIdentity'])) return is_string($state['runIdentity']) && hash_equals($state['runIdentity'], self::runIdentity($run));
+		return isset($state['startedAtUtc']) && strcmp((string) $state['startedAtUtc'], (string) $run->created_at_utc) >= 0;
+	}
+
+	/** @return boolean Every resource the state recorded is stored for the run (false: the database is older than the state) */
+	private static function recordsMatch($contextId, $runId, $state) {
+		$ids = array();
+		foreach ($state['resources'] as $r) if (isset($r['id'])) $ids[] = (int) $r['id'];
+		if (!$ids) return true;
+		return DoajPaDb::table(DoajPaSchema::T_RESOURCE)->where('context_id', '=', $contextId)->where('run_id', '=', $runId)
+			->whereIn('resource_id', $ids)->count() === count(array_unique($ids));
+	}
+
+	/** Move the private directory of an earlier run with the same ID aside (never deleted). @return string New name */
+	private static function retire($dir) {
+		$target = $dir . '.stale-' . gmdate('YmdHis') . '-' . bin2hex(random_bytes(3));
+		if (!@rename($dir, $target)) throw new DoajPaStateException('Cannot move aside the private crawl state of an earlier run.');
+		return basename($target);
 	}
 
 	/**
@@ -361,7 +414,8 @@ class DoajPaCrawlService {
 		$file = self::workDir($contextId, $runId) . '/state.json';
 		if (!is_file($file)) return null;
 		$state = json_decode((string) @file_get_contents($file), true);
-		return is_array($state) && isset($state['counts']) ? self::summary($state) : null;
+		if (!is_array($state) || !isset($state['counts']) || !self::belongsTo($state, DoajPaAssessmentRunService::getRun($contextId, $runId))) return null;
+		return self::summary($state);
 	}
 
 	private static function fetcher($scope, $limits, $options) {
