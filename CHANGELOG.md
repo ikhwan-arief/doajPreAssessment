@@ -3,6 +3,22 @@
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
 They are not compliance-ready and do not contain DOAJ assessment rules.
 
+## [0.6.0.0] - 2026-10-10 (Stage 02.08, development pre-release)
+
+Stage 02 framework; normative DOAJ assessment rules are not yet complete. See `RELEASE-NOTES.md`.
+
+### Added
+
+- Reproducible installation archive: built from a git commit with fixed ordering, owner, modes and times, and an
+  in-archive `MANIFEST.sha256`; an archive verifier for structure, metadata, integrity and absence of development code.
+- `RELEASE-NOTES.md` with the list of features that are not available.
+- README: installation, activation, deactivation, upgrade, rollback, uninstall, reinstall and recovery for OJS 3.3.0-23;
+  the English-only warning at the top.
+
+### Changed
+
+- No plugin code changes.
+
 ## [0.5.0.0] - 2026-10-10 (Stage 02.07, development build)
 
 ### Added

@@ -1,5 +1,9 @@
 # DOAJ Pre-Assessment for OJS 3.3
 
+> **ENGLISH-ONLY JOURNAL CONTENT.** This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. Do not rely on its findings for policies written in other languages. If essential non-English content is encountered, the affected check will be marked Unsupported Language / Needs Verification. This limitation applies to the plugin, not to DOAJ eligibility.
+
+> **Development pre-release (0.6.0.0): Stage 02 framework; normative DOAJ assessment rules are not yet complete.** No DOAJ criterion is evaluated and no result is a DOAJ assessment result. See `RELEASE-NOTES.md`.
+
 ## Project Overview
 
 DOAJ Pre-Assessment is a native Open Journal Systems (OJS) 3.3 plugin designed to help journal managers evaluate and improve their journal's readiness before applying for indexing in the Directory of Open Access Journals (DOAJ).
@@ -170,25 +174,79 @@ Record test commands, evidence, limitations, and unresolved findings.
 
 Do not claim installation compatibility until it has been verified on a running OJS 3.3.0-23 environment.
 
-## Development Build (Stage 02.07)
+## Installation (OJS 3.3.0-23)
 
-Version `0.5.0.0` is a development build. It contains the access guard, the English-only gates, the database
+Version `0.6.0.0` is a development pre-release. It contains the access guard, the English-only gates, the database
 for assessment history, the backend views, the public website crawler and the assessment framework. A Journal
 Manager can start an assessment (with a fresh English-only confirmation for every run); the plugin reads the
 journal's public website in short steps and seals the run. **No DOAJ rules are included: every DOAJ criterion
 is shown as NOT IMPLEMENTED, the DOAJ Form Guide questions FQ-01 to FQ-20 are "Not yet assessed", and no run is
 a DOAJ assessment result.**
 
-Install on OJS 3.3.0-23 (tested on PHP 7.3 and 8.2 in disposable stacks only):
+Supported: OJS 3.3.0-23 on PHP 7.3 to 8.2 (tested on PHP 7.3.33 and 8.2.34 in disposable stacks). OJS 3.4 and 3.5
+are **not** supported and were not tested.
 
-1. Build the archive: `tools/build-package.sh` → `dist/doajPreAssessment-0.5.0.0.tar.gz`.
-2. As the site administrator: Settings → Website → Plugins → Upload A New Plugin.
-3. Enable "DOAJ Pre-Assessment" for the journal (enabling is per journal).
-4. Open it from the backend menu entry "DOAJ Pre-Assessment", from the plugin's "Open DOAJ Pre-Assessment" action,
-   or at `/index.php/{journalPath}/doajPreAssessment`.
+### Package
 
-Uploading the archive creates the database tables. If the plugin is copied into `plugins/generic` by hand
-instead, run `php tools/upgrade.php upgrade` once on the server; until then the plugin answers HTTP 503.
+`doajPreAssessment-0.6.0.0.tar.gz` contains one directory, `doajPreAssessment/`, with the plugin code, templates,
+stylesheet, English locale, this README, the change log, the release notes and `MANIFEST.sha256` (the SHA-256 of every
+other file). It contains no test code, no development tools, no third-party libraries and no executables. Check the
+archive against the published SHA-256 before installing (`shasum -a 256 doajPreAssessment-0.6.0.0.tar.gz`).
+Maintainers build it with `tools/build-package.sh` (reproducible: the same commit always gives the same archive).
+
+### Install and activate
+
+1. Back up the OJS database and files (always, before installing or upgrading any plugin).
+2. As the site administrator: Settings → Website → Plugins → **Upload A New Plugin**, and choose the archive.
+   OJS copies the plugin to `plugins/generic/doajPreAssessment/` and creates its database tables.
+3. Enable "DOAJ Pre-Assessment" in each journal that should use it (enabling is per journal). OJS shows the
+   English-only warning right after enabling.
+4. Open the plugin from the backend menu entry "DOAJ Pre-Assessment" (shown to Journal Managers of that journal and
+   to user 1 as site administrator), from the plugin's "Open DOAJ Pre-Assessment" action, or at
+   `/index.php/{journalPath}/doajPreAssessment`. The first visit in each journal shows the English-only statement,
+   which must be confirmed before anything else is available. Every assessment asks for it again.
+
+Manual installation (copying `doajPreAssessment/` into `plugins/generic/`) also works; then run
+`php tools/upgrade.php upgrade` once on the server to create the tables. Until then the plugin answers HTTP 503 with
+this instruction.
+
+### Deactivate
+
+Disable the plugin in the journal's plugin list. Its pages and menu entry disappear; all assessment history, findings,
+corrective actions and the journal's English-only confirmation are kept and come back when it is enabled again.
+
+### Upgrade
+
+1. Back up the OJS database and the `plugins/generic/doajPreAssessment/` directory.
+2. Plugin list → DOAJ Pre-Assessment → **Upgrade**, and choose the newer archive. OJS replaces the files and runs the
+   plugin's database migration, which only adds what is missing and never removes data.
+3. OJS refuses an archive older than the installed version ("installed version is newer"). There is no downgrade
+   through the plugin list; use Rollback.
+
+Completed assessment runs stay sealed across upgrades; each run page shows whether its snapshot still verifies.
+
+### Rollback
+
+Restore both backups taken before the upgrade: the database (which also restores OJS's record of the installed plugin
+version) and the plugin directory. Anything recorded after the backup, such as runs started after the upgrade, is
+lost by the restore. Restoring only the files of an older version over a newer database is not supported.
+
+### Uninstall and reinstall
+
+Plugin list → DOAJ Pre-Assessment → **Delete** removes the plugin files only. **All plugin data is kept**: the 13
+`doaj_` tables (runs, evidence, findings, history, corrective actions, report metadata, audit events) and the plugin
+settings. The plugin has no data purge. Installing the same or a newer archive again reattaches the kept history, and
+earlier runs still verify. Removing the data permanently is a database administrator's decision outside the plugin
+(after a backup); the plugin offers no function for it.
+
+### Recovery after a failure
+
+- **Upload or install failed:** OJS removes the copied files when the installation script fails. Correct the cause
+  (for example file permissions) and upload again; the migration is idempotent.
+- **Upgrade failed after OJS removed the old files:** upload the archive again with "Upload A New Plugin" (the kept
+  tables are reused) or restore the backup.
+- **Plugin answers HTTP 503:** the tables are missing or incomplete; run `php tools/upgrade.php upgrade`.
+- **An assessment step failed:** the run is "Interrupted" with the reason; resume or cancel it (see below).
 
 ### Running an assessment
 
@@ -235,6 +293,7 @@ Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin ha
 - Stage 02.05: Backend dashboard and views; see `docs/stage02/02.05-report.md`
 - Stage 02.06: Public website crawler and extraction; see `docs/stage02/02.06-report.md`
 - Stage 02.07: Assessment framework and orchestration; see `docs/stage02/02.07-report.md`
+- Stage 02.08: Installation package; see `docs/stage02/02.08-report.md`
 - DOAJ assessment rules: Not implemented (Stage 03)
 - Production readiness: Not established
 

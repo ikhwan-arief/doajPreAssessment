@@ -1,0 +1,182 @@
+#!/usr/bin/env python3
+"""Verify a doajPreAssessment installation archive (Stage 02.08). Reads the archive only; never extracts it to disk.
+
+Checks: gzip/tar integrity; single root doajPreAssessment/; no absolute, parent ('..'), backslash or control-character
+paths; only regular files and directories (no symlinks, hard links, devices); modes 0644/0755, owner 0:0, one mtime;
+only the runtime file set and allowed extensions; no development-only code (tests/, tools/, docs/, the dev exception,
+fixture rules), no executables (ELF, Mach-O, PE, shebang scripts, a pdftotext binary), no archives, dumps, keys or test
+credentials; version.xml and plugin registration metadata; install.xml/upgrade.xml well formed and without a version
+attribute; MANIFEST.sha256 complete and correct; every template and locale key referenced exists; README states the
+English-only warning and the optional, unbundled pdftotext; release notes say the DOAJ rules are not complete; no
+licence is asserted while the licence decision is open (ADR D7).
+
+Usage: python3 tools/verify-package.py dist/doajPreAssessment-<release>.tar.gz [--json out.json]
+Exit code 0 only when every check passes.
+"""
+import argparse, gzip, hashlib, io, json, os, re, sys, tarfile
+import xml.etree.ElementTree as ET
+
+TOP = "doajPreAssessment"
+TOP_LEVEL = {"index.php", "version.xml", "install.xml", "upgrade.xml", "DoajPreAssessmentPlugin.inc.php", "classes", "pages",
+             "templates", "css", "locale", "README.md", "CHANGELOG.md", "RELEASE-NOTES.md", "MANIFEST.sha256"}
+REQUIRED = ["index.php", "version.xml", "install.xml", "upgrade.xml", "DoajPreAssessmentPlugin.inc.php", "README.md",
+            "CHANGELOG.md", "RELEASE-NOTES.md", "MANIFEST.sha256", "locale/en_US/locale.po", "css/doajpa.css",
+            "pages/DoajPreAssessmentHandler.inc.php", "classes/migration/DoajPaSchemaMigration.inc.php",
+            "classes/framework/DoajPaAssessmentOrchestrator.inc.php", "classes/services/DoajPaCrawlService.inc.php"]
+EXTENSIONS = (".php", ".tpl", ".xml", ".po", ".css", ".md", ".sha256")
+FORBIDDEN_PATHS = re.compile(r"(^|/)(tests|tools|docs|dist|build|vendor|node_modules|\.git[^/]*|\.vscode|\.idea)(/|$)|"
+                             r"DevPrivateAllowance|TestFixtureRules|\.DS_Store|~$|\.(orig|rej|bak|swp|sql|dump|env|zip|tar|tgz|gz|phar|sh|py|exe|so|dylib)$|"
+                             r"(^|/)pdftotext", re.I)
+FORBIDDEN_CONTENT = [rb"-----BEGIN [A-Z ]*PRIVATE KEY"]
+SWITCH = b"I-UNDERSTAND-THIS-IS-A-TEST-STACK"  # the loader's comparison constant; allowed in the loader only
+WARNING = ("ENGLISH-ONLY JOURNAL CONTENT. This plugin evaluates only publicly accessible English-language journal websites. "
+           "It uses deterministic rules, not Artificial Intelligence or automatic translation.")
+RELEASE_PHRASE = "Stage 02 framework; normative DOAJ assessment rules are not yet complete"
+results = []
+
+
+def check(cid, name, ok, evidence=""):
+    results.append({"id": cid, "name": name, "result": "PASS" if ok else "FAIL", "evidence": str(evidence)[:600]})
+    print(("PASS" if ok else "FAIL"), cid, name, "|", str(evidence)[:200])
+
+
+ap = argparse.ArgumentParser()
+ap.add_argument("archive")
+ap.add_argument("--json")
+opts = ap.parse_args()
+path = os.path.abspath(opts.archive)
+data = open(path, "rb").read()
+sha = hashlib.sha256(data).hexdigest()
+print(f"archive {os.path.basename(path)} sha256 {sha} bytes {len(data)}")
+
+# ---------------------------------------------------------------- integrity and structure
+try:
+    raw = gzip.decompress(data)
+    tar = tarfile.open(fileobj=io.BytesIO(raw), mode="r:")
+    members = tar.getmembers()
+    ok = True
+except Exception as e:  # noqa: BLE001
+    members, ok = [], False
+    check("A01", "gzip and tar integrity", False, e)
+    sys.exit(1)
+side = path + ".sha256"
+side_ok = os.path.exists(side) and open(side).read().split()[:2] == [sha, os.path.basename(path)]
+check("A01", "gzip and tar integrity; archive hash matches the .sha256 file next to it", ok and side_ok,
+      f"{len(members)} entries; .sha256 {'matches' if side_ok else 'missing or different'}")
+m = re.fullmatch(r"doajPreAssessment-(\d+)\.(\d+)\.(\d+)\.(\d+)\.tar\.gz", os.path.basename(path))
+check("A02", "Archive name doajPreAssessment-<release>.tar.gz (OJS takes the plugin directory from the name)", m is not None,
+      os.path.basename(path))
+names = [x.name for x in members]
+bad_paths = [n for n in names if n.startswith("/") or "\\" in n or any(p in ("..", ".") for p in n.split("/"))
+             or re.search(r"[\x00-\x1f\x7f]", n) or not (n == TOP or n.startswith(TOP + "/"))]
+check("A03", "Single root doajPreAssessment/; no absolute, '..', '.', backslash or control-character paths", not bad_paths
+      and names[0] == TOP and len(set(names)) == len(names), bad_paths[:5] or f"root={names[0]}")
+types = [x.name for x in members if not (x.isfile() or x.isdir())]
+check("A04", "Only regular files and directories (no symlinks, hard links, devices, FIFOs)", not types, types[:5])
+modes = [(x.name, oct(x.mode)) for x in members if (x.isdir() and x.mode != 0o755) or (x.isfile() and x.mode != 0o644)]
+owners = {(x.uid, x.gid, x.uname, x.gname) for x in members}
+mtimes = {x.mtime for x in members}
+check("A05", "Modes 0755 (directories) / 0644 (files), owner root 0:0, one fixed mtime (reproducible)",
+      not modes and owners == {(0, 0, "root", "root")} and len(mtimes) == 1, modes[:5] or f"owners={owners} mtimes={sorted(mtimes)}")
+files = {x.name[len(TOP) + 1:]: tar.extractfile(x).read() for x in members if x.isfile()}
+top = {n.split("/")[0] for n in files}
+check("A06", "Only the runtime file set at the top level, and every required file present",
+      top <= TOP_LEVEL and all(r in files for r in REQUIRED), {"unexpected": sorted(top - TOP_LEVEL), "missing": [r for r in REQUIRED if r not in files]})
+ext = [n for n in files if not n.endswith(EXTENSIONS)]
+check("A07", f"Allowed file types only ({', '.join(EXTENSIONS)})", not ext, ext[:5])
+
+# ---------------------------------------------------------------- development code, binaries, secrets
+forbidden = [n for n in files if FORBIDDEN_PATHS.search(n)]
+check("D01", "No development-only paths (tests/, tools/, docs/, dev exception, fixture rules, editor/OS files, dumps, archives)",
+      not forbidden, forbidden[:5])
+magic = [n for n, b in files.items() if b[:4] in (b"\x7fELF", b"\xcf\xfa\xed\xfe", b"\xce\xfa\xed\xfe", b"\xca\xfe\xba\xbe") or b[:2] == b"MZ"
+         or b[:2] == b"#!" or b[:2] == b"\x1f\x8b" or b[:4] == b"PK\x03\x04"]
+check("D02", "No executables or embedded archives (ELF, Mach-O, PE, shebang scripts, gzip, zip): pdftotext is NOT bundled",
+      not magic and not any("pdftotext" in os.path.basename(n).lower() for n in files), magic[:5])
+secrets = sorted({(n, p.decode()) for n, b in files.items() for p in FORBIDDEN_CONTENT if re.search(p, b)})
+switch = sorted(n for n, b in files.items() if SWITCH in b)
+check("D03", "No private keys or test credentials; the development switch value appears only as the loader's comparison constant",
+      not secrets and switch == ["classes/crawler/DoajPaAddressGuard.inc.php"], secrets[:5] or switch)
+docs_env = [n for n in ("README.md", "CHANGELOG.md", "RELEASE-NOTES.md") if b"DOAJ_PA_DEV" in files.get(n, b"")]
+check("D04", "Packaged documentation does not advertise the development-exception variables", not docs_env, docs_env)
+php_dev = sorted(n for n, b in files.items() if n.endswith(".php") and re.search(rb"tests/support|ForTests\s*\(", b))
+check("D05", "Only the dev-allowance loader references tests/support, and only the orchestrator defines the CLI-only test entry points",
+      php_dev == ["classes/crawler/DoajPaAddressGuard.inc.php", "classes/framework/DoajPaAssessmentOrchestrator.inc.php"], php_dev)
+vendor = [n for n in files if re.search(r"(^|/)(composer\.(json|lock)|package(-lock)?\.json)$", n)]
+check("D06", "No bundled third-party dependencies (no vendor directory, no composer or npm manifests)", not vendor, vendor)
+licence = [n for n in files if re.search(r"(^|/)(LICEN[CS]E|COPYING)(\.|$)", n, re.I)]
+check("D07", "No licence file asserted while the licence decision is open (ADR D7)", not licence, licence)
+
+# ---------------------------------------------------------------- metadata
+try:
+    v = ET.fromstring(files["version.xml"])
+    meta = {k: (v.findtext(k) or "").strip() for k in ("application", "type", "release", "date", "lazy-load", "class")}
+except Exception as e:  # noqa: BLE001
+    meta = {"error": str(e)}
+rel = meta.get("release", "")
+check("M01", "version.xml: application doajPreAssessment, type plugins.generic, class DoajPreAssessmentPlugin, lazy-load 1",
+      meta.get("application") == TOP and meta.get("type") == "plugins.generic" and meta.get("class") == "DoajPreAssessmentPlugin"
+      and meta.get("lazy-load") == "1" and re.fullmatch(r"\d{4}-\d\d-\d\d", meta.get("date", "")), meta)
+check("M02", "Release matches the archive name and is a pre-release (major version 0, never 1.0 before Stage 03-05 acceptance)",
+      m is not None and rel == ".".join(m.groups()) and rel.split(".")[0] == "0", rel)
+idx = files.get("index.php", b"")
+cls = files.get("DoajPreAssessmentPlugin.inc.php", b"")
+check("M03", "Registration: index.php returns the plugin; the class extends GenericPlugin and loads the migration",
+      b"return new DoajPreAssessmentPlugin();" in idx and re.search(rb"class DoajPreAssessmentPlugin extends GenericPlugin", cls) is not None
+      and b"getInstallMigration" in cls)
+xml_ok = {}
+for x in ("install.xml", "upgrade.xml"):
+    try:
+        root = ET.fromstring(files[x])
+        xml_ok[x] = (root.tag, root.get("version"), [c.get("class") for c in root.iter("migration")])
+    except Exception as e:  # noqa: BLE001
+        xml_ok[x] = ("error", str(e), [])
+check("M04", "install.xml and upgrade.xml well formed, no version attribute (C45/C46), run the plugin migration",
+      all(t == "install" and ver is None and any("DoajPaSchemaMigration" in (c or "") for c in cl) for t, ver, cl in xml_ok.values()), xml_ok)
+php_open = [n for n, b in files.items() if n.endswith(".php") and not b.startswith(b"<?php")]
+check("M05", "Every PHP file starts with '<?php' (no output before headers)", not php_open, php_open[:5])
+
+# ---------------------------------------------------------------- manifest and references
+lines = files.get("MANIFEST.sha256", b"").decode().splitlines()
+listed = {}
+for line in lines:
+    h, _, n = line.partition("  ")
+    listed[n] = h
+expected = {f"{TOP}/{n}": hashlib.sha256(b).hexdigest() for n, b in files.items() if n != "MANIFEST.sha256"}
+check("I01", "MANIFEST.sha256 lists every packaged file exactly once with the correct SHA-256",
+      listed == expected, {"missing": sorted(set(expected) - set(listed))[:3], "extra": sorted(set(listed) - set(expected))[:3],
+                            "wrong": [k for k in expected if k in listed and listed[k] != expected[k]][:3], "files": len(expected)})
+src = b"".join(b for n, b in files.items() if n.endswith(".php"))
+tpls = set(re.findall(rb"'([A-Za-z][A-Za-z/]*\.tpl)'", src))  # every template name the PHP code passes as a literal
+tpl_missing = sorted(t.decode() for t in tpls if "templates/" + t.decode() not in files)
+unused = sorted(n for n in files if n.startswith("templates/") and n[len("templates/"):].encode() not in tpls
+                and n[len("templates/"):].encode() not in b"".join(b for k, b in files.items() if k.endswith(".tpl")))
+check("I02", "Every template the PHP code renders exists in the package (and every packaged template is used)",
+      not tpl_missing and not unused and len(tpls) >= 15, tpl_missing or unused or f"{len(tpls)} templates")
+po = files.get("locale/en_US/locale.po", b"").decode()
+have = set(re.findall(r'^msgid "([^"]+)"', po, re.M))
+used = set()
+for n, b in files.items():
+    if n.endswith(".tpl"):
+        used |= set(re.findall(r'translate key="(plugins\.generic\.doajPreAssessment\.[A-Za-z0-9_.]+)"', b.decode()))
+missing_keys = sorted(used - have)
+check("I03", "Every static locale key used by a template exists in locale/en_US/locale.po (English only)",
+      not missing_keys and [n for n in files if n.startswith("locale/")] == ["locale/en_US/locale.po"], missing_keys[:5])
+
+# ---------------------------------------------------------------- documentation in the package
+readme = " ".join(files.get("README.md", b"").decode().replace("**", "").split())  # line breaks and bold markers do not matter
+notes = " ".join(files.get("RELEASE-NOTES.md", b"").decode().split())
+check("R01", "README: the English-only warning (verbatim), install/upgrade/rollback/uninstall instructions for OJS 3.3.0-23",
+      WARNING in readme and all(h in readme for h in ("## Installation", "### Upgrade", "### Rollback", "### Uninstall", "OJS 3.3.0-23")))
+check("R02", "README: pdftotext is an optional external prerequisite, NOT bundled, with its unavailable behaviour",
+      "pdftotext" in readme and "not included in the plugin" in readme and "pdf_extractor_unavailable" in readme)
+check("R03", f"Release notes say '{RELEASE_PHRASE}' and list the blocked features for {rel}",
+      RELEASE_PHRASE in notes and rel in notes and "## Not available in this release" in notes and "BLOCKED" in notes)
+
+failed = [r["id"] for r in results if r["result"] != "PASS"]
+summary = {"archive": os.path.basename(path), "sha256": sha, "bytes": len(data), "entries": len(members), "files": len(files),
+           "release": rel, "results": results}
+if opts.json:
+    json.dump(summary, open(opts.json, "w"), indent=2)
+print(f"checks={len(results)} pass={len(results) - len(failed)} fail={len(failed)} {failed}")
+sys.exit(0 if not failed else 1)
