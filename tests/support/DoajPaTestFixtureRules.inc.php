@@ -103,6 +103,38 @@ class DoajPaTestRuleThrows extends DoajPaTestFixtureRule {
 	}
 }
 
+/**
+ * Stage 02.09 three-assessment scenario: deficiencies A-D on the author guidelines page. Deficiency X is fixed when the
+ * page contains "FIXED-MARKER-X" (the test writes it through the fixture website). Fixed items are reported as verified
+ * clear with the page as evidence; a missing page gives "unverifiable" with no items (never "resolved").
+ */
+class DoajPaTestRuleAbcd extends DoajPaTestFixtureRule {
+	public function key() { return 'test.fixture.abcd'; }
+	public function title() { return 'TEST FIXTURE: deficiencies A-D on the guidelines page'; }
+	public function requiredEvidence() { return array('author_guidelines'); }
+	protected function outcome($context) {
+		foreach ($context->evidence(array('author_guidelines')) as $e) {
+			$detections = array(); $clear = array(); $quotes = array();
+			foreach (array('a', 'b', 'c', 'd') as $x) {
+				$item = array('subtype' => 'marker-' . $x, 'targetType' => 'page', 'target' => $e['url'], 'evidenceId' => $e['id']);
+				if (strpos($e['quote'], 'FIXED-MARKER-' . strtoupper($x)) !== false) {
+					$clear[] = $item;
+					$quotes[] = array('evidenceId' => $e['id'], 'text' => 'FIXED-MARKER-' . strtoupper($x));
+				} else {
+					$detections[] = $item + array('criterionStatus' => 'fail');
+				}
+			}
+			if (!$detections) {
+				return array('status' => 'pass', 'rationale' => 'All four fixture markers are present.', 'evidenceIds' => array($e['id']),
+					'quotes' => $quotes, 'verifiedClear' => $clear);
+			}
+			return array('status' => 'fail', 'rationale' => count($detections) . ' fixture deficiencies.', 'evidenceIds' => array($e['id']),
+				'detections' => $detections, 'verifiedClear' => $clear);
+		}
+		return array('status' => 'unverifiable', 'rationale' => 'The author guidelines page was not read in this run.');
+	}
+}
+
 /** A rule that claims to be live data: used to prove test runs refuse non-fixture datasets. */
 class DoajPaTestRuleWrongDataset extends DoajPaTestRuleQuote {
 	public function key() { return 'test.fixture.wrongdataset'; }
@@ -112,7 +144,8 @@ class DoajPaTestRuleWrongDataset extends DoajPaTestRuleQuote {
 /** @return DoajPaCriterionRule[] by name */
 function doajpa_test_fixture_rules($names) {
 	$map = array('quote' => 'DoajPaTestRuleQuote', 'detect' => 'DoajPaTestRuleDetect', 'language' => 'DoajPaTestRuleLanguage',
-		'fabricated' => 'DoajPaTestRuleFabricated', 'throws' => 'DoajPaTestRuleThrows', 'wrongdataset' => 'DoajPaTestRuleWrongDataset');
+		'fabricated' => 'DoajPaTestRuleFabricated', 'throws' => 'DoajPaTestRuleThrows', 'wrongdataset' => 'DoajPaTestRuleWrongDataset',
+		'abcd' => 'DoajPaTestRuleAbcd');
 	$rules = array();
 	foreach ($names as $n) $rules[] = new $map[$n]();
 	return $rules;
