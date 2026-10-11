@@ -226,6 +226,12 @@ class DoajPaFacts {
 	// Licences and copyright
 	//
 
+	/** @return string Display name of a licence code ("CC" = Creative Commons, variant not stated) */
+	public static function licenceLabel($code, $version = null) {
+		$names = array('CC' => 'Creative Commons (variant not stated)', 'other' => 'publisher\'s own licence', 'PDM' => 'Public Domain Mark');
+		return (isset($names[$code]) ? $names[$code] : $code) . ($version ? ' ' . $version : '');
+	}
+
 	/**
 	 * @return array Licence occurrences: code ("CC BY", "CC BY-NC-SA", ..., "CC0", "PDM"; "CC" when a Creative Commons
 	 *  licence is named without its variant; "other" for a publisher's own licence), version, kind (url|name), evidence, quote

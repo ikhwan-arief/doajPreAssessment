@@ -193,7 +193,7 @@ class DoajPaFormGuideBuilder {
 		if (!$l) return $this->notFound('guide.licensing-terms-stated', 'No licence was found.');
 		$codes = array();
 		foreach ($l as $x) if (!isset($codes[$x['code']])) $codes[$x['code']] = $x;
-		$text = implode('; ', array_map(function ($c, $x) { return $c . ($x['version'] ? ' ' . $x['version'] : '') . ' ' . DoajPaFormGuideBuilder::quoted($x); }, array_keys($codes), $codes));
+		$text = implode('; ', array_map(function ($c, $x) { return DoajPaFacts::licenceLabel($c, $x['version']) . ' ' . DoajPaFormGuideBuilder::quoted($x); }, array_keys($codes), $codes));
 		$c = $this->status('guide.copyright-no-contradiction');
 		if ($c === 'contradiction') return $this->verify($text, reset($codes), 'Conflicting licence or copyright statements were found (guide.copyright-no-contradiction).');
 		if (isset($codes['other'])) return $this->verify($text, $codes['other'], 'A publisher\'s own licence was found; whether it is an open licence needs review.');

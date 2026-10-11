@@ -174,7 +174,7 @@ class DoajPaChecks {
 		$lic = $f->licences();
 		$v = DoajPaFacts::verified(array_map(function ($l) { return $l['evidence']; }, $lic));
 		$vh = array_values(array_filter($lic, function ($l) { return $l['evidence']['verifiedEnglish']; }));
-		if ($vh) return $h->pass($vh, 'Licensing terms are stated: ' . implode(', ', array_unique(array_map(function ($l) { return $l['code']; }, $vh))) . '.');
+		if ($vh) return $h->pass($vh, 'Licensing terms are stated: ' . implode(', ', array_unique(array_map(function ($l) { return DoajPaFacts::licenceLabel($l['code']); }, $vh))) . '.');
 		if ($lic) return $h->unverifiable('Licence wording was found only on pages whose language is not verified English (ADR-011).', $lic);
 		return $h->missing(null, 'No ' . $what . ' were found on the pages read.', 'State the licence (for example a Creative Commons licence) for published content on the website.');
 	}
@@ -509,7 +509,7 @@ class DoajPaChecks {
 	private static function c_guide_licensing_cc_recommended($h, $f) {
 		$lic = array_values(array_filter($f->licences(), function ($l) { return $l['evidence']['verifiedEnglish']; }));
 		$cc = array_values(array_filter($lic, function ($l) { return $l['code'] !== 'other'; }));
-		if ($cc) return $h->pass($cc, 'Creative Commons licensing is used: ' . implode(', ', array_unique(array_map(function ($l) { return $l['code'] . ($l['version'] ? ' ' . $l['version'] : ''); }, $cc))) . '.');
+		if ($cc) return $h->pass($cc, 'Creative Commons licensing is used: ' . implode(', ', array_unique(array_map(function ($l) { return DoajPaFacts::licenceLabel($l['code'], $l['version']); }, $cc))) . '.');
 		if ($lic) return $h->found($lic, 'A licence is stated, but it is not a Creative Commons licence.', 'Consider using a Creative Commons licence.');
 		return $h->unverifiable('No licence was identified in verified-English text.');
 	}
@@ -595,7 +595,7 @@ class DoajPaChecks {
 		$lic = array_values(array_filter($f->licences(), function ($l) { return $l['evidence']['verifiedEnglish']; }));
 		$open = array_values(array_filter($lic, function ($l) { return $l['code'] !== 'other'; }));
 		$arr = array_filter($f->copyright(), function ($x) { return $x['kind'] === 'arr' && !$x['chrome'] && $x['evidence']['verifiedEnglish']; });
-		if ($open && !$arr) return $h->pass($open, 'Open access content uses an open licence: ' . $open[0]['code'] . '.');
+		if ($open && !$arr) return $h->pass($open, 'Open access content uses an open licence: ' . DoajPaFacts::licenceLabel($open[0]['code'], $open[0]['version']) . '.');
 		if ($arr) return $h->found(array_values($arr), '"All rights reserved" is applied to content designated as open access.', 'Apply an open licence to all open access content.');
 		if ($lic) return $h->review('Only a publisher\'s own licence was found; whether it is an open licence is a human judgement.', $lic);
 		return $h->missing(null, 'No licence was found for the open access content.', 'Apply and state an open licence for all content.');
@@ -856,10 +856,10 @@ class DoajPaChecks {
 		if ($over) {
 			$d = array();
 			foreach ($over as $u) if ($u['issue']['structured']) $d[] = array('subtype' => 'endogeny-over-25', 'targetType' => 'issue', 'target' => $u['issue']['url'], 'criterionStatus' => 'fail', 'evidenceId' => $u['issue']['structured']['id']);
-			return $h->raw('fail', 'Endogeny exceeds 25% in at least one of the latest two issues. ' . $text, $cite, array(), $d, 'Reduce the share of research articles authored by editors, board members or reviewers to 25% or less per issue.');
+			return $h->outcome('fail', 'Endogeny exceeds 25% in at least one of the latest two issues. ' . $text, $cite, array(), $d, 'Reduce the share of research articles authored by editors, board members or reviewers to 25% or less per issue.');
 		}
 		if ($unknown) return $h->unverifiable('Endogeny cannot be established without human confirmation of uncertain names or article types. ' . $text, array());
-		return $h->raw('pass', 'Endogeny is at most 25% in each of the latest two issues. ' . $text, $cite, array(), array(), null, 'observation');
+		return $h->outcome('pass', 'Endogeny is at most 25% in each of the latest two issues. ' . $text, $cite, array(), array(), null, 'observation');
 	}
 	private static function c_guide_endogeny_minimised($h, $f) { return self::c_guide_endogeny_25_issues($h, $f); }
 
@@ -880,7 +880,7 @@ class DoajPaChecks {
 			$d = array();
 			foreach ($dis as $c) $d[] = array('subtype' => 'unapproved-metric', 'targetType' => 'page', 'target' => $c['evidence']['url'], 'criterionStatus' => 'fail', 'evidenceId' => $c['evidence']['id']);
 			$seen = array(); $d = array_values(array_filter($d, function ($x) use (&$seen) { if (isset($seen[$x['target']])) return false; $seen[$x['target']] = true; return true; }));
-			return $h->raw('fail', 'A metric from a service that the Guide does not list as allowed is displayed: "' . $dis[0]['quote'] . '".', $dis, array(), $d, 'Remove impact factors and ranking metrics from services other than those the Guide allows (Clarivate, Scopus, SCImago, Qualis, Norwegian Register, Eigenfactor, Google Scholar h5-index, Altmetric, Crossref Event Data).');
+			return $h->outcome('fail', 'A metric from a service that the Guide does not list as allowed is displayed: "' . $dis[0]['quote'] . '".', $dis, array(), $d, 'Remove impact factors and ranking metrics from services other than those the Guide allows (Clarivate, Scopus, SCImago, Qualis, Norwegian Register, Eigenfactor, Google Scholar h5-index, Altmetric, Crossref Event Data).');
 		}
 		$unnamed = array_values(array_filter($v, function ($c) { return $c['unnamed']; }));
 		if ($unnamed) return $h->review('An impact factor or ranking claim is displayed without naming the service; whether it is an allowed metric needs human review.', $unnamed);
@@ -1037,7 +1037,7 @@ class DoajPaCheckRun {
 	}
 
 	/** Build an outcome. $hits: list of ['evidence', 'quote'] (quotes) or evidence items (cited without quote). */
-	public function raw($status, $rationale, $hits, $clear = array(), $detections = array(), $rec = null, $basis = 'quote') {
+	public function outcome($status, $rationale, $hits, $clear = array(), $detections = array(), $rec = null, $basis = 'quote') {
 		$quotes = array(); $ids = array();
 		foreach ($hits as $x) {
 			if (isset($x['evidence'], $x['quote'])) {
@@ -1073,14 +1073,14 @@ class DoajPaCheckRun {
 
 	/** Pass with verbatim quotes from verified-English evidence (the guard checks them). */
 	public function pass($hits, $rationale) {
-		return $this->raw('pass', $rationale, $hits, $this->clearFor($hits));
+		return $this->outcome('pass', $rationale, $hits, $this->clearFor($hits));
 	}
 
 	/** Pass on a fact of the retrieval itself (cites verified pages; ADR-010 R1.8). */
 	public function observed($items, $rationale) {
 		$v = DoajPaFacts::verified(array_values(array_filter($items)));
 		if (!$v) return $this->unverifiable('The supporting pages are not verified English (ADR-011).');
-		return $this->raw('pass', $rationale, $v, $this->clearFor($v), array(), null, 'observation');
+		return $this->outcome('pass', $rationale, $v, $this->clearFor($v), array(), null, 'observation');
 	}
 
 	/**
@@ -1098,13 +1098,13 @@ class DoajPaCheckRun {
 			return $this->unverifiable('Nothing non-conforming was found on the verified-English pages, but ' . count($unread) . ' relevant page(s) could not be read as verified English (ADR-011), so absence is not established: '
 				. implode(', ', array_slice(array_map(function ($r) { return $r['url'] . ' (' . ($r['reason'] !== null ? $r['reason'] : $r['acquisition']) . ')'; }, $unread), 0, 5)) . '.');
 		}
-		return $this->raw('pass', $rationale . ' Pages searched: ' . count($v) . '.', array_slice($v, 0, 8), $this->clearFor($v), array(), null, 'absence');
+		return $this->outcome('pass', $rationale . ' Pages searched: ' . count($v) . '.', array_slice($v, 0, 8), $this->clearFor($v), array(), null, 'absence');
 	}
 
 	/** A non-conforming statement was found (M/C: fail; R: warning). */
 	public function found($hits, $rationale, $rec) {
 		$status = $this->spec['level'] === 'R' ? 'warning' : 'fail';
-		return $this->raw($status, $rationale, $hits, array(), $this->detectionFor($hits, $status), $rec);
+		return $this->outcome($status, $rationale, $hits, array(), $this->detectionFor($hits, $status), $rec);
 	}
 
 	/**
@@ -1125,7 +1125,7 @@ class DoajPaCheckRun {
 				. implode(', ', array_slice(array_map(function ($r) { return $r['url'] . ' (' . ($r['reason'] !== null ? $r['reason'] : $r['acquisition']) . ')'; }, $unread), 0, 5)) . '.');
 		}
 		$status = $this->spec['level'] === 'R' ? 'warning' : 'fail';
-		return $this->raw($status, $rationale . ' Pages searched: ' . implode(', ', array_slice(array_unique(array_map(function ($e) { return $e['url']; }, $v)), 0, 8)) . '.',
+		return $this->outcome($status, $rationale . ' Pages searched: ' . implode(', ', array_slice(array_unique(array_map(function ($e) { return $e['url']; }, $v)), 0, 8)) . '.',
 			array_slice($v, 0, 8), array(), $this->detectionFor($v, $status), $rec);
 	}
 
@@ -1134,19 +1134,19 @@ class DoajPaCheckRun {
 		$v = DoajPaFacts::verified(array_values(array_filter($items)));
 		if (!$v) return $this->unverifiable('The relevant pages are not verified English (ADR-011).');
 		$status = $this->spec['level'] === 'R' ? 'warning' : 'fail';
-		return $this->raw($status, $rationale, $first ? array_merge(array($first), $v) : $v, array(), $this->detectionFor($v, $status), $rec);
+		return $this->outcome($status, $rationale, $first ? array_merge(array($first), $v) : $v, array(), $this->detectionFor($v, $status), $rec);
 	}
 
 	public function contradiction($hits, $rationale, $rec) {
-		return $this->raw('contradiction', $rationale, $hits, array(), $this->detectionFor($hits, 'contradiction'), $rec);
+		return $this->outcome('contradiction', $rationale, $hits, array(), $this->detectionFor($hits, 'contradiction'), $rec);
 	}
 
 	public function unverifiable($rationale, $hits = array()) {
-		return $this->raw('unverifiable', $rationale, array_slice($hits, 0, 3));
+		return $this->outcome('unverifiable', $rationale, array_slice($hits, 0, 3));
 	}
 
 	public function review($rationale, $hits = array()) {
-		return $this->raw('for_doaj_review', $rationale . ' (Human judgement reserved.)', array_slice($hits, 0, 3));
+		return $this->outcome('for_doaj_review', $rationale . ' (Human judgement reserved.)', array_slice($hits, 0, 3));
 	}
 
 	public function notApplicable($rationale) {
@@ -1154,7 +1154,7 @@ class DoajPaCheckRun {
 		if (!DoajPaFacts::verified($this->f->items($this->spec['evidence'], array('html_main_content', 'pdftotext_extraction', 'html_structured')))) {
 			return $this->unverifiable('Whether this applies cannot be determined: no relevant page (' . implode(', ', $this->spec['evidence']) . ') was read as verified English (ADR-011). ' . $rationale);
 		}
-		return $this->raw('not_applicable', $rationale . ' (Condition: ' . (isset($this->spec['condition']) ? $this->spec['condition'] : 'n/a') . '.)', array());
+		return $this->outcome('not_applicable', $rationale . ' (Condition: ' . (isset($this->spec['condition']) ? $this->spec['condition'] : 'n/a') . '.)', array());
 	}
 
 	/**
@@ -1206,7 +1206,7 @@ class DoajPaCheckRun {
 			return $this->unverifiable(count($found) . ' of ' . count($patterns) . ' ' . $what . ' were found; the others (' . implode(', ', $missing) . ') may be on '
 				. ($unread ? count($unread) . ' relevant page(s) that could not be read as verified English (ADR-011)' : 'pages not read (crawl limit)') . '.', array_values($found));
 		}
-		return $this->raw($this->spec['level'] === 'R' ? 'warning' : 'fail', count($found) . ' of ' . count($patterns) . ' ' . $what . ' were found; missing: ' . implode(', ', $missing) . '.',
+		return $this->outcome($this->spec['level'] === 'R' ? 'warning' : 'fail', count($found) . ' of ' . count($patterns) . ' ' . $what . ' were found; missing: ' . implode(', ', $missing) . '.',
 			array_values($found), array(), $this->detectionFor(array_values($found), $this->spec['level'] === 'R' ? 'warning' : 'fail'), 'Publish the missing ' . $what . ': ' . implode(', ', $missing) . '.');
 	}
 
@@ -1228,7 +1228,7 @@ class DoajPaCheckRun {
 				$mode === 'hybrid' ? 'Make every article open access; DOAJ does not index hybrid journals.' : 'Make the full text of all content freely available without registration or delay.');
 		}
 		if (!$cite) return $this->unverifiable('Sampled articles were retrieved, but none is verified English (ADR-011).');
-		return $this->raw('pass', 'All ' . count($res) . ' sampled article pages and full-text files were retrieved without login, registration or payment (a sample cannot prove "all content").',
+		return $this->outcome('pass', 'All ' . count($res) . ' sampled article pages and full-text files were retrieved without login, registration or payment (a sample cannot prove "all content").',
 			array_slice($cite, 0, 8), $this->clearFor($cite), array(), null, 'observation');
 	}
 

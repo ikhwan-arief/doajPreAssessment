@@ -13,3 +13,6 @@ build/
 
 # Test output
 tests/output/
+
+# Python bytecode
+__pycache__/
