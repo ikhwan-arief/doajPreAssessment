@@ -2,7 +2,7 @@
 
 > **ENGLISH-ONLY JOURNAL CONTENT.** This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. Do not rely on its findings for policies written in other languages. If essential non-English content is encountered, the affected check will be marked Unsupported Language / Needs Verification. This limitation applies to the plugin, not to DOAJ eligibility.
 
-> **Development pre-release (0.6.0.0): Stage 02 framework; normative DOAJ assessment rules are not yet complete.** No DOAJ criterion is evaluated and no result is a DOAJ assessment result. See `RELEASE-NOTES.md`.
+> **Internal-testing build (0.7.0.0): Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL.** No DOAJ criterion is approved. By default no criterion is evaluated; a Journal Manager may choose the candidate criteria for one run, and those results are labelled as candidate results. No result is a DOAJ assessment result. Internal testing only: no external redistribution (licence not decided). See `RELEASE-NOTES.md`.
 
 ## Project Overview
 
@@ -176,22 +176,28 @@ Do not claim installation compatibility until it has been verified on a running 
 
 ## Installation (OJS 3.3.0-23)
 
-Version `0.6.0.0` is a development pre-release. It contains the access guard, the English-only gates, the database
-for assessment history, the backend views, the public website crawler and the assessment framework. A Journal
-Manager can start an assessment (with a fresh English-only confirmation for every run); the plugin reads the
-journal's public website in short steps and seals the run. **No DOAJ rules are included: every DOAJ criterion
-is shown as NOT IMPLEMENTED, the DOAJ Form Guide questions FQ-01 to FQ-20 are "Not yet assessed", and no run is
-a DOAJ assessment result.**
+Version `0.7.0.0` is an internal-testing build. It contains the access guard, the English-only gates, the database
+for assessment history, the backend views, the public website crawler, the assessment framework and the Stage 03
+deterministic evaluation engine with the **candidate** criteria dataset 0.1.0-draft (137 criteria, PENDING APPROVAL).
+A Journal Manager can start an assessment (with a fresh English-only confirmation for every run); the plugin reads
+the journal's public website in short steps and seals the run.
+
+- **Default ("Approved DOAJ criteria only"):** no DOAJ criteria are approved, so no criterion is evaluated, the DOAJ
+  Form Guide questions FQ-01 to FQ-20 are "Not yet assessed", and the run records evidence and coverage only.
+- **Candidate criteria (internal testing):** chosen per run, with an extra confirmation. Every criterion of the
+  proposed dataset is evaluated deterministically from the public pages read in that run, and FQ-01 to FQ-20 are
+  answered only from verified English evidence. Results and answers are labelled "Candidate criteria - PENDING
+  APPROVAL" and "Not a DOAJ assessment result". They are not approved DOAJ rules and not a compliance claim.
 
 Supported: OJS 3.3.0-23 on PHP 7.3 to 8.2 (tested on PHP 7.3.33 and 8.2.34 in disposable stacks). OJS 3.4 and 3.5
 are **not** supported and were not tested.
 
 ### Package
 
-`doajPreAssessment-0.6.0.0.tar.gz` contains one directory, `doajPreAssessment/`, with the plugin code, templates,
+`doajPreAssessment-0.7.0.0.tar.gz` contains one directory, `doajPreAssessment/`, with the plugin code, templates,
 stylesheet, English locale, this README, the change log, the release notes and `MANIFEST.sha256` (the SHA-256 of every
 other file). It contains no test code, no development tools, no third-party libraries and no executables. Check the
-archive against the published SHA-256 before installing (`shasum -a 256 doajPreAssessment-0.6.0.0.tar.gz`).
+archive against the published SHA-256 before installing (`shasum -a 256 doajPreAssessment-0.7.0.0.tar.gz`).
 Maintainers build it with `tools/build-package.sh` (reproducible: the same commit always gives the same archive).
 
 ### Install and activate
@@ -252,7 +258,8 @@ earlier runs still verify. Removing the data permanently is a database administr
 
 ### Running an assessment
 
-New Assessment → confirm the English-only statement → Start assessment. The run page then continues the run in
+New Assessment → choose the criteria to apply (approved only, or the candidate criteria with their extra
+confirmation) → confirm the English-only statement → Start assessment. The run page then continues the run in
 steps of about ten seconds of reading (each step is a separate, CSRF-protected request; the page submits the next
 step automatically while "Continue automatically" is ticked, or use "Continue assessment"). When reading is
 complete, the results, coverage and the 20 form-guide entries are stored and the run is sealed in one database
@@ -266,6 +273,19 @@ transaction. Only one run per journal can be active.
 - Pages that could not be read, limits that were reached, links that were not followed and pages whose
   language was not verified as English are listed under "Coverage and gaps" of the run. A page whose language
   the advisory check could not establish is never treated as verified English.
+- The language of a page is identified from its main content region (ADR-011), not from menus, sidebars or the
+  footer. Pages with too little text (for example a list of names) stay "undetermined"; a candidate result that
+  depends on such a page is "unverifiable", never a failure. The English-only confirmation never makes a page
+  verified English.
+
+### Candidate results (internal testing)
+
+Each candidate result shows the machine status (pass, fail, warning, contradiction, unverifiable, for DOAJ review,
+not applicable), the rationale with the verbatim quotes and page addresses it relies on, the interpretation limit
+and, for fail, warning and contradiction, a recommended correction citing the DOAJ clause. Deficiencies become
+findings with stable IDs that are tracked across runs. Recommendations (R) never fail, human-judgement criteria
+are always "for DOAJ review", criteria needing an external registry (ISSN Portal, DOI resolution) are always
+"unverifiable" (no external lookup is made), and no index is ever called unreliable.
 
 ### Server requirements
 
@@ -296,7 +316,9 @@ Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin ha
 - Stage 02.06: Public website crawler and extraction; see `docs/stage02/02.06-report.md`
 - Stage 02.07: Assessment framework and orchestration; see `docs/stage02/02.07-report.md`
 - Stage 02.08: Installation package; see `docs/stage02/02.08-report.md`
-- DOAJ assessment rules: Not implemented (Stage 03)
+- Stage 03: deterministic evaluation engine and candidate criteria dataset 0.1.0-draft (PENDING APPROVAL); see
+  `docs/stage03/03-acceptance-report.md`
+- DOAJ assessment rules: none approved (candidate criteria for internal testing only)
 - Production readiness: Not established
 
 ## License and Copyright

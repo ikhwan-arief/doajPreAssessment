@@ -43,6 +43,16 @@
 			{csrf}
 			<input type="hidden" name="warningSha256" value="{$doajPaWarningSha256|escape}" />
 			<p id="doajPaRunHelp">{translate key="plugins.generic.doajPreAssessment.newAssessment.perRun"}</p>
+			<fieldset>
+				<legend>{translate key="plugins.generic.doajPreAssessment.newAssessment.profile"}</legend>
+				<p><input type="radio" id="doajPaProfileApproved" name="profile" value="approved" checked{if $doajPaBlocked} disabled{/if} />
+				<label for="doajPaProfileApproved">{translate key="plugins.generic.doajPreAssessment.newAssessment.profileApproved"}</label></p>
+				<p><input type="radio" id="doajPaProfileCandidate" name="profile" value="candidate"{if $doajPaBlocked} disabled{/if} aria-describedby="doajPaCandidateHelp" />
+				<label for="doajPaProfileCandidate">{translate key="plugins.generic.doajPreAssessment.newAssessment.profileCandidate"} (<code>{$doajPaCandidateRulebook|escape}</code>)</label></p>
+				<p id="doajPaCandidateHelp">{translate key="plugins.generic.doajPreAssessment.candidate.text"}</p>
+				<p><input type="checkbox" id="doajPaConfirmCandidate" name="confirmCandidate" value="1"{if $doajPaBlocked} disabled{/if} />
+				<label for="doajPaConfirmCandidate">{translate key="plugins.generic.doajPreAssessment.newAssessment.confirmCandidate"}</label></p>
+			</fieldset>
 			<p>
 				<input type="checkbox" id="doajPaRunAck" name="confirmEnglishOnly" value="1" required{if $doajPaBlocked} disabled{/if} />
 				<label for="doajPaRunAck">{$doajPaCheckboxText|escape}</label>

@@ -802,3 +802,42 @@ msgstr "Pipeline"
 
 msgid "plugins.generic.doajPreAssessment.run.notImplementedHeading"
 msgstr "Not implemented in this version"
+
+msgid "plugins.generic.doajPreAssessment.candidate.label"
+msgstr "Candidate criteria - PENDING APPROVAL."
+
+msgid "plugins.generic.doajPreAssessment.candidate.text"
+msgstr "The candidate profile applies the proposed DOAJ criteria dataset 0.1.0-draft for internal testing. These criteria and the FQ question mapping have not been approved by the product owner. Their results are not approved DOAJ rules, not a DOAJ decision and not a compliance claim; a human must verify every result."
+
+msgid "plugins.generic.doajPreAssessment.candidate.badge"
+msgstr "CANDIDATE - PENDING APPROVAL"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.profile"
+msgstr "Criteria to apply"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.profileApproved"
+msgstr "Approved DOAJ criteria only (none are installed: the run records website evidence and coverage only)"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.profileCandidate"
+msgstr "Candidate criteria, pending approval (internal testing)"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.confirmCandidate"
+msgstr "I understand that candidate results are not approved and are not a DOAJ assessment result."
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.error.profile"
+msgstr "Choose which criteria to apply."
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.error.candidate"
+msgstr "To apply the candidate criteria, confirm that their results are not approved and are not a DOAJ assessment result."
+
+msgid "plugins.generic.doajPreAssessment.run.candidateRules"
+msgstr "This run applied the proposed criteria for internal testing. Each result quotes the public text it relies on; a pass is never a DOAJ approval, and unreadable or non-English pages make a result unverifiable, never a failure. Dataset:"
+
+msgid "plugins.generic.doajPreAssessment.run.candidateModulesHeading"
+msgstr "Modules evaluated as candidates (pending approval)"
+
+msgid "plugins.generic.doajPreAssessment.run.statusCounts"
+msgstr "Machine results"
+
+msgid "plugins.generic.doajPreAssessment.formGuide.candidate"
+msgstr "These answers come from the candidate profile of the latest completed run. The FQ mapping is pending approval (decision D-03-2). A supported answer quotes verified English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. FQ-08 (keywords) is never answered automatically."

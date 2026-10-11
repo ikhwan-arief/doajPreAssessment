@@ -19,8 +19,11 @@
  * An unexpected failure moves the run to "interrupted" (audited); resume() continues it without duplicate
  * resource records (the crawler skips URLs already stored and reports them as coverage gaps).
  *
- * Live runs use DoajPaRuleRegistry::liveRules() only, which must come from an approved dataset. The
- * test entry points (startForTests, advanceForTests) work only on the command line, only for runs created
+ * Live runs use DoajPaRuleRegistry::liveRules() only, which must come from an approved dataset (none exists, so
+ * the default "approved" profile evaluates no criterion). Stage 03 adds one explicit, per-run "candidate" profile:
+ * a Journal Manager may choose to evaluate the PROPOSED criteria dataset (PENDING APPROVAL, decision D-03-1) for
+ * internal testing. Such runs carry CANDIDATE_RULEBOOK (never an approved rulebook), their results and FQ answers
+ * are labelled as candidate, and the report states "Not a DOAJ assessment result". The test entry points (startForTests, advanceForTests) work only on the command line, only for runs created
  * with TEST_RULEBOOK, and only with rules whose dataset starts with TEST_DATASET_PREFIX.
  */
 
@@ -41,6 +44,10 @@ class DoajPaAssessmentOrchestrator {
 	/** Rule set label of runs created by test tooling. */
 	const TEST_RULEBOOK = 'TEST-FIXTURE-NOT-DOAJ-0207';
 	const TEST_DATASET_PREFIX = 'TEST-FIXTURE-NOT-DOAJ';
+	/** Rule set label of runs that evaluate the proposed (unapproved) criteria dataset. Never approved. */
+	const CANDIDATE_RULEBOOK = DoajPaSchema::CANDIDATE_RULEBOOK;
+	const PROFILE_APPROVED = 'approved';
+	const PROFILE_CANDIDATE = 'candidate';
 	const PIPELINE_VERSION = 'doajpa-orchestrator/1';
 	/** Seconds of crawling per web step. */
 	const STEP_SECONDS = 10;
@@ -59,6 +66,9 @@ class DoajPaAssessmentOrchestrator {
 
 	const FQ_NOT_YET_ASSESSED = 'Not yet assessed. No approved DOAJ rule maps this question in this plugin version, so no answer is given or inferred.';
 	const DISCLAIMER = 'Not a DOAJ assessment result. No approved DOAJ rule set was applied; this run records website coverage and evidence only.';
+	const CANDIDATE_DISCLAIMER = 'Not a DOAJ assessment result. Candidate criteria (dataset 0.1.0-draft, PENDING APPROVAL) were applied for internal testing only; they are not approved DOAJ rules, and no result is a compliance claim.';
+	/** Stage 03 modules evaluated by the candidate profile (PENDING APPROVAL). */
+	const CANDIDATE_MODULES = array('endogeny', 'publication_history_dates', 'licensing_consistency', 'indexer_claims', 'doaj_criteria', 'form_guide');
 
 	//
 	// Entry points used by the backend handler (live runs)
@@ -87,8 +97,14 @@ class DoajPaAssessmentOrchestrator {
 	 * A crawl start failure leaves the run "interrupted" (resumable or cancellable).
 	 * @return int run_id
 	 */
-	public static function start($contextId, $homepage, $actor, $acknowledgement) {
-		return self::startRun($contextId, $homepage, $actor, $acknowledgement, self::LIVE_RULEBOOK, array());
+	public static function start($contextId, $homepage, $actor, $acknowledgement, $profile = self::PROFILE_APPROVED) {
+		if ($profile !== self::PROFILE_APPROVED && $profile !== self::PROFILE_CANDIDATE) throw new DoajPaValidationException('Unknown assessment profile.');
+		return self::startRun($contextId, $homepage, $actor, $acknowledgement, $profile === self::PROFILE_CANDIDATE ? self::CANDIDATE_RULEBOOK : self::LIVE_RULEBOOK, array());
+	}
+
+	/** @return boolean Whether a run evaluates the proposed (unapproved) candidate criteria */
+	public static function isCandidate($rulebook) {
+		return $rulebook === self::CANDIDATE_RULEBOOK;
 	}
 
 	/**
@@ -98,10 +114,11 @@ class DoajPaAssessmentOrchestrator {
 	 */
 	public static function advance($contextId, $runId, $actor) {
 		$run = DoajPaAssessmentRunService::getRun($contextId, $runId);
-		if (!in_array($run->rulebook_version, array_merge(array(self::LIVE_RULEBOOK), DoajPaSchema::APPROVED_RULEBOOKS), true)) {
+		if (!in_array($run->rulebook_version, array_merge(array(self::LIVE_RULEBOOK, self::CANDIDATE_RULEBOOK), DoajPaSchema::APPROVED_RULEBOOKS), true)) {
 			throw new DoajPaStateException('This run was not created by the live assessment and cannot be continued here.');
 		}
-		return self::advanceRun($contextId, $run, $actor, self::liveRules(), array(), array());
+		$rules = self::isCandidate($run->rulebook_version) ? self::candidateRules() : self::liveRules();
+		return self::advanceRun($contextId, $run, $actor, $rules, array(), array());
 	}
 
 	/**
@@ -113,6 +130,23 @@ class DoajPaAssessmentOrchestrator {
 		foreach ($rules as $rule) {
 			if (!($rule instanceof DoajPaCriterionRule) || !in_array($rule->datasetVersion(), DoajPaSchema::APPROVED_DATASETS, true)) {
 				throw new DoajPaStateException('A live rule does not come from an approved DOAJ criteria dataset.');
+			}
+		}
+		return $rules;
+	}
+
+	/**
+	 * The proposed criteria of the candidate profile. Each must come from the candidate dataset, which must NOT be an
+	 * approved dataset (an approved version is registered as a new criterion version and runs as a live rule).
+	 * @return DoajPaCriterionRule[]
+	 */
+	public static function candidateRules() {
+		require_once(dirname(__FILE__) . '/../rules/DoajPaCandidateRule.inc.php');
+		$rules = DoajPaRuleRegistry::candidateRules();
+		foreach ($rules as $rule) {
+			if (!($rule instanceof DoajPaCandidateRule) || $rule->datasetVersion() !== DoajPaCandidateDataset::VERSION
+				|| DoajPaCandidateDataset::STATUS !== 'proposed' || in_array($rule->datasetVersion(), DoajPaSchema::APPROVED_DATASETS, true)) {
+				throw new DoajPaStateException('A candidate rule does not come from the proposed criteria dataset.');
 			}
 		}
 		return $rules;
@@ -241,17 +275,25 @@ class DoajPaAssessmentOrchestrator {
 		$manifestJson = is_file($dir . '/manifest.json') ? (string) file_get_contents($dir . '/manifest.json') : '';
 		$manifestVerified = $manifestJson !== '' && hash_equals((string) $coverage['manifestSha256'], hash('sha256', $manifestJson));
 		$languageByResource = array();
+		$crawlInfo = array();
 		if ($manifestVerified) {
 			$manifest = json_decode($manifestJson, true);
 			foreach (isset($manifest['resources']) ? $manifest['resources'] : array() as $r) {
-				if (isset($r['id'])) $languageByResource[(int) $r['id']] = is_array($r['language']) ? (string) $r['language']['verdict'] : 'none';
+				if (!isset($r['id'])) continue;
+				$languageByResource[(int) $r['id']] = is_array($r['language']) ? (string) $r['language']['verdict'] : 'none';
+				$crawlInfo[(int) $r['id']] = array('depth' => isset($r['depth']) ? (int) $r['depth'] : null,
+					'mainRegion' => isset($r['mainRegion']) ? $r['mainRegion'] : null, 'linkText' => isset($r['linkText']) ? (string) $r['linkText'] : '');
 			}
 		}
 		$resources = array();
 		foreach (DoajPaDb::table(DoajPaSchema::T_RESOURCE)->where('context_id', '=', $contextId)->where('run_id', '=', $runId)->orderBy('resource_id')->get()->all() as $r) {
 			$resources[(int) $r->resource_id] = array('id' => (int) $r->resource_id, 'url' => $r->url, 'urlSha256' => $r->url_sha256,
 				'pageType' => $r->page_type, 'httpStatus' => $r->http_status === null ? null : (int) $r->http_status,
-				'acquisition' => $r->acquisition_status, 'reason' => $r->skip_reason, 'contentSha256' => $r->content_sha256);
+				'acquisition' => $r->acquisition_status, 'reason' => $r->skip_reason, 'contentSha256' => $r->content_sha256,
+				'finalUrl' => $r->final_url, 'mediaType' => $r->media_type,
+				'depth' => isset($crawlInfo[(int) $r->resource_id]) ? $crawlInfo[(int) $r->resource_id]['depth'] : null,
+				'mainRegion' => isset($crawlInfo[(int) $r->resource_id]) ? $crawlInfo[(int) $r->resource_id]['mainRegion'] : null,
+				'linkText' => isset($crawlInfo[(int) $r->resource_id]) ? $crawlInfo[(int) $r->resource_id]['linkText'] : '');
 		}
 		$evidence = array();
 		$counts = array('items' => 0, 'verifiedEnglish' => 0, 'languageNotVerified' => 0, 'provenanceFailures' => 0);
@@ -265,7 +307,8 @@ class DoajPaAssessmentOrchestrator {
 			$evidence[(int) $e->evidence_id] = array('id' => (int) $e->evidence_id, 'resourceId' => $res ? $res['id'] : null,
 				'url' => $e->source_url, 'title' => $e->source_title, 'sourceType' => $e->source_type, 'pageType' => $res ? $res['pageType'] : null,
 				'quote' => (string) $e->quote, 'quoteSha256' => $e->quote_sha256, 'acquisition' => $res ? $res['acquisition'] : null,
-				'language' => $language, 'provenance' => $provenance, 'verifiedEnglish' => $verified);
+				'language' => $language, 'provenance' => $provenance, 'verifiedEnglish' => $verified,
+				'method' => (string) $e->detection_method, 'location' => (string) $e->location);
 			$counts['items']++;
 			if (!$provenance) $counts['provenanceFailures']++;
 			if ($verified) $counts['verifiedEnglish']++; else $counts['languageNotVerified']++;
@@ -287,7 +330,12 @@ class DoajPaAssessmentOrchestrator {
 		$downgraded = 0;
 		foreach ($rules as $rule) {
 			$identity = array($rule->key(), $rule->version(), $rule->lineage(), $rule->datasetVersion(), $rule->sourceVersion(), DoajPaOutcomeGuard::VERSION);
-			$fingerprint = $context->fingerprint($identity, $rule->requiredEvidence());
+			$scope = $rule->requiredEvidence();
+			if (method_exists($rule, 'fingerprintScope')) {
+				list($scope, $extra) = $rule->fingerprintScope($coverage);
+				$identity[] = $extra;
+			}
+			$fingerprint = $context->fingerprint($identity, $scope);
 			$raw = null;
 			$wasReused = false;
 			if ($fingerprint !== null && $previousEvaluation !== null && isset($previousEvaluation['rules'][$rule->key()])
@@ -307,10 +355,32 @@ class DoajPaAssessmentOrchestrator {
 			if ($outcome['downgrades']) $downgraded++;
 			if ($wasReused) $reused++;
 			$statusCounts[$outcome['status']] = isset($statusCounts[$outcome['status']]) ? $statusCounts[$outcome['status']] + 1 : 1;
-			$records[] = array('rule' => $rule, 'outcome' => $outcome);
+			$record = array('rule' => $rule, 'outcome' => $outcome);
+			if (self::isCandidate($run->rulebook_version)) $record['cited'] = self::cited($outcome, $evidence);
+			$records[] = $record;
 			$evaluation['rules'][$rule->key()] = array('version' => $rule->version(), 'fingerprint' => $fingerprint, 'reused' => $wasReused,
 				'outcome' => self::portable($outcome, $evidence));
 		}
+		// form guide: FQ-01..FQ-20 from the guarded outcomes and the run's facts (candidate profile only)
+		$candidate = self::isCandidate($run->rulebook_version);
+		$formAnswers = array();
+		if ($candidate) {
+			require_once(dirname(__FILE__) . '/../rules/DoajPaCandidateRule.inc.php');
+			require_once(dirname(__FILE__) . '/../rules/DoajPaFormGuideBuilder.inc.php');
+			$guarded = array();
+			foreach ($records as $record) $guarded[$record['rule']->key()] = $record['outcome'];
+			$data = DoajPaCandidateDataset::data();
+			$builder = new DoajPaFormGuideBuilder(DoajPaFacts::of($context), $guarded, $data['fqMapping']);
+			$formAnswers = $builder->build();
+			$evaluation['formGuide'] = $formAnswers;
+		} else {
+			for ($i = 1; $i <= 20; $i++) {
+				$formAnswers[] = array('questionKey' => sprintf('FQ-%02d', $i), 'answerStatus' => 'not_yet_assessed', 'uncertainty' => self::FQ_NOT_YET_ASSESSED);
+			}
+		}
+		$answerCounts = array();
+		foreach ($formAnswers as $a) $answerCounts[$a['answerStatus']] = isset($answerCounts[$a['answerStatus']]) ? $answerCounts[$a['answerStatus']] + 1 : 1;
+		ksort($answerCounts);
 		$evaluationJson = DoajPaDb::json($evaluation);
 		self::atomicWrite($dir . '/evaluation.json', $evaluationJson);
 		ksort($statusCounts);
@@ -319,20 +389,24 @@ class DoajPaAssessmentOrchestrator {
 		$rulebookApproved = in_array($run->rulebook_version, DoajPaSchema::APPROVED_RULEBOOKS, true);
 		$coverage['assessment'] = array(
 			'pipelineVersion' => self::PIPELINE_VERSION, 'pipeline' => self::PIPELINE,
-			'criteria' => !$rules ? 'not_implemented' : ($rulebookApproved ? 'approved_rules' : 'test_fixture_rules'),
+			'criteria' => !$rules ? 'not_implemented' : ($rulebookApproved ? 'approved_rules' : ($candidate ? 'candidate_rules_pending_approval' : 'test_fixture_rules')),
 			'rulesEvaluated' => count($rules), 'rulesReused' => $reused, 'rulesDowngraded' => $downgraded, 'statusCounts' => $statusCounts,
-			'notImplemented' => array_keys(self::FUTURE_MODULES),
-			'formGuide' => array('questions' => 20, 'answerStatus' => 'not_yet_assessed'),
+			'notImplemented' => $candidate ? array() : array_keys(self::FUTURE_MODULES),
+			'candidateModules' => $candidate ? self::CANDIDATE_MODULES : array(),
+			'candidateDataset' => $candidate ? array('version' => DoajPaCandidateDataset::VERSION, 'status' => DoajPaCandidateDataset::STATUS,
+				'sourceSha256' => DoajPaCandidateDataset::SOURCE_SHA256, 'engine' => DoajPaCandidateRule::ENGINE_VERSION, 'approval' => 'PENDING APPROVAL (D-03-1)') : null,
+			'formGuide' => $candidate ? array('questions' => 20, 'answerStatus' => 'candidate_pending_approval', 'counts' => $answerCounts)
+				: array('questions' => 20, 'answerStatus' => 'not_yet_assessed'),
 			'evidence' => $counts + array('manifestVerified' => $manifestVerified),
 			'diff' => $diff, 'evaluationSha256' => hash('sha256', $evaluationJson),
 			'report' => array('rulebookVersion' => $run->rulebook_version, 'rulebookApproved' => $rulebookApproved, 'notADoajResult' => !$rulebookApproved,
-				'disclaimer' => self::DISCLAIMER, 'extractionVersion' => $run->extraction_version,
+				'candidate' => $candidate, 'disclaimer' => $candidate ? self::CANDIDATE_DISCLAIMER : self::DISCLAIMER, 'extractionVersion' => $run->extraction_version,
 				'pdfTool' => isset($coverage['pdfTool']) ? $coverage['pdfTool'] : null, 'evaluatedAtUtc' => DoajPaDb::now()),
 		);
 		$lock = (int) $run->lock_version;
 
 		// persist and seal: one transaction
-		return DoajPaDb::transaction(function () use ($contextId, $runId, $actor, $records, $coverage, $lock, $hooks, $reused, $statusCounts) {
+		return DoajPaDb::transaction(function () use ($contextId, $runId, $actor, $records, $coverage, $lock, $hooks, $reused, $statusCounts, $formAnswers) {
 			$detected = array();
 			$verifiedClear = array();
 			foreach ($records as $record) {
@@ -345,7 +419,7 @@ class DoajPaAssessmentOrchestrator {
 				), $actor);
 				DoajPaAssessmentRunService::addCriterionResult($contextId, $runId, $definitionId, array(
 					'machineStatus' => $o['status'],
-					'rationale' => $o['rationale'] !== '' ? $o['rationale'] : 'No rationale was given.',
+					'rationale' => ($o['rationale'] !== '' ? $o['rationale'] : 'No rationale was given.') . (isset($record['cited']) ? $record['cited'] : ''),
 					'interpretationLimit' => $o['interpretationLimit'] !== '' ? $o['interpretationLimit'] : $rule->humanReviewBoundary(),
 					'evidenceId' => $o['evidenceIds'] ? $o['evidenceIds'][0] : null,
 				));
@@ -353,10 +427,7 @@ class DoajPaAssessmentOrchestrator {
 				foreach ($o['detections'] as $d) $detected[] = $identity + $d;
 				foreach ($o['verifiedClear'] as $c) $verifiedClear[] = $identity + $c;
 			}
-			for ($i = 1; $i <= 20; $i++) {
-				DoajPaAssessmentRunService::addFormAnswer($contextId, $runId, array('questionKey' => sprintf('FQ-%02d', $i),
-					'answerStatus' => 'not_yet_assessed', 'uncertainty' => self::FQ_NOT_YET_ASSESSED));
-			}
+			foreach ($formAnswers as $a) DoajPaAssessmentRunService::addFormAnswer($contextId, $runId, $a);
 			DoajPaAssessmentRunService::recordCoverage($contextId, $runId, $coverage, $actor);
 			if (!empty($hooks['failBeforeSeal'])) throw new RuntimeException('Injected failure before sealing (test).');
 			$summary = DoajPaAssessmentRunService::complete($contextId, $runId, $lock, $actor, $detected, $verifiedClear);
@@ -365,6 +436,21 @@ class DoajPaAssessmentOrchestrator {
 				'statusCounts' => $statusCounts, 'snapshotDigest' => $summary['snapshotDigest']));
 			return $summary + array('rulesEvaluated' => count($records), 'rulesReused' => $reused);
 		});
+	}
+
+	/**
+	 * Verified quotes and evidence URLs of a candidate outcome, appended to the stored rationale so the sealed record
+	 * shows exactly what the result relies on (the quotes passed DoajPaOutcomeGuard).
+	 * @return string
+	 */
+	private static function cited($outcome, $evidence) {
+		$parts = array();
+		foreach (array_slice($outcome['quotes'], 0, 3) as $q) $parts[] = '"' . $q['text'] . '" (' . $evidence[$q['evidenceId']]['url'] . ')';
+		$out = $parts ? ' Verified quotes: ' . implode('; ', $parts) . '.' : '';
+		$urls = array();
+		foreach ($outcome['evidenceIds'] as $id) if (isset($evidence[$id])) $urls[$evidence[$id]['url']] = true;
+		if ($urls) $out .= ' Evidence pages (' . count($urls) . '): ' . implode(', ', array_slice(array_keys($urls), 0, 8)) . (count($urls) > 8 ? ', ...' : '') . '.';
+		return $out;
 	}
 
 	/** @return array Resource changes against the previous completed run (counts and up to 20 sample URLs each) */
@@ -419,6 +505,7 @@ class DoajPaAssessmentOrchestrator {
 			return isset($evidence[$id]) ? array('url' => $evidence[$id]['url'], 'sha' => $evidence[$id]['quoteSha256']) : null;
 		};
 		$p = array('status' => $outcome['status'], 'rationale' => $outcome['rationale'], 'interpretationLimit' => $outcome['interpretationLimit'],
+			'basis' => isset($outcome['basis']) ? $outcome['basis'] : 'quote',
 			'evidence' => array_map($ref, $outcome['evidenceIds']), 'quotes' => array(), 'detections' => array(), 'verifiedClear' => array());
 		foreach ($outcome['quotes'] as $q) $p['quotes'][] = array('ref' => $ref($q['evidenceId']), 'text' => $q['text']);
 		foreach (array('detections', 'verifiedClear') as $list) {
@@ -436,6 +523,7 @@ class DoajPaAssessmentOrchestrator {
 		};
 		if (!is_array($portable)) return null;
 		$o = array('status' => $portable['status'], 'rationale' => $portable['rationale'], 'interpretationLimit' => $portable['interpretationLimit'],
+			'basis' => isset($portable['basis']) ? $portable['basis'] : 'quote',
 			'evidenceIds' => array(), 'quotes' => array(), 'detections' => array(), 'verifiedClear' => array());
 		foreach ($portable['evidence'] as $ref) { $id = $find($ref); if ($id === null) return null; $o['evidenceIds'][] = $id; }
 		foreach ($portable['quotes'] as $q) { $id = $find($q['ref']); if ($id === null) return null; $o['quotes'][] = array('evidenceId' => $id, 'text' => $q['text']); }

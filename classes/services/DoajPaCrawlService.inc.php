@@ -192,6 +192,7 @@ class DoajPaCrawlService {
 		if ($res['devException']) self::recordDevException($contextId, $runId, $actor, $res['devHosts'], $state);
 
 		$acq = 'inaccessible'; $reason = null; $kind = null; $text = ''; $title = null; $extractNote = null; $language = null; $links = array();
+		$mainText = ''; $mainRegion = null; $structured = array();
 		if ($res['error'] !== null) {
 			$reason = $res['error'] . ($res['errorDetail'] ? ': ' . $res['errorDetail'] : '');
 		} elseif ($res['status'] === 404 || $res['status'] === 410) {
@@ -211,7 +212,9 @@ class DoajPaCrawlService {
 				if (!$x['ok']) { $acq = 'parse_failed'; $reason = $x['reason']; }
 				else {
 					$text = $x['text']; $title = $x['title']; $links = $x['links'];
-					$language = DoajPaLanguageHeuristic::assess($text, $x['lang']);
+					$mainText = $x['mainText']; $mainRegion = $x['mainRegion']; $structured = $x['structured'];
+					// ADR-011: the language is identified from the main content region only; too little text stays undetermined.
+					$language = DoajPaLanguageHeuristic::assess($mainText, $x['lang']);
 					self::noteHtml($state, $res['finalUrl'], $x);
 				}
 			} else {
@@ -239,14 +242,28 @@ class DoajPaCrawlService {
 			else $state['contentHashes'][$res['sha256']] = $resourceId;
 		}
 		$evidenceId = null;
-		if (trim($text) !== '' && $duplicateOf === null && in_array($acq, array('retrieved', 'unsupported_language', 'ambiguous'), true)) {
+		if (trim($mainText) !== '' && $kind === 'html' && $duplicateOf === null && in_array($acq, array('retrieved', 'unsupported_language', 'ambiguous'), true)) {
 			$evidenceId = DoajPaAssessmentRunService::addEvidence($contextId, $runId, array(
+				'resourceId' => $resourceId, 'sourceUrl' => $res['finalUrl'], 'sourceTitle' => $title, 'sourceType' => 'html_page', 'quote' => $mainText,
+				'location' => 'main content region (' . $mainRegion . ')', 'detectionMethod' => 'html_main_content', 'extractionVersion' => DoajPaHtmlExtractor::VERSION,
+			));
+		}
+		if ($structured && $kind === 'html' && $duplicateOf === null && in_array($acq, array('retrieved', 'unsupported_language', 'ambiguous'), true)) {
+			DoajPaAssessmentRunService::addEvidence($contextId, $runId, array(
+				'resourceId' => $resourceId, 'sourceUrl' => $res['finalUrl'], 'sourceTitle' => $title, 'sourceType' => 'html_page',
+				'quote' => implode("\n", $structured), 'location' => 'page metadata and structure (meta tags, table of contents, licence and language links, image text)',
+				'detectionMethod' => 'html_structured', 'extractionVersion' => DoajPaHtmlExtractor::VERSION,
+			));
+		}
+		if (trim($text) !== '' && $duplicateOf === null && in_array($acq, array('retrieved', 'unsupported_language', 'ambiguous'), true)) {
+			$pageEvidence = DoajPaAssessmentRunService::addEvidence($contextId, $runId, array(
 				'resourceId' => $resourceId, 'sourceUrl' => $res['finalUrl'], 'sourceTitle' => $title,
 				'sourceType' => $kind === 'pdf' ? 'pdf' : 'html_page', 'quote' => $text,
 				'location' => $kind === 'pdf' ? 'pdf text, all pages read (page markers included)' : 'page text (scripts, styles and forms removed)',
 				'detectionMethod' => $kind === 'pdf' ? 'pdftotext_extraction' : 'html_text_extraction',
 				'extractionVersion' => $kind === 'pdf' ? ($extractNote ?: DoajPaPdfExtractor::VERSION) : DoajPaHtmlExtractor::VERSION,
 			));
+			if ($evidenceId === null) $evidenceId = $pageEvidence;
 		}
 		self::increment($state['statusCounts'], $acq);
 		self::increment($state['typeCounts'], $type);
@@ -254,6 +271,7 @@ class DoajPaCrawlService {
 			'status' => $res['status'], 'acquisition' => $acq, 'reason' => $reason, 'mediaType' => $res['mediaType'], 'bytes' => $res['bytes'],
 			'sha256' => $res['sha256'], 'fetchedAtUtc' => $res['fetchedAtUtc'], 'hops' => count($res['hops']), 'from' => $item['from'],
 			'linkText' => $item['t'], 'depth' => $item['d'], 'evidenceId' => $evidenceId, 'duplicateOf' => $duplicateOf,
+			'mainRegion' => $mainRegion, 'mainWords' => $mainText === '' ? 0 : preg_match_all('/\p{L}+/u', $mainText),
 			'language' => $language === null ? null : array('verdict' => $language['verdict'], 'detected' => $language['detected'], 'words' => $language['words'], 'attr' => $language['langAttribute']));
 
 		if ($kind === 'html' && $links && $item['d'] < $state['limits']['maxDepth']) {

@@ -105,6 +105,9 @@
 		<h2 id="doajPaAssessment">{translate key="plugins.generic.doajPreAssessment.run.assessment"}</h2>
 		{if $a.criteria == 'not_implemented'}
 			<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</strong> {translate key="plugins.generic.doajPreAssessment.run.criteriaNotImplemented"}</p>
+		{elseif $a.criteria == 'candidate_rules_pending_approval'}
+			<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.candidate.label"}</strong> {translate key="plugins.generic.doajPreAssessment.run.candidateRules"}
+			{if $a.candidateDataset}<code>{$a.candidateDataset.version|escape}</code> ({$a.candidateDataset.approval|escape}).{/if}</p>
 		{elseif $a.criteria == 'test_fixture_rules'}
 			<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.run.testRulesLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.run.testRules"}</p>
 		{/if}
@@ -123,8 +126,15 @@
 			</tbody>
 		</table>
 		</div>
+		{if $a.statusCounts}<p>{translate key="plugins.generic.doajPreAssessment.run.statusCounts"}: {foreach from=$a.statusCounts key=k item=n name=sc}{include file=$doajPaBadge group="criterion" code=$k} {$n|escape}{if !$smarty.foreach.sc.last}; {/if}{/foreach}</p>{/if}
+		{if $a.candidateModules}
+		<h3 id="doajPaCandidateModules">{translate key="plugins.generic.doajPreAssessment.run.candidateModulesHeading"}</h3>
+		<ul aria-labelledby="doajPaCandidateModules">{foreach from=$a.candidateModules item=k}<li><span class="doajPa-badge doajPa-badge--candidate">{translate key="plugins.generic.doajPreAssessment.candidate.badge"}</span> {if isset($doajPaFutureModules[$k])}{$doajPaFutureModules[$k]|escape}{else}{$k|escape}{/if}</li>{/foreach}</ul>
+		{/if}
+		{if $a.notImplemented}
 		<h3 id="doajPaNotImplemented">{translate key="plugins.generic.doajPreAssessment.run.notImplementedHeading"}</h3>
 		<ul aria-labelledby="doajPaNotImplemented">{foreach from=$a.notImplemented item=k}<li><span class="doajPa-badge doajPa-badge--not_implemented">{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</span> {if isset($doajPaFutureModules[$k])}{$doajPaFutureModules[$k]|escape}{else}{$k|escape}{/if}</li>{/foreach}</ul>
+		{/if}
 		{/if}
 
 		<h2 id="doajPaObservations">{translate key="plugins.generic.doajPreAssessment.run.observations"}</h2>

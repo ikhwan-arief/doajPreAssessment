@@ -7,7 +7,8 @@ only the runtime file set and allowed extensions; no development-only code (test
 fixture rules), no executables (ELF, Mach-O, PE, shebang scripts, a pdftotext binary), no archives, dumps, keys or test
 credentials; version.xml and plugin registration metadata; install.xml/upgrade.xml well formed and without a version
 attribute; MANIFEST.sha256 complete and correct; every template and locale key referenced exists; README states the
-English-only warning and the optional, unbundled pdftotext; release notes say the DOAJ rules are not complete; no
+English-only warning and the optional, unbundled pdftotext; release notes say the build is for internal testing with candidate criteria PENDING APPROVAL; no approved rule set or
+dataset, and the candidate dataset is packaged as proposed; no
 licence is asserted while the licence decision is open (ADR D7).
 
 Usage: python3 tools/verify-package.py dist/doajPreAssessment-<release>.tar.gz [--json out.json]
@@ -31,7 +32,7 @@ FORBIDDEN_CONTENT = [rb"-----BEGIN [A-Z ]*PRIVATE KEY"]
 SWITCH = b"I-UNDERSTAND-THIS-IS-A-TEST-STACK"  # the loader's comparison constant; allowed in the loader only
 WARNING = ("ENGLISH-ONLY JOURNAL CONTENT. This plugin evaluates only publicly accessible English-language journal websites. "
            "It uses deterministic rules, not Artificial Intelligence or automatic translation.")
-RELEASE_PHRASE = "Stage 02 framework; normative DOAJ assessment rules are not yet complete"
+RELEASE_PHRASE = "Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL"
 results = []
 
 
@@ -172,6 +173,19 @@ check("R02", "README: pdftotext is an optional external prerequisite, NOT bundle
       "pdftotext" in readme and "not included in the plugin" in readme and "pdf_extractor_unavailable" in readme)
 check("R03", f"Release notes say '{RELEASE_PHRASE}' and list the blocked features for {rel}",
       RELEASE_PHRASE in notes and rel in notes and "## Not available in this release" in notes and "BLOCKED" in notes)
+
+# ---------------------------------------------------------------- candidate criteria (Stage 03)
+schema = files.get("classes/persistence/DoajPaSchema.inc.php", b"")
+registry = files.get("classes/framework/DoajPaRuleRegistry.inc.php", b"")
+dataset = files.get("classes/rules/data/DoajPaCandidateDataset.inc.php", b"")
+check("C01", "No approved DOAJ rule set or dataset: APPROVED_RULEBOOKS and APPROVED_DATASETS are empty; the live registry returns no rules",
+      b"const APPROVED_RULEBOOKS = array();" in schema and b"const APPROVED_DATASETS = array();" in schema
+      and re.search(rb"function liveRules\(\)\s*\{\s*return array\(\);\s*\}", registry) is not None)
+check("C02", "The candidate dataset is packaged as PROPOSED (no approver), with the candidate rule-set label that is never approved",
+      b"const STATUS = 'proposed';" in dataset and b"'approvedBy' => null" in dataset and b"Status PROPOSED (PENDING APPROVAL" in dataset
+      and b"const CANDIDATE_RULEBOOK = 'candidate-doajpa-criteria-0.1.0-draft';" in schema)
+check("C03", "Candidate results are labelled: the templates and locale carry the PENDING APPROVAL and not-a-DOAJ-result texts",
+      b"Candidate criteria - PENDING APPROVAL." in files.get("locale/en_US/locale.po", b"") and b"candidate.label" in files.get("templates/partials/notResult.tpl", b""))
 
 failed = [r["id"] for r in results if r["result"] != "PASS"]
 summary = {"archive": os.path.basename(path), "sha256": sha, "bytes": len(data), "entries": len(members), "files": len(files),

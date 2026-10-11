@@ -1,7 +1,39 @@
 # Changelog
 
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
-They are not compliance-ready and do not contain DOAJ assessment rules.
+They are not compliance-ready and do not contain approved DOAJ assessment rules.
+
+## [0.7.0.0] - 2026-10-12 (Stage 03, internal-testing build)
+
+Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL. See `RELEASE-NOTES.md`.
+
+### Added
+
+- Deterministic evaluation engine (`classes/rules/`): fact extraction from the stored evidence of one run, 137
+  criterion checks for the proposed dataset 0.1.0-draft, modules for editorial endogeny (per issue, uncertain name
+  matches abstain), publication-history dates (exact Stage 01 F4 messages), licensing and copyright consistency
+  (cross-page contradictions; footer notices kept apart), metrics and indexing claims (Guide-listed metrics only;
+  indexing claims inventoried, never judged), and the FQ-01..FQ-20 form-guide builder.
+- Candidate assessment profile: chosen per run with an extra confirmation; rule set label
+  `candidate-doajpa-criteria-0.1.0-draft`, never an approved rule set; results, findings and form answers are
+  labelled "Candidate criteria - PENDING APPROVAL" and "Not a DOAJ assessment result". The default profile is
+  unchanged (approved criteria only: none).
+- Corrective recommendations with the DOAJ clause on every fail, warning and contradiction; the verified quotes and
+  evidence pages a result relies on are stored with the result.
+
+### Changed
+
+- ADR-011: page language is identified from the main content region (`role="main"`, `<main>`,
+  `pkp_structure_main`, ...), without navigation, breadcrumbs, sidebars or footers; too little text stays
+  undetermined. HTML extraction `doajpa-html/2` stores three evidence rows per page (main content, page structure
+  and metadata, whole-page text). Fingerprints of earlier runs therefore change once.
+- Outcome guard (ADR-010 R1.8): a pass may rest on a declared absence or observation basis only when it cites
+  searched pages that are all verified English; otherwise a verbatim quote is still required.
+
+### Not included
+
+- Approval of any criterion or of the FQ mapping (decisions D-03-1 to D-03-5 PENDING APPROVAL), external registry
+  lookups (ISSN Portal, DOI resolution), reports (Stage 04), Before You Apply.
 
 ## [0.6.0.0] - 2026-10-10 (Stage 02.08, development pre-release)
 

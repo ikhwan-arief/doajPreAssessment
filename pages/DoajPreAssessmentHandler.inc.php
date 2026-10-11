@@ -200,6 +200,7 @@ class DoajPreAssessmentHandler extends Handler {
 		return $this->_render($request, 'formGuide.tpl', 'formGuide', array(
 			'doajPaFormGuide' => DoajPaReadService::formGuide(self::_contextId($request)),
 			'doajPaFormGuideNote' => DoajPaAssessmentOrchestrator::FQ_NOT_YET_ASSESSED,
+			'doajPaCandidateRulebook' => DoajPaAssessmentOrchestrator::CANDIDATE_RULEBOOK,
 		));
 	}
 
@@ -337,13 +338,22 @@ class DoajPreAssessmentHandler extends Handler {
 		if (!$confirmed || !is_string($shownHash) || !hash_equals(DoajPaEnglishGate::warningSha256(), $shownHash)) {
 			return $this->_renderNewAssessment($request, 'acknowledgement', 400);
 		}
+		// Assessment profile: approved criteria only (default), or the explicitly confirmed candidate criteria (Stage 03).
+		$profile = $request->getUserVar('profile');
+		if ($profile === null || $profile === '') $profile = DoajPaAssessmentOrchestrator::PROFILE_APPROVED;
+		if (!in_array($profile, array(DoajPaAssessmentOrchestrator::PROFILE_APPROVED, DoajPaAssessmentOrchestrator::PROFILE_CANDIDATE), true)) {
+			return $this->_renderNewAssessment($request, 'profile', 400);
+		}
+		if ($profile === DoajPaAssessmentOrchestrator::PROFILE_CANDIDATE && $request->getUserVar('confirmCandidate') !== '1') {
+			return $this->_renderNewAssessment($request, 'candidate', 400);
+		}
 		$contextId = self::_contextId($request);
 		if (DoajPaReadService::activeRun($contextId)) return $this->_renderNewAssessment($request, 'activeRun', 409);
 		self::_extendTimeLimit();
 		try {
 			$homepage = DoajPaAssessmentOrchestrator::target($request, $request->getContext());
 			$runId = DoajPaAssessmentOrchestrator::start($contextId, $homepage, self::_actor($request),
-				array('confirmed' => true, 'warningSha256' => $shownHash));
+				array('confirmed' => true, 'warningSha256' => $shownHash), $profile);
 		} catch (DoajPaStateException $e) {
 			return $this->_renderNewAssessment($request, DoajPaReadService::activeRun($contextId) ? 'activeRun' : 'cannotStart', 409);
 		} catch (DoajPaConcurrencyException $e) {
@@ -425,6 +435,7 @@ class DoajPreAssessmentHandler extends Handler {
 			'doajPaPdfTool' => $pdfTool,
 			'doajPaPdfAvailable' => $pdfTool !== 'unavailable',
 			'doajPaRulebook' => DoajPaAssessmentOrchestrator::LIVE_RULEBOOK,
+			'doajPaCandidateRulebook' => DoajPaAssessmentOrchestrator::CANDIDATE_RULEBOOK,
 			'doajPaFutureModules' => DoajPaAssessmentOrchestrator::FUTURE_MODULES,
 		), $status);
 	}
@@ -443,7 +454,7 @@ class DoajPreAssessmentHandler extends Handler {
 			'doajPaProgress' => $active ? DoajPaCrawlService::progress($contextId, $runId) : null,
 			'doajPaStepNotice' => is_string($notice) && in_array($notice, self::STEP_NOTICES, true) ? $notice : null,
 			'doajPaError' => $error,
-			'doajPaCanAdvance' => $run['status'] === 'running' && $run['rulebook_version'] === DoajPaAssessmentOrchestrator::LIVE_RULEBOOK,
+			'doajPaCanAdvance' => $run['status'] === 'running' && in_array($run['rulebook_version'], array(DoajPaAssessmentOrchestrator::LIVE_RULEBOOK, DoajPaAssessmentOrchestrator::CANDIDATE_RULEBOOK), true),
 			'doajPaCanCancel' => in_array($run['status'], DoajPaSchema::RUN_ACTIVE, true),
 			'doajPaFutureModules' => DoajPaAssessmentOrchestrator::FUTURE_MODULES,
 		), $status);

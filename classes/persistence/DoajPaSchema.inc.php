@@ -17,6 +17,11 @@ class DoajPaSchema {
 	 */
 	const APPROVED_RULEBOOKS = array();
 	const APPROVED_DATASETS = array();
+	/**
+	 * Rule set label of runs that apply the PROPOSED criteria dataset (Stage 03 candidate profile, PENDING APPROVAL
+	 * D-03-1). Never an approved rule set: it must never be added to APPROVED_RULEBOOKS.
+	 */
+	const CANDIDATE_RULEBOOK = 'candidate-doajpa-criteria-0.1.0-draft';
 
 	/** Schema level written by DoajPaSchemaMigration (plugin_settings, context 0, 'schemaVersion'). */
 	const VERSION = 1;

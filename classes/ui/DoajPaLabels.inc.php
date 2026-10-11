@@ -32,7 +32,7 @@ class DoajPaLabels {
 			'diff' => array('new' => 'New pages', 'unchanged' => 'Unchanged', 'changed' => 'Changed', 'notReadAgain' => 'Not read again',
 				'becameGap' => 'Now not retrieved'),
 			'formAnswer' => array('not_yet_assessed' => 'Not yet assessed', 'supported' => 'Supported', 'not_found' => 'Not found',
-				'needs_verification' => 'Needs verification'),
+				'needs_verification' => 'Needs verification', 'candidate_pending_approval' => 'Candidate answers (pending approval)'),
 		);
 	}
 }

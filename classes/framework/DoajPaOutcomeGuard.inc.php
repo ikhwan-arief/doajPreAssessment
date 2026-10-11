@@ -9,7 +9,10 @@
  *   - the status is unknown, or the outcome is not an array (the rule failed);
  *   - cited evidence does not belong to the run, or fails provenance (see DoajPaEvaluationContext);
  *   - a quote is shorter than MIN_QUOTE characters or does not appear verbatim in the cited evidence;
- *   - "pass" has no verified quote;
+ *   - "pass" has no verified quote, unless the outcome declares the basis "absence" (nothing non-conforming was found
+ *     on the pages searched) or "observation" (a fact of the retrieval itself, e.g. the URL scheme) AND cites at least
+ *     one searched evidence item, every cited item being retrieved, provenance-checked, verified-English evidence
+ *     (Stage 03, ADR-010 R1.8);
  *   - cited evidence is not retrieved, verified-English evidence. The language check is an advisory
  *     heuristic, so "undetermined", "mixed" and "non_english" are never treated as verified English;
  *   - a detection is malformed, a duplicate, or also listed as verified clear.
@@ -42,6 +45,7 @@ class DoajPaOutcomeGuard {
 			'rationale' => self::str($outcome, 'rationale'),
 			'interpretationLimit' => self::str($outcome, 'interpretationLimit'),
 			'evidenceIds' => array(), 'quotes' => array(), 'detections' => array(), 'verifiedClear' => array(), 'downgrades' => array(),
+			'basis' => isset($outcome['basis']) && is_string($outcome['basis']) ? $outcome['basis'] : 'quote',
 		);
 
 		$cited = array();
@@ -85,7 +89,9 @@ class DoajPaOutcomeGuard {
 			if (!$evidence[$id]['verifiedEnglish']) $allVerified = false;
 		}
 		if (!$allVerified && in_array($status, array('pass', 'fail', 'warning', 'contradiction'), true)) $down[] = 'evidence_not_verified_english';
-		if ($status === 'pass' && $verifiedQuotes === 0) $down[] = 'pass_without_verified_quote';
+		$basis = isset($outcome['basis']) && in_array($outcome['basis'], array('absence', 'observation'), true) ? $outcome['basis'] : 'quote';
+		$basisOk = $basis !== 'quote' && $allVerified && count(array_filter($cited, function ($id) use ($evidence) { return is_int($id) && isset($evidence[$id]); })) > 0;
+		if ($status === 'pass' && $verifiedQuotes === 0 && !$basisOk) $down[] = 'pass_without_verified_quote';
 
 		$down = array_values(array_unique($down));
 		if ($down) {

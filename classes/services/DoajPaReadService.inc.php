@@ -139,12 +139,28 @@ class DoajPaReadService {
 			foreach (DoajPaDb::table(DoajPaSchema::T_FORM_ANSWER)->where('context_id', '=', $ctx)->where('run_id', '=', (int) $latest->run_id)
 				->orderBy('answer_id')->get()->all() as $a) $stored[$a->question_key] = (array) $a;
 		}
+		// Question titles come from the proposed mapping only for runs that used it (candidate profile, D-03-2 pending).
+		$titles = array();
+		if ($latest && $latest->rulebook_version === DoajPaSchema::CANDIDATE_RULEBOOK) {
+			require_once(dirname(__FILE__) . '/../rules/data/DoajPaCandidateDataset.inc.php');
+			$data = DoajPaCandidateDataset::data();
+			foreach ($data['fqMapping'] as $m) $titles[$m['fq']] = $m['title'];
+		}
+		$sources = array();
+		$ids = array_values(array_filter(array_map(function ($a) { return $a['evidence_id']; }, $stored)));
+		if ($ids) {
+			foreach (DoajPaDb::table(DoajPaSchema::T_EVIDENCE)->where('context_id', '=', $ctx)->whereIn('evidence_id', $ids)->get(array('evidence_id', 'source_url'))->all() as $e) {
+				$sources[(int) $e->evidence_id] = $e->source_url;
+			}
+		}
 		$entries = array();
 		for ($i = 1; $i <= 20; $i++) {
 			$key = sprintf('FQ-%02d', $i);
 			$a = isset($stored[$key]) ? $stored[$key] : null;
-			$entries[] = array('questionKey' => $key, 'answerStatus' => $a ? $a['answer_status'] : 'not_yet_assessed',
-				'answerText' => $a ? $a['answer_text'] : null, 'uncertainty' => $a ? $a['uncertainty'] : null, 'stored' => $a !== null);
+			$url = $a && $a['evidence_id'] !== null && isset($sources[(int) $a['evidence_id']]) ? $sources[(int) $a['evidence_id']] : null;
+			$entries[] = array('questionKey' => $key, 'title' => isset($titles[$key]) ? $titles[$key] : null, 'answerStatus' => $a ? $a['answer_status'] : 'not_yet_assessed',
+				'answerText' => $a ? $a['answer_text'] : null, 'uncertainty' => $a ? $a['uncertainty'] : null, 'stored' => $a !== null,
+				'source_url' => $url, 'sourceUrlIsLink' => self::isHttpUrl($url));
 		}
 		return array('run' => $latest ? self::runSummary($latest, false) : null, 'entries' => $entries);
 	}

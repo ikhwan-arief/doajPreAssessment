@@ -1,12 +1,13 @@
-# Release Notes — DOAJ Pre-Assessment 0.6.0.0
+# Release Notes — DOAJ Pre-Assessment 0.7.0.0
 
-**Release type:** development pre-release (not compliance-ready; never 1.0 before Stage 03–05 acceptance)
-**Date:** 2026-10-10
+**Release type:** internal-testing build (not compliance-ready; never 1.0 before Stage 03–05 acceptance)
+**Date:** 2026-10-12
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
+**Distribution:** internal testing only. The licence is not decided; no external redistribution.
 
-**Stage 02 framework; normative DOAJ assessment rules are not yet complete.** This build evaluates no DOAJ
-criterion. Every run is labelled "Not a DOAJ assessment result." Nothing in it states, predicts or guarantees DOAJ
-eligibility or acceptance.
+**Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL.** No DOAJ criterion is approved.
+Every run is labelled "Not a DOAJ assessment result." Nothing in it states, predicts or guarantees DOAJ eligibility
+or acceptance.
 
 > **ENGLISH-ONLY JOURNAL CONTENT.** The plugin evaluates only publicly accessible English-language journal websites,
 > with deterministic rules and without Artificial Intelligence or automatic translation. A confirmation is required
@@ -14,35 +15,44 @@ eligibility or acceptance.
 
 ## What this release contains
 
-- Access limited to the journal's default Journal Manager group and to user 1 as site administrator; "Login as"
-  sessions are always denied.
-- English-only first-use gate and per-run confirmation, both recorded with user and UTC time.
-- Persistent, sealed assessment history: runs, evidence, findings with stable IDs and per-run observations,
-  corrective actions, report metadata and an append-only audit log.
-- Backend views: Overview, New Assessment, Criteria & Findings, Evidence, DOAJ Form Guide, Before You Apply,
-  Corrective Actions, Assessment History (with comparison), Reports, Settings.
-- Public website reader: SSRF-protected, bounded, robots.txt-aware; HTML and PDF text extraction with explicit
-  statuses for every page that could not be read.
-- Assessment framework: bounded, resumable steps; a rule interface; result checks (verbatim quotes, verified English
-  evidence only); evaluation and sealing in one transaction.
+- Everything in 0.6.0.0: access guard, English-only gates, sealed assessment history with stable finding IDs,
+  backend views, SSRF-protected website reader, resumable assessment framework.
+- Main-content language identification (ADR-011): navigation, breadcrumbs, sidebars and footers do not decide a
+  page's language; too little text stays undetermined and is never verified English.
+- Deterministic evaluation engine with the candidate criteria dataset 0.1.0-draft (137 criteria from the DOAJ
+  Guide v2.9, the Principles of Transparency v4.0 and DOAJ Licensing & copyright v2.1, captured 2026-10-10).
+- Two assessment profiles on New Assessment:
+  - **Approved DOAJ criteria only** (default): none are approved, so no criterion is evaluated;
+  - **Candidate criteria, pending approval**: an explicit, per-run choice with an extra confirmation; results are
+    labelled "Candidate criteria - PENDING APPROVAL".
+- Candidate results quote the verified English text they rely on, with page addresses; fail, warning and
+  contradiction results include a recommended correction citing the DOAJ clause; deficiencies become findings
+  tracked across runs.
+- DOAJ Form Guide FQ-01 to FQ-20 answered from verified English evidence only in candidate runs (supported, not
+  found, needs verification); FQ-08 (keywords) is never answered automatically.
 
 ## Not available in this release
 
 | Feature | Status |
 |---|---|
-| DOAJ criteria (Guide, Transparency, Copyright and Licensing) | **NOT IMPLEMENTED** (Stage 03; no approved rule set) |
-| Editorial endogeny (25% per issue / calendar year) | **NOT IMPLEMENTED** (Stage 03) |
-| Article PDF publication-history dates | **NOT IMPLEMENTED** (Stage 03) |
-| Licensing cross-page contradictions | **NOT IMPLEMENTED** (Stage 03) |
-| Indexing claims and journal metrics | **NOT IMPLEMENTED** (Stage 03) |
-| DOAJ Form Guide answers FQ-01 to FQ-20 | "Not yet assessed" for every question (Stage 03) |
+| Approved DOAJ criteria | **PENDING APPROVAL** (decision D-03-1); only the candidate profile evaluates criteria |
+| FQ-01..FQ-20 mapping | **PENDING APPROVAL** (decision D-03-2); answers are candidate answers |
+| ISSN Portal and DOI resolver lookups | Not performed (decision D-03-4); those criteria are always "unverifiable" |
+| Unreliable-index classification | Not performed (decision D-03-5); indexing claims are listed as unverified |
 | Before You Apply task list | Not available (needs approved criteria) |
 | HTML, PDF and DOCX reports | Not available; export metadata only (Stage 04) |
 | Human confirmation of machine results | Not available (later stage) |
 | Unattended (scheduled) assessments | Not available: steps run from the manager's browser |
-| Main-content language identification | Planned for Stage 03 (decision recorded); the current check is page-wide and advisory |
-| Independent code review (Codex) of Stage 02 | **BLOCKED** (not executed) |
-| Licence | Not decided: no licence is granted by this release |
+| Independent code review (Codex) of Stage 02 and Stage 03 | **BLOCKED** (not executed) |
+| Licence | Not decided: no licence is granted by this release; no external redistribution |
+
+## Known limitations
+
+- Pages that list mostly names (editorial board, contact) often have too little prose for the language check; they
+  stay "undetermined" (ADR-011) and results that depend on them are "unverifiable".
+- Checks read only the pages crawled in the run, within the crawl limits. A sample cannot prove "all content".
+- Matching is by curated English patterns; wording outside them is reported as unverifiable or for DOAJ review,
+  never as a pass.
 
 ## Requirements and limits
 
@@ -53,5 +63,5 @@ eligibility or acceptance.
 
 ## Data
 
-Disabling, upgrading or deleting the plugin keeps all its data. There is no automatic purge. See README
-"Installation (OJS 3.3.0-23)" for upgrade, rollback, uninstall and recovery.
+Disabling, upgrading or deleting the plugin keeps all its data. There is no automatic purge. Upgrading from 0.6.0.0
+needs no schema change. See README "Installation (OJS 3.3.0-23)" for upgrade, rollback, uninstall and recovery.
