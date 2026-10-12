@@ -323,7 +323,18 @@ Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin ha
 
 ## License and Copyright
 
-Licensing and redistribution terms have not yet been finalized. Do not assume an open-source license or permission for redistribution.
+Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+
+The plugin code is free software, licensed under the GNU General Public License, version 3 or (at your option) any
+later version (GPL-3.0-or-later). The full licence text is in `LICENSE`.
+
+The DOAJ-derived reference material (`classes/rules/data/DoajPaCandidateDataset.inc.php`) is licensed separately under
+CC BY-SA 4.0. It contains excerpts from DOAJ documents (CC BY-SA 4.0) and from the Principles of Transparency and Best
+Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME; CC BY 4.0). `NOTICE.md` gives the full attribution. The
+plugin is not reviewed or endorsed by DOAJ.
+
+The licence permits redistribution. This build is nevertheless an internal-testing build, not a production release:
+the candidate criteria are PENDING APPROVAL and the independent security audit is BLOCKED.
 
 ## Disclaimer
 

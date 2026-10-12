@@ -8,6 +8,10 @@
  *  journal context ID and filters by it; records of other journals are "not found". Historical statuses
  *  come from per-run observations (Stage 01 F6), never from the current finding status alone.
  *  Values are returned unescaped; templates escape every output.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/../persistence/DoajPaDb.inc.php');

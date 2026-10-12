@@ -11,6 +11,10 @@
  *     crawl not truncated); an unread or unverified page is never "not found";
  *   - everything else is "needs_verification" (with what was found), and FQ-08 (keywords) is never answered.
  *  The mapping is PROPOSED (decision D-03-2, PENDING APPROVAL); answers are candidate answers.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/DoajPaFacts.inc.php');
@@ -56,6 +60,12 @@ class DoajPaFormGuideBuilder {
 	// Helpers
 	//
 
+	/** @return string The ADR-013 label when the governing outcome rests on language-neutral facts */
+	private function neutralNote($key) {
+		return isset($this->o[$key]['basis']) && $this->o[$key]['basis'] === 'neutral'
+			? 'Based on language-neutral facts (names, dates, ISSNs or counts) read from a page with too little text for a language verdict (ADR-013, PENDING APPROVAL); check the page.' : '';
+	}
+
 	private function status($key) {
 		return isset($this->o[$key]) ? $this->o[$key]['status'] : null;
 	}
@@ -94,7 +104,7 @@ class DoajPaFormGuideBuilder {
 		if ($s === 'pass' && $this->o[$key]['quotes']) {
 			$q = $this->o[$key]['quotes'][0];
 			$e = $this->f->evidence[$q['evidenceId']];
-			return array('status' => 'supported', 'text' => $passText . ' "' . $q['text'] . '" (' . $e['url'] . ')', 'evidenceId' => $q['evidenceId'], 'uncertainty' => '');
+			return array('status' => 'supported', 'text' => $passText . ' "' . $q['text'] . '" (' . $e['url'] . ')', 'evidenceId' => $q['evidenceId'], 'uncertainty' => $this->neutralNote($key));
 		}
 		if ($s === 'fail' || $s === 'warning') return $this->notFound($key, $notFoundText);
 		$ids = $s !== null ? $this->o[$key]['evidenceIds'] : array();
@@ -254,7 +264,7 @@ class DoajPaFormGuideBuilder {
 		$s = $this->status($key);
 		if ($s === 'pass' && $this->o[$key]['quotes']) {
 			$e = $this->f->evidence[$this->o[$key]['quotes'][0]['evidenceId']];
-			return array('status' => 'supported', 'text' => $e['url'] . ' ("' . $this->o[$key]['quotes'][0]['text'] . '")', 'evidenceId' => $e['id'], 'uncertainty' => '');
+			return array('status' => 'supported', 'text' => $e['url'] . ' ("' . $this->o[$key]['quotes'][0]['text'] . '")', 'evidenceId' => $e['id'], 'uncertainty' => $this->neutralNote($key));
 		}
 		return $this->fromOutcome($key, $what, 'No ' . $what . ' page was found.');
 	}
@@ -272,8 +282,9 @@ class DoajPaFormGuideBuilder {
 
 	private function fq18() {
 		$fees = $this->f->fees();
-		$no = self::v($fees['noFee']);
 		$apc = array_values(array_filter(self::v($fees['fees']), function ($x) { return $x['type'] === 'apc'; }));
+		// A no-fee statement conflicts with an APC only when it covers all charges or the APC ("no submission fee" does not).
+		$no = array_values(array_filter(self::v($fees['noFee']), function ($x) { return !isset($x['scope']) || array_intersect($x['scope'], array('all', 'apc')); }));
 		$w = self::v($fees['waivers']);
 		$waiver = $w ? ' Waiver: ' . self::q($w[0]) . '.' : '';
 		$amount = array_values(array_filter($apc, function ($x) { return $x['amount'] !== null; }));

@@ -11,6 +11,10 @@
  *    explicitly selects the candidate profile for one run; results are labelled as candidate, not approved.
  *  There is no setting, request parameter or file lookup that can add rules; test rules are passed only by CLI test
  *  code (never reachable from a request).
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 class DoajPaRuleRegistry {

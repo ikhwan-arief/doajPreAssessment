@@ -2,6 +2,10 @@
  * templates/partials/refs.tpl
  *
  * "Cross-check with DOAJ" links. Parameter: primary (optional URL of the criterion's own DOAJ page).
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  *}
 <div class="doajPa-crosscheck">
 	<span class="doajPa-crosscheck__label">{translate key="plugins.generic.doajPreAssessment.crossCheck"}</span>

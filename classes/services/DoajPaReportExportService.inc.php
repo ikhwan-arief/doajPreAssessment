@@ -7,6 +7,10 @@
  * @brief Report export metadata (Stage 01 F7, F10) and private storage paths (ADR-006). Exports belong
  *  to a completed run and record its snapshot digest. Files live only under OJS files_dir, never under
  *  the public files directory. Generating files is Stage 04; this stage stores metadata only.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/../persistence/DoajPaDb.inc.php');

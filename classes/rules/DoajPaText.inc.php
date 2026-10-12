@@ -7,6 +7,10 @@
  * @brief Deterministic English text utilities for Stage 03 rules. Pure; no OJS dependency; no network; no inference.
  *  Every sentence or snippet returned is a verbatim substring of the evidence text, so DoajPaOutcomeGuard can verify
  *  quotes. Patterns are bounded (no nested unbounded quantifiers) and inputs are capped at the extractor limits.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 class DoajPaText {
@@ -44,6 +48,27 @@ class DoajPaText {
 			}
 		}
 		return $hits;
+	}
+
+	/**
+	 * Whether a line looks like a heading or menu label rather than a statement (Stage 01 F2: a label never proves
+	 * anything): no closing punctuation, at most six words, and most words capitalised ("Open Access Policy",
+	 * "Print Edition", "Subscription"). Lines with a sentence end, more words or ordinary capitalisation are statements.
+	 */
+	public static function headingLike($line) {
+		$line = trim($line);
+		if ($line === '' || preg_match('/[.!?;:)\]"\x{201D}]$/u', $line)) return false;
+		if (!preg_match_all('/\p{L}[\p{L}\'\x{2019}-]*/u', $line, $m)) return false;
+		$words = array_values(array_filter($m[0], function ($w) { return !preg_match('/^(?:and|or|of|the|a|an|to|for|in|on|with|by|&)$/i', $w); }));
+		if (!$words || count($m[0]) > 6) return false;
+		$caps = 0;
+		foreach ($words as $w) if (preg_match('/^\p{Lu}/u', $w)) $caps++;
+		return $caps / count($words) >= 0.6;
+	}
+
+	/** @return boolean Whether the matched text itself contains a negation ("authors do not retain copyright") */
+	public static function negatedWithin($text) {
+		return preg_match('/\b(no|not|never|without|none|cannot|can\'t|don\'t|doesn\'t|isn\'t|aren\'t|won\'t)\b/i', $text) === 1;
 	}
 
 	/** @return boolean Whether a negation word appears shortly before byte offset $pos in the sentence */

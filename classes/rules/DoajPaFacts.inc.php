@@ -9,6 +9,10 @@
  *  verbatim sentence it came from, so outcomes can quote it. Curated English patterns only (Stage 01 F2, PROD-06).
  *  Evidence methods: html_main_content (ADR-011 main region), html_text_extraction (whole page), html_structured
  *  (meta tags, table of contents, licence/locale links, image text), pdftotext_extraction (PDF full text).
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/DoajPaText.inc.php');
@@ -24,6 +28,10 @@ class DoajPaFacts {
 	public $resources = array();
 	public $coverage = array();
 	public $refDate;
+	/** @var array evidenceId => bool: neutral-eligible evidence (ADR-013, DoajPaEvaluationContext::neutralEligible) */
+	public $neutral = array();
+	/** @var array resourceId => bool: resources whose evidence is neutral-eligible */
+	public $neutralResource = array();
 	/** @var array memoized facts (the context is immutable) */
 	private $memo = array();
 
@@ -45,6 +53,8 @@ class DoajPaFacts {
 		foreach ($context->evidence() as $e) $this->evidence[$e['id']] = $e;
 		foreach ($context->resources() as $r) $this->resources[$r['id']] = $r;
 		$this->coverage = $context->coverage();
+		$this->neutral = $context->neutralEligible();
+		foreach ($this->evidence as $id => $e) if (!empty($this->neutral[$id])) $this->neutralResource[$e['resourceId']] = true;
 		$finished = isset($this->coverage['finishedAtUtc']) ? $this->coverage['finishedAtUtc'] : null;
 		$this->refDate = $finished ? substr($finished, 0, 10) : gmdate('Y-m-d');
 	}
@@ -82,15 +92,31 @@ class DoajPaFacts {
 	 * other language, inaccessible, parse failure). A fact missing from the readable pages may be on these (F5).
 	 * A page that does not exist (404/410) counts as read. An OJS galley viewer page (/article/view/X/Y) whose language
 	 * is only undetermined is not counted: it frames the full-text file, which is a resource of its own and is read
-	 * (and counted) separately; a galley page in another language still counts.
+	 * (and counted) separately; likewise an undetermined archive page that is only a list (no sentence), whose issues are
+	 * read as resources of their own (decision D-03-8). A galley or archive page in another language, or an archive page
+	 * with prose, still counts. With $neutralOk (rules that read only language-neutral facts, ADR-013), a neutral-eligible
+	 * page counts as read.
 	 * @return array resources
 	 */
-	public function unreadOf($types) {
-		return array_values(array_filter($this->resourcesOf($types), function ($r) {
+	public function unreadOf($types, $neutralOk = false) {
+		$f = $this;
+		return array_values(array_filter($this->resourcesOf($types), function ($r) use ($f, $neutralOk) {
 			if ($r['acquisition'] === 'not_found') return false;
-			if ($r['pageType'] === 'galley' && $r['acquisition'] === 'retrieved' && is_string($r['reason']) && strpos($r['reason'], 'language_undetermined') === 0) return false;
+			if ($neutralOk && !empty($f->neutralResource[$r['id']])) return false; // language-neutral facts were read (ADR-013)
+			// A list page whose language is only undetermined frames resources that are read on their own: the galley viewer
+			// frames the full-text file; the archive lists the issues (each issue page is a resource of its own).
+			if (in_array($r['pageType'], array('galley', 'archive'), true) && $r['acquisition'] === 'retrieved' && is_string($r['reason']) && strpos($r['reason'], 'language_undetermined') === 0
+				&& ($r['pageType'] === 'galley' || !$f->hasProse($r['id']))) return false;
 			return $r['acquisition'] !== 'retrieved' || $r['reason'] !== null;
 		}));
+	}
+
+	/** @return boolean Whether the main text of a resource contains a sentence (five or more words ending with . ! or ?), not only list entries */
+	public function hasProse($resourceId) {
+		$e = $this->mainOf($resourceId);
+		if (!$e) return false;
+		foreach (DoajPaText::sentences($e['quote']) as $s) if (DoajPaText::words($s) >= 5 && preg_match('/[.!?]$/', $s)) return true;
+		return false;
 	}
 
 	/** @return boolean Whether the crawl stopped at a page or time limit (absence findings are then unverifiable) */
@@ -151,16 +177,21 @@ class DoajPaFacts {
 		'access_method' => '/\b(subscription|subscribe|pay[- ]per[- ]view|register to read|registration (?:is )?required|login to (?:read|access)|members only)\b/i',
 		'affiliated_org' => '/\b(affiliated with|official journal of|published on behalf of|journal of the [A-Z]\w+ (?:Society|Association)|in (?:collaboration|cooperation|partnership) with)\b/i',
 		'non_oa_policy' => '/\b(non[- ]open[- ]access|not open access|free[- ]to[- ]read content|subscription content|poetry)\b/i',
-		'consent_policy' => '/\b(consent to publi\w+|informed consent|patient consent|consent (?:form|was obtained))\b/i',
+		'consent_policy' => '/\b(consent (?:to|for) (?:the )?publi\w+|(?:patient|participant|written|informed) consent\b[^.!?\n]{0,80}\b(?:publication of|to publish|patients?|case (?:details|reports?)|images?)|consent (?:form|was obtained))\b/i',
 		'anonymisation' => '/\b(anonymi[sz]\w+|de-?identif\w+|identifiable (?:information|details|participant))\b/i',
 		'case_report_review' => '/\breviewer guidelines?\b[^.!?\n]{0,80}\bcase reports?\b|\bcase reports?\b[^.!?\n]{0,80}\breviewer guidelines?\b/i',
 		'care_guideline' => '/\bCARE (?:guidelines?|checklist|reporting)\b/i',
 		'phd_members' => '/\b(Ph\.?\s?D\.?|doctorate|doctoral degree|D\.Phil)\b/i',
 	);
 
-	/** @return array Matches of a topic in the given items (see DoajPaText::find) */
+	/** @return array Matches of a topic in the given items (see DoajPaText::find); headings and menu labels are not statements (F2) */
 	public function topic($name, $items, $skipNegated = true) {
-		return DoajPaText::find($items, self::TOPICS[$name], $skipNegated);
+		return self::statements(DoajPaText::find($items, self::TOPICS[$name], $skipNegated));
+	}
+
+	/** @return array The matches whose sentence is a statement, not a heading or menu label (DoajPaText::headingLike) */
+	public static function statements($hits) {
+		return array_values(array_filter($hits, function ($h) { return !DoajPaText::headingLike($h['sentence']); }));
 	}
 
 	//
@@ -187,7 +218,7 @@ class DoajPaFacts {
 	public function condition($name) {
 		$memoKey = 'condition' . '|' . json_encode($name);
 		if (array_key_exists($memoKey, $this->memo)) return $this->memo[$memoKey];
-		return $this->memo[$memoKey] = DoajPaText::find($this->items(null), self::CONDITIONS[$name], true);
+		return $this->memo[$memoKey] = self::statements(DoajPaText::find($this->items(null), self::CONDITIONS[$name], true));
 	}
 
 	//
@@ -299,9 +330,11 @@ class DoajPaFacts {
 		$items = array_merge($this->items(null, array('html_main_content', 'pdftotext_extraction', 'html_text_extraction')), $this->items(null, array('html_structured')));
 		foreach ($items as $e) {
 			foreach (DoajPaText::sentences($e['quote']) as $s) {
+				$heading = DoajPaText::headingLike($s) && !preg_match('/(?:\x{00A9}|\(c\)|copyright)\s*\d{4}/iu', $s);
 				foreach (self::COPYRIGHT as $kind => $rx) {
 					if (!preg_match($rx, $s, $m, PREG_OFFSET_CAPTURE)) continue;
-					if ($kind !== 'arr' && $kind !== 'statement' && DoajPaText::negatedAt($s, $m[0][1])) continue;
+					if ($heading && $kind !== 'arr') continue; // "Copyright Notice" is a heading, not copyright terms
+					if ($kind !== 'arr' && $kind !== 'statement' && (DoajPaText::negatedAt($s, $m[0][1]) || DoajPaText::negatedWithin($m[0][0]))) continue;
 					$chrome = $e['method'] === 'html_text_extraction' && (!isset($main[$e['resourceId']]) || strpos($main[$e['resourceId']], $s) === false);
 					if ($e['method'] === 'html_text_extraction' && !$chrome) continue; // already found in the main region
 					$out[] = array('kind' => $kind, 'evidence' => $e, 'quote' => DoajPaText::snippet($s, $m[0][1]), 'sentence' => $s, 'chrome' => $chrome);
@@ -340,8 +373,12 @@ class DoajPaFacts {
 		$out['items'] = $items;
 		foreach ($items as $e) {
 			foreach (DoajPaText::sentences($e['quote']) as $s) {
+				if (DoajPaText::headingLike($s)) continue; // "Article Processing Charges" as a heading states nothing
 				if (preg_match(self::NO_FEE, $s, $m, PREG_OFFSET_CAPTURE)) {
-					$out['noFee'][] = array('evidence' => $e, 'quote' => DoajPaText::snippet($s, $m[0][1]), 'sentence' => $s);
+					// Scope: the fee types the statement names ("no submission fee"), or all charges ("does not charge any fees").
+					$scope = array();
+					foreach (self::FEE_TYPES as $type => $rx) if (preg_match($rx, $m[0][0])) $scope[] = $type;
+					$out['noFee'][] = array('evidence' => $e, 'quote' => DoajPaText::snippet($s, $m[0][1]), 'sentence' => $s, 'scope' => $scope ?: array('all'));
 					continue;
 				}
 				foreach (self::FEE_TYPES as $type => $rx) {
@@ -350,7 +387,7 @@ class DoajPaFacts {
 					$amount = preg_match(self::AMOUNT, $s, $a) ? trim($a[0]) : null;
 					$out['fees'][] = array('type' => $type, 'amount' => $amount, 'evidence' => $e, 'quote' => DoajPaText::snippet($s, $m[0][1]), 'sentence' => $s);
 				}
-				if (preg_match(self::CONDITIONS['waiver'], $s, $m, PREG_OFFSET_CAPTURE)) {
+				if (preg_match(self::CONDITIONS['waiver'], $s, $m, PREG_OFFSET_CAPTURE) && !DoajPaText::negatedAt($s, $m[0][1])) {
 					$out['waivers'][] = array('evidence' => $e, 'quote' => DoajPaText::snippet($s, $m[0][1]), 'sentence' => $s);
 				}
 			}

@@ -20,6 +20,10 @@
  *  - The state is bound to its run's identity (context, ID, number, creation time). Restoring a database backup can
  *    give a new run the ID of a discarded one whose private files remain: start() moves such a stale directory
  *    aside, and step() refuses a state that belongs to another run or is ahead of the stored records.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/../persistence/DoajPaDb.inc.php');

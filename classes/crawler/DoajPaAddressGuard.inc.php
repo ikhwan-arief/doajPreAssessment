@@ -12,6 +12,10 @@
  * Development-only exception: only if the environment variable DOAJ_PA_DEV_ALLOW_PRIVATE equals
  * "I-UNDERSTAND-THIS-IS-A-TEST-STACK" AND the file tests/support/DoajPaDevPrivateAllowance.inc.php exists
  * (it is never packaged) AND DOAJ_PA_DEV_ALLOW_HOSTS lists the exact host:port=ip triple.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/DoajPaIpPolicy.inc.php');

@@ -14,6 +14,10 @@
  *   quotes           [['evidenceId' => int, 'text' => string]] exact excerpts that must appear verbatim
  *   detections       [['subtype','targetType','target','criterionStatus','evidenceId']] deficiencies found
  *   verifiedClear    [['subtype','targetType','target','evidenceId']] earlier deficiencies now verified corrected
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 interface DoajPaCriterionRule {

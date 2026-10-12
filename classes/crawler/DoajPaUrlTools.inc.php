@@ -9,6 +9,10 @@
  *    0x7f000001 or 127.1 are rejected rather than resolved), port 1-65535, no control characters;
  *  - resolve(): RFC 3986 section 5.2 reference resolution;
  *  - key(): deduplication key (DoajPaFindingKey::normalizeUrl form) - never used as the URL to fetch.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/../history/DoajPaFindingKey.inc.php');

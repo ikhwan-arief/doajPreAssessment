@@ -108,5 +108,5 @@ doajpa_test('EvaluationContext: fingerprint changes with content, gaps and langu
 	$e4 = $ev; $e4[1]['language'] = 'undetermined';
 	doajpa_assert($fp !== (new DoajPaEvaluationContext($e4, $res, array()))->fingerprint(array('k', 1), array('about')), 'language');
 	doajpa_same(null, $base->fingerprint(array('k', 1), array('editorial_team')), 'no inputs: never reused');
-	doajpa_same(array(1 => array('quote' => 'q', 'verifiedEnglish' => true)), $base->guardView(), 'guard view');
+	doajpa_same(array(1 => array('quote' => 'q', 'verifiedEnglish' => true, 'neutral' => false)), $base->guardView(), 'guard view (neutral: ADR-013 eligibility, false without an English site)');
 });

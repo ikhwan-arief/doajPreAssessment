@@ -8,6 +8,10 @@
  *  as a separate process with a timeout and an output cap. Nothing is bundled. Explicit outcomes (F4):
  *  ok, unavailable (no pdftotext), encrypted, corrupt, no_text (scanned / image-only), timeout.
  *  Text order follows pdftotext's reading-order heuristics; multi-column layouts may interleave.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 class DoajPaPdfExtractor {

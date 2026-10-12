@@ -6,6 +6,10 @@
  * @class DoajPaSchema
  * @brief Table names and closed value sets of the plugin schema (Stage 01 F5, F6, F10).
  *  Pure constants; no OJS dependency.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 class DoajPaSchema {

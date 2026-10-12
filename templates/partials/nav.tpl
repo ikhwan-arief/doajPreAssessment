@@ -2,6 +2,10 @@
  * templates/partials/nav.tpl
  *
  * Plugin navigation (Stage 01 F8 order) and development-build notice.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  *}
 <nav class="doajPa-nav" aria-label="{translate key="plugins.generic.doajPreAssessment.nav.label"}">
 	<ul class="doajPa-nav__list">

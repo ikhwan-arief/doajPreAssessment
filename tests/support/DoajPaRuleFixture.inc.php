@@ -35,10 +35,12 @@ class DoajPaRuleFixture {
 
 	/**
 	 * @param $pages array path => [kind, body] (see pages())
-	 * @param $opts array limitsHit (string[]), site (name used in URLs)
+	 * @param $opts array limitsHit (string[]), site (name used in URLs), depth (path => clicks from the homepage),
+	 *  finalUrl (path => URL after redirects), mediaType (path => media type of a kind "other" file)
 	 * @return DoajPaEvaluationContext
 	 */
 	public static function context($pages, $opts = array()) {
+		static $extracted = array();
 		$s = self::sites();
 		$site = isset($opts['site']) ? $opts['site'] : 'x';
 		$resources = array(); $evidence = array(); $rid = 0; $eid = 0;
@@ -51,13 +53,23 @@ class DoajPaRuleFixture {
 			$r = array('id' => $rid, 'url' => $url, 'urlSha256' => hash('sha256', $url), 'pageType' => $type, 'httpStatus' => 200, 'acquisition' => 'retrieved',
 				'reason' => null, 'contentSha256' => hash('sha256', is_string($body) ? $body : json_encode($body)), 'finalUrl' => $url,
 				'mediaType' => $kind === 'pdf' ? 'application/pdf' : 'text/html', 'depth' => $depth, 'mainRegion' => null, 'linkText' => '');
+			if (isset($opts['depth'][$path])) $r['depth'] = $opts['depth'][$path];
+			if (isset($opts['finalUrl'][$path])) $r['finalUrl'] = $opts['finalUrl'][$path];
 			$rows = array();
 			$language = null;
 			if ($kind === 'status') {
 				$r['httpStatus'] = (int) $body; $r['acquisition'] = 'inaccessible'; $r['reason'] = 'access_restricted_http_' . $body; $r['contentSha256'] = null;
+			} elseif ($kind === 'other') {
+				// A retrieved file that is neither HTML nor PDF (for example a word-processor file): no text is read.
+				$r['mediaType'] = isset($opts['mediaType'][$path]) ? $opts['mediaType'][$path] : 'application/octet-stream';
 			} elseif ($kind === 'html') {
-				$x = DoajPaHtmlExtractor::extract($body, 'utf-8', $url);
-				$language = DoajPaLanguageHeuristic::assess($x['mainText'], $x['lang']);
+				$ck = hash('sha256', $url . "\0" . $body);
+				if (!isset($extracted[$ck])) {
+					if (count($extracted) > 4000) $extracted = array();
+					$x0 = DoajPaHtmlExtractor::extract($body, 'utf-8', $url);
+					$extracted[$ck] = array($x0, DoajPaLanguageHeuristic::assess($x0['mainText'], $x0['lang']));
+				}
+				list($x, $language) = $extracted[$ck];
 				$r['mainRegion'] = $x['mainRegion'];
 				if (trim($x['mainText']) !== '') $rows[] = array('html_main_content', $x['mainText'], 'html_page', $x['title']);
 				if ($x['structured']) $rows[] = array('html_structured', implode("\n", $x['structured']), 'html_page', $x['title']);

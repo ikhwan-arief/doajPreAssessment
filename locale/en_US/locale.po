@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+# Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+# SPDX-License-Identifier: GPL-3.0-or-later
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
@@ -841,3 +844,6 @@ msgstr "Machine results"
 
 msgid "plugins.generic.doajPreAssessment.formGuide.candidate"
 msgstr "These answers come from the candidate profile of the latest completed run. The FQ mapping is pending approval (decision D-03-2). A supported answer quotes verified English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. FQ-08 (keywords) is never answered automatically."
+
+msgid "plugins.generic.doajPreAssessment.attribution.doaj"
+msgstr "DOAJ text quoted in candidate results: excerpts, wording unchanged, from the DOAJ Guide to applying, Licensing & copyright and Application form (© DOAJ, CC BY-SA 4.0) and from the Principles of Transparency and Best Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME, CC BY 4.0). DOAJ has not reviewed or endorsed this plugin. Full attribution: NOTICE.md in the plugin package."

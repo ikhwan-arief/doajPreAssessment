@@ -15,6 +15,10 @@
  *   - external registries are not consulted (decision D-03-4 pending): unverifiable;
  *   - no index is called unreliable (decision D-03-5 pending).
  *  Failed and warned items carry a corrective recommendation that points to the DOAJ clause.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/DoajPaFacts.inc.php');
@@ -42,12 +46,13 @@ class DoajPaChecks {
 	 */
 	public static function bound($spec, $o) {
 		$s = $o['status'];
+		$recommendation = self::recommendation($spec);
 		$decisive = in_array($s, array('pass', 'fail', 'warning', 'contradiction'), true);
 		if (($spec['level'] === 'H' || $spec['assessability'] === 'human') && $decisive && $s !== 'contradiction') {
 			$o['status'] = 'for_doaj_review';
 			$o['detections'] = array(); $o['verifiedClear'] = array();
 			$o['rationale'] = '[Human judgement reserved] ' . $o['rationale'];
-		} elseif ($spec['level'] === 'R' && $s === 'fail') {
+		} elseif ($recommendation && $s === 'fail') {
 			$o['status'] = 'warning';
 			foreach ($o['detections'] as $i => $d) if ($d['criterionStatus'] === 'fail') $o['detections'][$i]['criterionStatus'] = 'warning';
 		} elseif ($spec['assessability'] === 'external' && $s === 'pass') {
@@ -56,6 +61,16 @@ class DoajPaChecks {
 			$o['rationale'] = '[External registry verification not performed] ' . $o['rationale'];
 		}
 		return $o;
+	}
+
+	/**
+	 * Whether the clause is a recommendation (AT-09: must and should are reported faithfully): level R, or a conditional
+	 * (C) clause worded with "should" and not "must" (for example "If offline versions are available, this should be
+	 * clearly described"). A recommendation is never failed; its non-conformance is a warning.
+	 */
+	public static function recommendation($spec) {
+		if ($spec['level'] === 'R') return true;
+		return $spec['level'] === 'C' && preg_match('/\bshould\b/i', $spec['quote'] . ' ' . $spec['locator']) === 1 && preg_match('/\bmust\b/i', $spec['quote']) !== 1;
 	}
 
 	//
@@ -101,10 +116,11 @@ class DoajPaChecks {
 	}
 
 	private static function c_guide_dedicated_homepage($h, $f) {
+		$h->allowNeutral(); // the retrieval of the homepage is a language-neutral fact (ADR-013)
 		$home = $f->homepage();
 		if (!$home['resource']) return $h->unverifiable('The journal homepage was not retrieved in this run.');
-		if (!$home['main'] || !$home['main']['verifiedEnglish']) return $h->unverifiable('The homepage was retrieved, but its main content is not verified English (ADR-011), so it cannot be cited.');
-		return $h->observed(array($home['main']), 'The journal homepage was retrieved at ' . $home['resource']['url'] . ' (one vantage point; "accessible from any location" is not proven).');
+		if (!$home['main'] || !$h->usable(array($home['main']))) return $h->unverifiable('The homepage was retrieved, but its main content is not verified English (ADR-011) and does not meet the language-neutral safeguards (ADR-013), so it cannot be cited.');
+		return $h->observedHome($home, 'The journal homepage was retrieved at ' . $home['resource']['url'] . ' (one vantage point; "accessible from any location" is not proven).');
 	}
 
 	private static function c_guide_article_individual_full_text($h, $f) {
@@ -126,13 +142,28 @@ class DoajPaChecks {
 		$urls = array_map(function ($a) { return $a['url']; }, $arts);
 		$cite = array_values(array_filter(array_map(function ($a) { return $a['main']; }, $arts)));
 		if (count(array_unique($urls)) !== count($urls)) return $h->missingAt($cite, 'Duplicate article URLs were found.', 'Give every article one unique URL.');
+		// Tables of contents: two different articles must not share one URL.
+		$byUrl = array(); $dups = array();
+		foreach ($f->issues() as $i) {
+			foreach ($i['toc'] as $t) {
+				if ($t['url'] === '') continue;
+				if (isset($byUrl[$t['url']]) && $byUrl[$t['url']]['title'] !== $t['title']) $dups[] = array('evidence' => $i['structured'], 'quote' => $t['line'], 'other' => $byUrl[$t['url']]);
+				else $byUrl[$t['url']] = array('title' => $t['title'], 'line' => $t['line'], 'evidence' => $i['structured']);
+			}
+		}
+		if ($dups) return $h->missingAt(array($dups[0], array('evidence' => $dups[0]['other']['evidence'], 'quote' => $dups[0]['other']['line'])), count($dups) . ' article(s) in the tables of contents share a URL with a different article: ' . $dups[0]['other']['title'] . ' / ' . preg_replace('/^toc \| [^|]* \| ([^|]*) \|.*$/', '$1', $dups[0]['quote']) . '.', 'Give every article one unique URL.');
 		return $h->observed($cite, 'Each of the ' . count($arts) . ' sampled articles has its own URL.');
 	}
 
 	private static function c_guide_article_html_or_pdf($h, $f) {
-		$files = array();
+		$files = array(); $otherFormat = array();
 		foreach ($f->resources as $r) {
-			if (in_array($r['pageType'], array('file', 'galley', 'issue_file'), true) && $r['acquisition'] === 'retrieved') $files[] = $r;
+			if (!in_array($r['pageType'], array('file', 'galley', 'issue_file'), true) || $r['acquisition'] !== 'retrieved') continue;
+			if (preg_match('#^(application/pdf|text/html|application/xhtml\+xml)#i', (string) $r['mediaType'])) $files[] = $r; else $otherFormat[] = $r;
+		}
+		if (!$files && $otherFormat) {
+			$cite = array_values(array_filter(array_map(function ($a) { return $a['main']; }, $f->articles())));
+			return $h->missingAt($cite, count($otherFormat) . ' sampled full-text file(s) were retrieved, but none is HTML or PDF (' . implode(', ', array_unique(array_map(function ($r) { return $r['mediaType']; }, $otherFormat))) . '): ' . implode(', ', array_slice(array_map(function ($r) { return $r['url']; }, $otherFormat), 0, 3)) . '.', 'Publish every article as HTML or PDF full text, as a minimum.');
 		}
 		$pdfs = $f->items(array('file', 'galley'), array('pdftotext_extraction', 'html_main_content'));
 		if (!$files && !$pdfs) {
@@ -144,10 +175,11 @@ class DoajPaChecks {
 	}
 
 	private static function c_transparency_website_https($h, $f) {
+		$h->allowNeutral(); // the URL scheme is a language-neutral fact (ADR-013)
 		$home = $f->homepage();
-		if (!$home['resource'] || !$home['main'] || !$home['main']['verifiedEnglish']) return $h->unverifiable('The homepage was not retrieved as verified English text (ADR-011).');
+		if (!$home['resource'] || !$home['main'] || !$h->usable(array($home['main']))) return $h->unverifiable('The homepage was not retrieved as verified English text (ADR-011) and does not meet the language-neutral safeguards (ADR-013).');
 		$url = isset($home['resource']['finalUrl']) && $home['resource']['finalUrl'] ? $home['resource']['finalUrl'] : $home['resource']['url'];
-		if (stripos($url, 'https://') === 0) return $h->observed(array($home['main']), 'The journal homepage is served over https (' . $url . ').');
+		if (stripos($url, 'https://') === 0) return $h->observedHome($home, 'The journal homepage is served over https (' . $url . ').');
 		return $h->missingAt(array($home['main']), 'The journal homepage is served over http, not https (' . $url . ').', 'Serve the journal website over https and redirect all http traffic.');
 	}
 
@@ -208,15 +240,16 @@ class DoajPaChecks {
 		$p = array_values(array_filter($f->publisher(), function ($x) { return $x['evidence']['verifiedEnglish']; }));
 		$a = array_values(array_filter($f->addresses(), function ($x) { return $x['evidence']['verifiedEnglish']; }));
 		if ($p && $a) return $h->pass(array($p[0], $a[0]), 'Publisher name and an address are stated (a link to the publisher website, if any, is not verified).');
-		if ($p) return $h->missingAt(array($p[0]['evidence']), 'The publisher is named, but no postal address was recognised.', 'Give the publisher\'s full address.');
+		if ($p) return $h->missing(null, 'The publisher is named (' . $p[0]['name'] . '), but no postal address was recognised.', 'Give the publisher\'s full address.');
 		return self::c_guide_disclosure_publisher($h, $f);
 	}
 
 	private static function c_guide_contact_person_email($h, $f) {
+		$h->allowNeutral(); // an email address and a contact role label are language-neutral facts (ADR-013)
 		$items = $f->items(array('contact', 'about'), array('html_main_content'));
 		$contactRead = $f->resourcesOf(array('contact'));
-		$e = array_values(array_filter($f->emails(), function ($x) { return $x['evidence']['verifiedEnglish']; }));
-		$named = DoajPaText::find(DoajPaFacts::verified($items), '/\b(principal contact|contact person|managing editor|editor[- ]in[- ]chief|support contact)\b/i');
+		$e = $h->usable($f->emails());
+		$named = DoajPaText::find($h->usable($items, false), '/\b(principal contact|contact person|managing editor|editor[- ]in[- ]chief|support contact)\b/i');
 		if ($e && $named) return $h->pass(array($named[0], $e[0]), 'A contact (' . $named[0]['match'] . ') and an email address are published.');
 		if (!$contactRead) return $h->unverifiable('The contact page was not read in this run.');
 		if (!DoajPaFacts::verified($items)) return $h->unverifiable('The contact page is not verified English (ADR-011).');
@@ -233,20 +266,22 @@ class DoajPaChecks {
 	//
 
 	private static function c_guide_issn_displayed($h, $f) {
+		$h->allowNeutral(); // an ISSN is a language-neutral fact (ADR-013)
 		$all = $f->issns();
-		$valid = array_values(array_filter($all, function ($x) { return $x['valid'] && $x['evidence']['verifiedEnglish']; }));
+		$valid = $h->usable(array_values(array_filter($all, function ($x) { return $x['valid']; })));
 		if ($valid) {
 			$distinct = array_unique(array_map(function ($x) { return $x['issn']; }, $valid));
 			return $h->pass($valid, 'ISSN displayed: ' . implode(', ', $distinct) . ' (check digit valid).');
 		}
-		$invalid = array_values(array_filter($all, function ($x) { return !$x['valid'] && $x['evidence']['verifiedEnglish']; }));
+		$invalid = $h->usable(array_values(array_filter($all, function ($x) { return !$x['valid']; })));
 		if ($invalid) return $h->found($invalid, 'An ISSN is displayed but its check digit is invalid: ' . $invalid[0]['issn'] . '.', 'Display the ISSN exactly as registered at issn.org.');
 		if ($all) return $h->unverifiable('ISSN wording was found only on pages whose language is not verified English (ADR-011).', $all);
 		return $h->missing($f->items(array('home', 'about'), array('html_main_content', 'html_text_extraction')), 'No ISSN was found on the pages read.', 'Display the journal\'s ISSN(s) on the website.');
 	}
 
 	private static function c_transparency_website_issns($h, $f) {
-		$valid = array_values(array_filter($f->issns(), function ($x) { return $x['valid'] && $x['evidence']['verifiedEnglish']; }));
+		$h->allowNeutral(); // ISSNs and their print/online labels are language-neutral facts (ADR-013)
+		$valid = $h->usable(array_values(array_filter($f->issns(), function ($x) { return $x['valid']; })));
 		if (!$valid) return $h->unverifiable('No valid ISSN was found in verified-English text.');
 		$labelled = array_values(array_filter($valid, function ($x) { return $x['label'] !== 'unlabelled'; }));
 		if ($labelled) return $h->pass($labelled, 'ISSN(s) labelled by version: ' . implode(', ', array_unique(array_map(function ($x) { return $x['issn'] . ' (' . $x['label'] . ')'; }, $labelled))) . '.');
@@ -269,10 +304,18 @@ class DoajPaChecks {
 	//
 
 	private static function boardOrAbstain($h, $f, $reviewers = false) {
+		$h->allowNeutral(); // names and affiliations are language-neutral facts (ADR-013)
 		$b = $f->board($reviewers);
 		if (!$b['pages']) return array(null, $reviewers ? $h->notApplicable('No reviewer list page was found.') : (
 			$f->resourcesOf(array('editorial_team')) ? $h->unverifiable('The editorial team page was retrieved but has no readable main content.') : $h->missing(null, 'No editorial team page was found on the pages read.', 'Publish the editorial board on a page linked from the homepage.')));
-		if (!DoajPaFacts::verified($b['pages'])) return array(null, $h->unverifiable('The editorial team page is not verified English (ADR-011).'));
+		if (!$h->usable($b['pages'])) return array(null, $h->unverifiable('The editorial team page is not verified English (ADR-011), and the language-neutral safeguards (ADR-013) are not met.'));
+		if (!$b['people'] && $b['lines'] === 0) {
+			// "Nobody is listed" is an absence finding: only from a verified-English page (never from a neutral one).
+			if (!DoajPaFacts::verified($b['pages'])) return array(null, $h->unverifiable('The editorial team page lists no recognisable people, and its language could not be verified (ADR-011).'));
+			// The page was read as English but lists nobody (prose or headings only).
+			return array(null, $reviewers ? $h->notApplicable('A reviewers page was found, but it lists no reviewers.')
+				: $h->missing(DoajPaFacts::verified($b['pages']), 'The editorial team page was read, but it lists no editors or board members.', 'List the editor and the editorial board members, with their affiliations, on a page linked from the homepage.', array('editorial_team', 'about')));
+		}
 		if (!$b['people'] || $b['unparsed'] > max(2, 0.3 * $b['lines'])) {
 			return array(null, $h->unverifiable('The editorial team page could not be read reliably as a list of people (' . count($b['people']) . ' recognised, ' . $b['unparsed'] . ' unrecognised lines); human review.', array_slice(array_map(function ($p) { return $p; }, $b['people']), 0, 3)));
 		}
@@ -332,6 +375,7 @@ class DoajPaChecks {
 
 	private static function c_guide_student_run_advisory_board($h, $f) {
 		if (!$h->confirmed('student_run')) return $h->notApplicable('The journal is not stated to be student-run.');
+		if ($f->unreadOf(array('editorial_team')) || !DoajPaFacts::verified($f->items(array('editorial_team'), array('html_main_content')))) return $h->unverifiable('Student-run journal: the editorial team page was not read as verified English (ADR-011), so the advisory board cannot be checked.');
 		$phd = DoajPaText::find(DoajPaFacts::verified($f->items(array('editorial_team', 'about', 'custom'), array('html_main_content'))), DoajPaFacts::TOPICS['phd_members']);
 		if (count($phd) >= 2) return $h->pass(array_slice($phd, 0, 2), 'Advisory board members with a PhD or equivalent are listed.');
 		return $h->review('Student-run journal: at least two advisory board members with a PhD (or equivalent) were not recognised; human review.', $phd);
@@ -449,8 +493,10 @@ class DoajPaChecks {
 		$fees = $f->fees();
 		$mentions = array_values(array_filter($fees['fees'], function ($x) { return $x['evidence']['verifiedEnglish']; }));
 		if (!$mentions) return $h->notApplicable('No charges are stated in verified-English text.');
-		$noFee = array_values(array_filter($fees['noFee'], function ($x) { return $x['evidence']['verifiedEnglish']; }));
 		$withAmount = array_values(array_filter($mentions, function ($x) { return $x['amount'] !== null; }));
+		$charged = array_values(array_unique(array_map(function ($x) { return $x['type']; }, $withAmount)));
+		// A no-fee statement contradicts a charge only when it covers that charge ("no charges", or "no APC" next to an APC amount).
+		$noFee = array_values(array_filter($fees['noFee'], function ($x) use ($charged) { return $x['evidence']['verifiedEnglish'] && (in_array('all', $x['scope'], true) || array_intersect($x['scope'], $charged)); }));
 		if ($noFee && $withAmount) return $h->contradiction(array($noFee[0], $withAmount[0]), 'The website states both that there are no charges and that charges apply.', 'Make the fee statements consistent on all pages.');
 		$noAmount = array_values(array_filter($mentions, function ($x) { return $x['amount'] === null; }));
 		$types = array_values(array_unique(array_map(function ($x) { return $x['type']; }, $mentions)));
@@ -574,7 +620,11 @@ class DoajPaChecks {
 		if ($c) return $h->contradiction(array($c[0][0], $c[0][1]), 'Contradiction: ' . $c[0][2] . '.', 'Make the copyright, licence and open access terms consistent on every page and in the articles.');
 		$lic = array_values(array_filter($f->licences(), function ($l) { return $l['evidence']['verifiedEnglish']; }));
 		$cr = array_values(array_filter($f->copyright(), function ($x) { return !$x['chrome'] && $x['evidence']['verifiedEnglish'] && in_array($x['kind'], array('retain', 'transfer', 'exclusive', 'statement'), true); }));
-		if ($lic && $cr) return $h->pass(array($lic[0], $cr[0]), 'The copyright and licence statements found do not contradict each other (deterministic comparison of exact claims).');
+		if ($lic && $cr) {
+			$unread = $f->unreadOf($h->spec['evidence']);
+			if ($unread || $f->crawlTruncated()) return $h->unverifiable('No contradiction was found between the statements read, but ' . ($unread ? count($unread) . ' relevant page(s) could not be read as verified English (ADR-011)' : 'the crawl stopped at a page or time limit') . ', so the absence of a contradiction is not established.', array($lic[0], $cr[0]));
+			return $h->pass(array($lic[0], $cr[0]), 'The copyright and licence statements found do not contradict each other (deterministic comparison of exact claims).');
+		}
 		return $h->unverifiable('Copyright and licence statements were not both found in verified-English text; consistency cannot be established.');
 	}
 	private static function c_copyright_no_contradiction($h, $f) { return self::c_guide_copyright_no_contradiction($h, $f); }
@@ -698,12 +748,22 @@ class DoajPaChecks {
 	}
 
 	private static function c_guide_actively_publishing($h, $f) {
-		$dates = array_values(array_filter(self::dated($f), function ($d) { return $d['evidence']['verifiedEnglish']; }));
+		$h->allowNeutral(); // dates are language-neutral facts (ADR-013)
+		$dates = $h->usable(self::dated($f), false);
 		if (!$dates) return $h->unverifiable('No dated issue or article was read as verified-English evidence.');
 		$cut = date('Y-m-d', strtotime($f->refDate . ' -365 days'));
 		if ($dates[0]['date'] >= $cut) return $h->pass(array($dates[0]), 'Latest dated content: ' . $dates[0]['date'] . ' (within the 12 months before ' . $f->refDate . ').');
-		if ($f->resourcesOf(array('archive')) && !$f->crawlTruncated()) return $h->missingAt(array($dates[0]['evidence']), 'The latest dated content read is from ' . $dates[0]['date'] . ', more than 12 months before ' . $f->refDate . '.', 'Publish research articles regularly (DOAJ: the journal must be actively publishing).');
-		return $h->unverifiable('The latest dated content read is older than 12 months, but the archive was not read completely.');
+		if (self::archiveComplete($f)) return $h->missingAt(array($dates[0]['evidence']), 'The latest dated content read is from ' . $dates[0]['date'] . ', more than 12 months before ' . $f->refDate . '.', 'Publish research articles regularly (DOAJ: the journal must be actively publishing).');
+		return $h->unverifiable('The latest dated content read is older than 12 months, but the archive and its issues were not all read (archive page, issue pages or crawl limit), so newer content may exist.');
+	}
+
+	/**
+	 * Whether the archive was read completely enough to state that something is missing from it: the archive page was
+	 * retrieved, no issue page is unread (ADR-011, inaccessible) and the crawl did not stop at a limit.
+	 */
+	private static function archiveComplete($f) {
+		$archive = array_filter($f->resourcesOf(array('archive')), function ($r) { return $r['acquisition'] === 'retrieved'; });
+		return $archive && !$f->unreadOf(array('issue'), true) && !$f->crawlTruncated();
 	}
 
 	private static function researchCount($f, $sinceDate) {
@@ -721,12 +781,13 @@ class DoajPaChecks {
 	}
 
 	private static function c_guide_five_research_articles_per_year($h, $f) {
+		$h->allowNeutral(); // tables of contents, dates and counts are language-neutral facts (ADR-013)
 		$since = date('Y-m-d', strtotime($f->refDate . ' -365 days'));
 		list($certain, $uncertain, $cite, $complete) = self::researchCount($f, $since);
-		$cite = array_values(array_filter($cite, function ($c) { return $c['evidence']['verifiedEnglish']; }));
+		$cite = $h->usable($cite, false);
 		if ($certain >= 5 && $cite) return $h->pass($cite, $certain . ' research articles in issues published in the 12 months before ' . $f->refDate . ' (sections read from the issue tables of contents).');
 		$older = array_filter($f->issues(), function ($i) use ($since) { return $i['published'] && $i['published'] < $since; });
-		if ($certain + $uncertain < 5 && $complete && $older && !$f->crawlTruncated()) {
+		if ($certain + $uncertain < 5 && $complete && $older && self::archiveComplete($f)) {
 			$ev = array_values(array_filter(array_map(function ($i) { return $i['evidence']; }, $f->issues())));
 			return $h->missingAt($ev, 'Only ' . $certain . ' research articles (' . $uncertain . ' items of uncertain type) were published in issues of the 12 months before ' . $f->refDate . '.', 'Publish at least five research articles per year.');
 		}
@@ -736,14 +797,16 @@ class DoajPaChecks {
 	private static function archiveYears($f) {
 		$years = array(); $ev = null;
 		foreach ($f->items(array('archive'), array('html_main_content')) as $e) {
+			if ($e['acquisition'] !== 'retrieved') continue; // never from a page in another language
 			if (preg_match_all('/\((\d{4})\)/', $e['quote'], $m)) { $years = array_merge($years, array_map('intval', $m[1])); $ev = $e; }
 		}
 		return array($years, $ev);
 	}
 
 	private static function c_guide_new_journal_history($h, $f) {
+		$h->allowNeutral(); // dates and counts are language-neutral facts (ADR-013)
 		list($years, $ev) = self::archiveYears($f);
-		$dates = self::dated($f);
+		$dates = $h->usable(self::dated($f), false);
 		$earliest = $dates ? end($dates)['date'] : null;
 		$refYear = (int) substr($f->refDate, 0, 4);
 		if ($years && min($years) < $refYear - 1) return $h->notApplicable('The archive shows content from ' . min($years) . '; the journal is not newly launched.');
@@ -751,7 +814,11 @@ class DoajPaChecks {
 		list($certain, $uncertain, $cite, $complete) = self::researchCount($f, '0000-00-00');
 		if ($certain >= 10 && $cite) return $h->pass($cite, 'Newly launched journal with ' . $certain . ' research articles.');
 		if (!$dates) return $h->unverifiable('The publishing history could not be dated from the evidence read.');
-		return $h->review('The journal appears newly launched (earliest content read: ' . $earliest . ') with ' . $certain . ' research articles counted; the Guide requires more than one year of history or at least ten research articles.');
+		$text = 'The journal appears newly launched (earliest content read: ' . $earliest . ') with ' . $certain . ' research articles counted' . ($uncertain ? ' and ' . $uncertain . ' items of uncertain type' : '') . '; the Guide requires more than one year of history or at least ten research articles.';
+		if (!self::archiveComplete($f)) return $h->unverifiable($text . ' The archive and its issues were not all read, so older content or more articles may exist.');
+		if ($certain + $uncertain >= 10 || !$complete) return $h->review($text . ' Article types need human confirmation.');
+		$cite = array_values(array_filter(array_map(function ($i) { return $i['evidence']; }, $f->issues())));
+		return $h->missingAt($cite, $text, 'Apply after more than one year of publishing, or after publishing at least ten open access research articles.');
 	}
 
 	private static function c_guide_article_dates($h, $f) {
@@ -759,7 +826,8 @@ class DoajPaChecks {
 		$read = array_values(array_filter($all, function ($a) { return $a['readable'] && $a['main'] && $a['main']['verifiedEnglish']; }));
 		if (!$read) return $h->unverifiable('No sampled article was readable as verified-English text.');
 		$complete = array_values(array_filter($read, function ($a) { return $a['status'] === 'complete'; }));
-		$lines = array_map(function ($a) { return $a['url'] . ': ' . $a['message']; }, array_slice($read, 0, 10));
+		$ordered = array_merge(array_filter($read, function ($a) { return $a['status'] !== 'complete'; }), array_filter($read, function ($a) { return $a['status'] === 'complete'; }));
+		$lines = array_map(function ($a) { return $a['url'] . ': ' . $a['message']; }, array_slice(array_values($ordered), 0, 10));
 		$quotes = array();
 		foreach ($complete as $a) foreach ($a['quotes'] as $q) if ($q['evidence']['verifiedEnglish'] && count($quotes) < 3) $quotes[] = $q;
 		if (count($complete) === count($read) && $quotes) return $h->pass($quotes, 'All ' . count($read) . ' sampled articles display submitted, accepted and published dates.');
@@ -833,11 +901,18 @@ class DoajPaChecks {
 	}
 
 	private static function c_guide_endogeny_25_issues($h, $f) {
-		$units = self::endogeny($f);
+		$h->allowNeutral(); // author and board names, tables of contents and counts are language-neutral facts (ADR-013)
 		$board = $f->board(false);
+		$reviewers = $f->board(true);
 		if (!$board['people']) return $h->unverifiable('No editorial board names could be read; endogeny cannot be computed.');
+		if (count($h->usable($board['pages'], false)) !== count($board['pages']) || count($h->usable($reviewers['pages'], false)) !== count($reviewers['pages'])) return $h->unverifiable('The editorial team or reviewer page is not verified English (ADR-011) and does not meet the language-neutral safeguards (ADR-013); its names are not used.');
+		$unread = $f->unreadOf(array('issue', 'editorial_team'), true);
+		if ($unread || $f->crawlTruncated()) return $h->unverifiable('The sample is incomplete (Stage 01 F4: never pass): ' . ($unread ? count($unread) . ' issue or editorial team page(s) could not be read as verified English (' . implode(', ', array_slice(array_map(function ($r) { return $r['url']; }, $unread), 0, 3)) . ')' : 'the crawl stopped at a page or time limit') . ', so the latest two issues or the board may not have been read.');
+		$units = self::endogeny($f);
 		if (count($units) < 2) return $h->unverifiable('Fewer than two issues with a readable table of contents were read (' . count($units) . '); the Guide requires each of the latest two issues.');
-		$lines = array(); $over = array(); $unknown = false; $cite = array();
+		$lines = array(); $over = array(); $unknown = false;
+		// The board and reviewer pages are cited first: their names decide every match (and the ADR-013 label when they are neutral).
+		$cite = array_slice(array_merge($board['pages'], $reviewers['pages']), 0, 2);
 		foreach ($units as $u) {
 			$label = ($u['issue']['title'] ?: $u['issue']['url']);
 			if ($u['n'] === 0) { $unknown = true; $lines[] = $label . ': no research articles identified (' . $u['uncertainTypes'] . ' of uncertain type)'; continue; }
@@ -1021,6 +1096,30 @@ class DoajPaCheckRun {
 	public $spec;
 	/** @var DoajPaFacts */
 	public $f;
+	/** @var boolean The handler reads only language-neutral facts and may use neutral-eligible evidence (ADR-013) */
+	public $neutralOk = false;
+
+	/** Opt in to language-neutral facts (names, affiliations, dates, ISSNs, counts, email addresses) from pages without a language verdict */
+	public function allowNeutral() {
+		$this->neutralOk = true;
+		return $this;
+	}
+
+	/**
+	 * @param $items array Evidence items or hits
+	 * @param $fallbackOnly boolean Neutral-eligible items only when no verified-English item is given (safeguard S4: a
+	 *  language-neutral fact is a fallback, never preferred); false keeps both, for facts that are combined (dates, counts)
+	 * @return array Items usable by this check: verified English, or neutral-eligible when allowed (ADR-013)
+	 */
+	public function usable($items, $fallbackOnly = true) {
+		$f = $this->f; $ok = $this->neutralOk;
+		$verified = array_values(array_filter($items, function ($x) { $e = isset($x['evidence']) ? $x['evidence'] : $x; return !empty($e['verifiedEnglish']); }));
+		if (!$ok || ($fallbackOnly && $verified)) return $verified;
+		return array_values(array_filter($items, function ($x) use ($f) {
+			$e = isset($x['evidence']) ? $x['evidence'] : $x;
+			return !empty($e['verifiedEnglish']) || (isset($e['id']) && !empty($f->neutral[$e['id']]));
+		}));
+	}
 
 	public function __construct($spec, $f) {
 		$this->spec = $spec;
@@ -1051,6 +1150,17 @@ class DoajPaCheckRun {
 		}
 		$quotes = array_slice($quotes, 0, 5);
 		$ids = array_values(array_unique(array_slice($ids, 0, 8)));
+		if ($this->neutralOk && in_array($status, array('pass', 'fail', 'warning', 'contradiction'), true)) {
+			$neutralUrls = array();
+			foreach (array_merge($ids, array_map(function ($q) { return $q['evidenceId']; }, $quotes)) as $id) {
+				if (!empty($this->f->neutral[$id]) && isset($this->f->evidence[$id])) $neutralUrls[$this->f->evidence[$id]['url']] = true;
+			}
+			if ($neutralUrls) {
+				$basis = 'neutral';
+				$rationale .= ' [Language-neutral facts (ADR-013, PENDING APPROVAL): names, affiliations, dates, ISSNs or counts were read from '
+					. count($neutralUrls) . ' page(s) with too little text for a language verdict, on a site whose policy pages are verified English: ' . implode(', ', array_slice(array_keys($neutralUrls), 0, 3)) . '.]';
+			}
+		}
 		return array('status' => $status, 'rationale' => $rationale . ($rec ? ' Recommended correction: ' . $rec . ' (DOAJ: "' . $this->spec['quote'] . '")' : ''),
 			'interpretationLimit' => $this->limit(), 'evidenceIds' => $ids, 'quotes' => $quotes, 'detections' => $detections, 'verifiedClear' => $clear, 'basis' => $basis);
 	}
@@ -1078,9 +1188,18 @@ class DoajPaCheckRun {
 
 	/** Pass on a fact of the retrieval itself (cites verified pages; ADR-010 R1.8). */
 	public function observed($items, $rationale) {
-		$v = DoajPaFacts::verified(array_values(array_filter($items)));
+		$v = $this->usable(array_values(array_filter($items)));
 		if (!$v) return $this->unverifiable('The supporting pages are not verified English (ADR-011).');
 		return $this->outcome('pass', $rationale, $v, $this->clearFor($v), array(), null, 'observation');
+	}
+
+	/** Observation on the homepage: verified English as observed(); a neutral-eligible homepage quotes its first line (ADR-013) */
+	public function observedHome($home, $rationale) {
+		if ($home['main']['verifiedEnglish']) return $this->observed(array($home['main']), $rationale);
+		foreach (DoajPaText::sentences($home['main']['quote']) as $line) {
+			if (mb_strlen($line, 'UTF-8') >= DoajPaOutcomeGuard::MIN_QUOTE) return $this->outcome('pass', $rationale, array(array('evidence' => $home['main'], 'quote' => DoajPaText::snippet($line, 0))));
+		}
+		return $this->unverifiable('The homepage has no text line long enough to quote.');
 	}
 
 	/**
@@ -1131,7 +1250,7 @@ class DoajPaCheckRun {
 
 	/** Missing/non-conforming at specific items (already selected). */
 	public function missingAt($items, $rationale, $rec, $first = null) {
-		$v = DoajPaFacts::verified(array_values(array_filter($items)));
+		$v = $this->usable(array_values(array_filter($items)));
 		if (!$v) return $this->unverifiable('The relevant pages are not verified English (ADR-011).');
 		$status = $this->spec['level'] === 'R' ? 'warning' : 'fail';
 		return $this->outcome($status, $rationale, $first ? array_merge(array($first), $v) : $v, array(), $this->detectionFor($v, $status), $rec);
@@ -1153,6 +1272,15 @@ class DoajPaCheckRun {
 		// "Does not apply" needs readable evidence: with no verified-English page of the relevant types, it is unknown.
 		if (!DoajPaFacts::verified($this->f->items($this->spec['evidence'], array('html_main_content', 'pdftotext_extraction', 'html_structured')))) {
 			return $this->unverifiable('Whether this applies cannot be determined: no relevant page (' . implode(', ', $this->spec['evidence']) . ') was read as verified English (ADR-011). ' . $rationale);
+		}
+		// It is an absence finding (the condition was not found), so it needs every relevant page read (ADR-012). A
+		// conditional clause's condition is stated on policy pages, so those count as relevant too.
+		$types = $this->spec['evidence'];
+		if (isset($this->spec['condition'])) $types = array_values(array_unique(array_merge($types, array('home', 'about', 'custom', 'information', 'about_other', 'author_guidelines'))));
+		$unread = $this->f->unreadOf($types);
+		if ($unread || $this->f->crawlTruncated()) {
+			return $this->unverifiable('Whether this applies is not established: ' . ($unread ? count($unread) . ' relevant page(s) could not be read as verified English (ADR-011): '
+				. implode(', ', array_slice(array_map(function ($r) { return $r['url'] . ' (' . ($r['reason'] !== null ? $r['reason'] : $r['acquisition']) . ')'; }, $unread), 0, 3)) : 'the crawl stopped at a page or time limit') . '. ' . $rationale);
 		}
 		return $this->outcome('not_applicable', $rationale . ' (Condition: ' . (isset($this->spec['condition']) ? $this->spec['condition'] : 'n/a') . '.)', array());
 	}

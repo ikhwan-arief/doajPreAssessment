@@ -19,7 +19,8 @@ import argparse, gzip, hashlib, io, os, re, subprocess, sys, tarfile
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TOP = "doajPreAssessment"
 INCLUDE = ["index.php", "version.xml", "install.xml", "upgrade.xml", "DoajPreAssessmentPlugin.inc.php",
-           "classes", "pages", "templates", "css", "locale", "README.md", "CHANGELOG.md", "RELEASE-NOTES.md"]
+           "classes", "pages", "templates", "css", "locale", "README.md", "CHANGELOG.md", "RELEASE-NOTES.md",
+           "LICENSE", "NOTICE.md"]
 IGNORED_NAMES = {".DS_Store", "Thumbs.db"}
 
 

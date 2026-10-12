@@ -7,6 +7,10 @@
  * @brief Corrective action register (Stage 01 F6, F7). Owners are free text and grant no access (F9).
  *  Completing an action never changes a finding: only new public evidence can resolve a finding (F6).
  *  Every change is audited; concurrent edits are detected with lock_version.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/../persistence/DoajPaDb.inc.php');

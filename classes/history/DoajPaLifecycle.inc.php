@@ -12,6 +12,10 @@
  *  - not_established: neither could be established (page missing, inaccessible, not evaluated);
  *  - superseded: the criterion changed incompatibly (new lineage) or the target disappeared.
  * "Resolved (Verified)" is reachable only through verified_clear. Manual action completion is never input.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 class DoajPaLifecycle {

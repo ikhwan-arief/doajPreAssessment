@@ -16,9 +16,18 @@
  *   - cited evidence is not retrieved, verified-English evidence. The language check is an advisory
  *     heuristic, so "undetermined", "mixed" and "non_english" are never treated as verified English;
  *   - a detection is malformed, a duplicate, or also listed as verified clear.
+ *  Basis "neutral" (ADR-013, PENDING APPROVAL D-03-9): an outcome built only from language-neutral facts (names,
+ *  affiliations, dates, ISSNs, counts) may also cite evidence that the context marks as neutral-eligible (a page with
+ *  too little text for a language verdict, on a site whose other pages are verified English; see
+ *  DoajPaEvaluationContext::neutralEligible). Such evidence counts as acceptable for that outcome only: a pass still
+ *  needs a verbatim quote, and it never yields a verified-clear item (a neutral fact never resolves a finding).
  *  Detections on unverified evidence are kept (a deficiency is never hidden) with criterion status
  *  "unverifiable". Verified-clear items need verified-English evidence and an outcome without downgrades;
  *  otherwise they are dropped, so the finding becomes "needs verification", never "resolved".
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/../persistence/DoajPaSchema.inc.php');
@@ -50,6 +59,11 @@ class DoajPaOutcomeGuard {
 
 		$cited = array();
 		foreach (self::lst($outcome, 'evidenceIds') as $id) $cited[] = $id;
+		$neutralBasis = isset($outcome['basis']) && $outcome['basis'] === 'neutral';
+		// Evidence acceptable for this outcome: verified English, or (basis "neutral" only) neutral-eligible evidence.
+		$ok = function ($id) use ($evidence, $neutralBasis) {
+			return $evidence[$id]['verifiedEnglish'] || ($neutralBasis && !empty($evidence[$id]['neutral']));
+		};
 		$verifiedQuotes = 0;
 		foreach (self::lst($outcome, 'quotes') as $q) {
 			$id = is_array($q) && isset($q['evidenceId']) ? $q['evidenceId'] : null;
@@ -58,7 +72,7 @@ class DoajPaOutcomeGuard {
 			if (!is_int($id) || !isset($evidence[$id])) { $down[] = 'quote_evidence_not_in_run'; continue; }
 			if (mb_strlen($text, 'UTF-8') < self::MIN_QUOTE || strpos($evidence[$id]['quote'], $text) === false) { $down[] = 'quote_not_verbatim'; continue; }
 			$out['quotes'][] = array('evidenceId' => $id, 'text' => $text);
-			if ($evidence[$id]['verifiedEnglish']) $verifiedQuotes++;
+			if ($ok($id)) $verifiedQuotes++;
 		}
 
 		$detections = array();
@@ -86,7 +100,7 @@ class DoajPaOutcomeGuard {
 		foreach ($cited as $id) {
 			if (!is_int($id) || !isset($evidence[$id])) { $down[] = 'evidence_not_in_run'; $allVerified = false; continue; }
 			$valid[$id] = true;
-			if (!$evidence[$id]['verifiedEnglish']) $allVerified = false;
+			if (!$ok($id)) $allVerified = false;
 		}
 		if (!$allVerified && in_array($status, array('pass', 'fail', 'warning', 'contradiction'), true)) $down[] = 'evidence_not_verified_english';
 		$basis = isset($outcome['basis']) && in_array($outcome['basis'], array('absence', 'observation'), true) ? $outcome['basis'] : 'quote';
@@ -101,7 +115,7 @@ class DoajPaOutcomeGuard {
 		$out['evidenceIds'] = array_keys($valid);
 		foreach ($detections as $d) {
 			if (!isset($evidence[$d['evidenceId']])) continue;
-			if ($down || !$evidence[$d['evidenceId']]['verifiedEnglish']) $d['criterionStatus'] = 'unverifiable';
+			if ($down || !$ok($d['evidenceId'])) $d['criterionStatus'] = 'unverifiable';
 			unset($d['key']);
 			$out['detections'][] = $d;
 		}

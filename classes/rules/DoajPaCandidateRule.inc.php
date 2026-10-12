@@ -8,6 +8,10 @@
  *  Candidate criteria are PENDING APPROVAL (decision D-03-1): they run only in the explicitly selected candidate
  *  profile, whose results are labelled "Not a DOAJ assessment result" and are never presented as approved.
  *  Version 1 is the candidate version; an approved criterion will be registered as a new version of the same lineage.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/../framework/DoajPaCriterionRule.inc.php');

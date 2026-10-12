@@ -6,6 +6,10 @@
  * @class DoajPaAccessPolicy
  * @brief Central authorization policy for every plugin route. Collects facts from the request and
  *  the OJS role tables, then applies DoajPaAccessDecision. Any error denies.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import('lib.pkp.classes.security.authorization.AuthorizationPolicy');

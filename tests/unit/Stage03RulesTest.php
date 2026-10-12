@@ -175,13 +175,15 @@ doajpa_test('S3-P01 Every outcome is valid and survives the guard unchanged (no 
 		}
 	}
 });
-doajpa_test('S3-P02 A pass always rests on verified-English evidence: a verbatim quote, or a declared absence/observation basis', function () {
+doajpa_test('S3-P02 A pass always rests on verified-English evidence (or, basis "neutral" only, neutral-eligible evidence, ADR-013): a verbatim quote, or a declared absence/observation basis', function () {
 	foreach (array('good', 'bad', 'foreign') as $site) {
 		list($c, $o) = s3_eval($site);
+		$neutral = $c->neutralEligible();
 		foreach ($o as $k => $x) {
 			if ($x['status'] !== 'pass') continue;
 			doajpa_assert($x['evidenceIds'] !== array(), "$site $k cites evidence");
-			foreach ($x['evidenceIds'] as $id) doajpa_assert($c->evidenceById($id)['verifiedEnglish'], "$site $k cites verified English");
+			foreach ($x['evidenceIds'] as $id) doajpa_assert($c->evidenceById($id)['verifiedEnglish'] || ($x['basis'] === 'neutral' && $neutral[$id]), "$site $k cites verified English (or neutral-eligible evidence with basis neutral)");
+			if ($x['basis'] === 'neutral') doajpa_same(array(), $x['verifiedClear'], "$site $k: a neutral fact never resolves a finding");
 			if (!in_array($x['basis'], array('absence', 'observation'), true)) {
 				doajpa_assert($x['quotes'] !== array(), "$site $k has a quote");
 				foreach ($x['quotes'] as $q) doajpa_assert(strpos($c->evidenceById($q['evidenceId'])['quote'], $q['text']) !== false, "$site $k quote verbatim");
@@ -332,7 +334,51 @@ doajpa_test('S3-A01 An unreadable relevant page makes a missing fact unverifiabl
 	list($c, $o) = s3_eval('bad');
 	doajpa_same('unverifiable', s3_status($o, 'guide.contact-person-email'), 'contact page undetermined');
 	doajpa_assert(strpos($o['guide.contact-person-email']['rationale'], 'about/contact (language_undetermined)') !== false, 'names the unread page');
-	foreach (array('guide.disclosure-editorial-board', 'guide.board-names-affiliations', 'transparency.website-manuscript-types') as $k) doajpa_same('unverifiable', s3_status($o, $k), $k);
+	doajpa_same('unverifiable', s3_status($o, 'transparency.website-manuscript-types'), 'prose criterion: an undetermined page is never read for English wording');
+	// A board page in another language is never read (the language-neutral exception needs "undetermined", ADR-013 S1).
+	$pages = DoajPaRuleFixture::pages('bad');
+	$pages['/about/editorialTeam'][1] = str_replace('lang="en-US" xml:lang="en-US"', 'lang="id-ID" xml:lang="id-ID"', $pages['/about/editorialTeam'][1]);
+	$o2 = DoajPaRuleFixture::evaluate(DoajPaRuleFixture::context($pages, array('site' => 'bad')));
+	foreach (array('guide.disclosure-editorial-board', 'guide.board-names-affiliations', 'guide.endogeny-25-issues') as $k) doajpa_same('unverifiable', $o2[$k]['status'], $k . ' with an Indonesian board page');
+});
+doajpa_test('S3-N01 ADR-013: language-neutral facts from a short (undetermined) page of an English site are used, labelled, and never resolve a finding', function () {
+	list($c, $o) = s3_eval('bad');
+	$team = null;
+	foreach ($c->resources() as $r) if ($r['pageType'] === 'editorial_team') $team = $r;
+	doajpa_same('retrieved', $team['acquisition'], 'team page retrieved');
+	doajpa_assert(strpos($team['reason'], 'language_undetermined') === 0, 'team page undetermined');
+	foreach (array('guide.disclosure-editorial-board' => 'pass', 'guide.board-names-affiliations' => 'fail', 'guide.endogeny-25-issues' => 'fail') as $k => $want) {
+		doajpa_same($want, $o[$k]['status'], $k);
+		doajpa_same('neutral', $o[$k]['basis'], $k . ' basis');
+		doajpa_assert(strpos($o[$k]['rationale'], 'Language-neutral facts (ADR-013, PENDING APPROVAL)') !== false, $k . ' labelled');
+		doajpa_same(array(), $o[$k]['verifiedClear'], $k . ' never verified clear');
+	}
+	doajpa_same('unverifiable', s3_status($o, 'guide.contact-person-email'), 'a missing contact name on an undetermined page is never a finding');
+});
+doajpa_test('S3-N02 ADR-013 safeguards: another-language page in the run (S3), too few verified-English policy pages (S2), an inaccessible page (S1) switch the exception off', function () {
+	$base = DoajPaRuleFixture::pages('bad');
+	$p = $base; $p['/kebijakan'] = array('html', s3_page('<p>' . str_repeat('Jurnal ini menerbitkan artikel penelitian yang telah ditelaah oleh mitra bestari dan dapat diakses secara terbuka oleh semua pembaca tanpa biaya. ', 4) . '</p>'));
+	$o = DoajPaRuleFixture::evaluate(DoajPaRuleFixture::context($p, array('site' => 'bad')));
+	foreach (array('guide.disclosure-editorial-board', 'guide.endogeny-25-issues') as $k) doajpa_same('unverifiable', $o[$k]['status'], $k . ' with a non-English page in the run');
+	$p = $base; $p['/about'] = array('status', 403); $p['/index'] = array('status', 403);
+	$c = DoajPaRuleFixture::context($p, array('site' => 'bad'));
+	doajpa_same(array(), array_filter($c->neutralEligible()), 'fewer than two verified-English policy pages: nothing is eligible');
+	$o = DoajPaRuleFixture::evaluate($c);
+	doajpa_same('unverifiable', $o['guide.disclosure-editorial-board']['status'], 'board without an English site');
+	$p = $base; $p['/about/editorialTeam'] = array('status', 403);
+	$o = DoajPaRuleFixture::evaluate(DoajPaRuleFixture::context($p, array('site' => 'bad')));
+	doajpa_same('unverifiable', $o['guide.disclosure-editorial-board']['status'], 'inaccessible board page');
+});
+doajpa_test('S3-N03 Outcome guard: basis "neutral" accepts only neutral-eligible evidence, needs a verbatim quote for pass, and never yields verified clear', function () {
+	$ev = array(1 => array('quote' => 'Dr. Budi Santoso, Editor', 'verifiedEnglish' => false, 'neutral' => true), 2 => array('quote' => 'Kontak redaksi kami', 'verifiedEnglish' => false, 'neutral' => false));
+	$clear = array(array('subtype' => 'not-met', 'targetType' => 'journal', 'target' => null, 'evidenceId' => 1));
+	$g = DoajPaOutcomeGuard::apply(array('status' => 'pass', 'basis' => 'neutral', 'evidenceIds' => array(1), 'quotes' => array(array('evidenceId' => 1, 'text' => 'Dr. Budi Santoso')), 'verifiedClear' => $clear), $ev, 'k');
+	doajpa_same('pass', $g['status'], 'neutral pass with a verbatim quote');
+	doajpa_same(array(), $g['verifiedClear'], 'never verified clear');
+	doajpa_same('unverifiable', DoajPaOutcomeGuard::apply(array('status' => 'pass', 'basis' => 'quote', 'evidenceIds' => array(1), 'quotes' => array(array('evidenceId' => 1, 'text' => 'Dr. Budi Santoso'))), $ev, 'k')['status'], 'without basis neutral: not accepted');
+	doajpa_same('unverifiable', DoajPaOutcomeGuard::apply(array('status' => 'pass', 'basis' => 'neutral', 'evidenceIds' => array(2), 'quotes' => array(array('evidenceId' => 2, 'text' => 'Kontak redaksi kami'))), $ev, 'k')['status'], 'ineligible evidence');
+	doajpa_same('unverifiable', DoajPaOutcomeGuard::apply(array('status' => 'pass', 'basis' => 'neutral', 'evidenceIds' => array(1)), $ev, 'k')['status'], 'no quote');
+	doajpa_same('fail', DoajPaOutcomeGuard::apply(array('status' => 'fail', 'basis' => 'neutral', 'evidenceIds' => array(1), 'quotes' => array(), 'detections' => array(array('subtype' => 'not-met', 'targetType' => 'journal', 'target' => null, 'criterionStatus' => 'fail', 'evidenceId' => 1))), $ev, 'k')['status'], 'a neutral fail is kept');
 });
 doajpa_test('S3-A02 A crawl stopped by a page or time limit never establishes absence', function () {
 	list($c, $o) = s3_eval('bad', array('limitsHit' => array('maxPages')));
@@ -404,7 +450,8 @@ doajpa_test('S3-Q02 Form guide: "not found" only when the governing criterion es
 	$fq = array();
 	foreach (DoajPaRuleFixture::formGuide($c, $o) as $a) $fq[$a['questionKey']] = $a;
 	doajpa_same('not_found', $fq['FQ-01']['answerStatus'], 'OA statement absent on verified pages');
-	doajpa_same('needs_verification', $fq['FQ-16']['answerStatus'], 'board page unreadable');
+	doajpa_same('supported', $fq['FQ-16']['answerStatus'], 'board names read as language-neutral facts (ADR-013)');
+	doajpa_assert(strpos($fq['FQ-16']['uncertainty'], 'Some members have no affiliation') !== false, 'FQ-16 states the missing affiliations');
 	doajpa_same('needs_verification', $fq['FQ-10']['answerStatus'], 'conflicting licences');
 	doajpa_same('needs_verification', $fq['FQ-05']['answerStatus'], 'invalid ISSN');
 	foreach ($fq as $k => $a) if ($a['answerStatus'] === 'not_found') doajpa_assert(strpos($a['uncertainty'], '(fail)') !== false || strpos($a['uncertainty'], '(warning)') !== false || $k === 'FQ-07', $k);

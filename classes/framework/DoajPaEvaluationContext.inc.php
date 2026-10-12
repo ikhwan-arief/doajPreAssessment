@@ -12,6 +12,10 @@
  *  provenance (true when the evidence passed the provenance checks) and verifiedEnglish
  *  (provenance && acquisition "retrieved" && language "english").
  *  Each resource: id, url, urlSha256, pageType, httpStatus, acquisition, reason, contentSha256.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 class DoajPaEvaluationContext {
@@ -22,6 +26,13 @@ class DoajPaEvaluationContext {
 	private $_resources;
 	/** @var array */
 	private $_coverage;
+	/** @var array|null evidenceId => bool, see neutralEligible() */
+	private $_neutral = null;
+
+	/** Policy page types whose verified-English main content establishes that the journal site is in English (ADR-013) */
+	const NEUTRAL_SITE_TYPES = array('home', 'about', 'author_guidelines', 'custom', 'information', 'about_other', 'contact');
+	/** Minimum number of such verified-English pages (ADR-013 safeguard S3) */
+	const NEUTRAL_MIN_ENGLISH_PAGES = 2;
 
 	public function __construct($evidence, $resources, $coverage) {
 		$this->_evidence = $evidence;
@@ -59,11 +70,44 @@ class DoajPaEvaluationContext {
 		return $this->_coverage;
 	}
 
-	/** @return array evidenceId => ['quote' => string, 'verifiedEnglish' => bool] for DoajPaOutcomeGuard */
+	/** @return array evidenceId => ['quote' => string, 'verifiedEnglish' => bool, 'neutral' => bool] for DoajPaOutcomeGuard */
 	public function guardView() {
 		$view = array();
-		foreach ($this->_evidence as $id => $e) $view[$id] = array('quote' => $e['quote'], 'verifiedEnglish' => $e['verifiedEnglish']);
+		$neutral = $this->neutralEligible();
+		foreach ($this->_evidence as $id => $e) $view[$id] = array('quote' => $e['quote'], 'verifiedEnglish' => $e['verifiedEnglish'], 'neutral' => !empty($neutral[$id]));
 		return $view;
+	}
+
+	/**
+	 * Evidence that may support LANGUAGE-NEUTRAL facts only (names, affiliations, dates, ISSNs, email addresses, counts),
+	 * although its page has no language verdict (ADR-013, PENDING APPROVAL as decision D-03-9). Safeguards, all required:
+	 *   S1 the page was retrieved and parsed, and its language is "undetermined" (too little text): never "non_english"
+	 *      or "mixed", never an inaccessible or unparsed page; provenance checks passed; HTML only;
+	 *   S2 the run contains at least NEUTRAL_MIN_ENGLISH_PAGES policy pages whose main content is verified English;
+	 *   S3 no page of the run is in another language or mixed (any such page switches the exception off for the run).
+	 * The outcome guard accepts such evidence only for an outcome that declares the basis "neutral"; it never makes a page
+	 * verified English and never resolves a finding (DoajPaOutcomeGuard).
+	 * @return array evidenceId => bool
+	 */
+	public function neutralEligible() {
+		if ($this->_neutral !== null) return $this->_neutral;
+		$english = array();
+		$foreign = false;
+		foreach ($this->_resources as $r) {
+			if (in_array($r['acquisition'], array('unsupported_language', 'ambiguous'), true)) $foreign = true;
+		}
+		foreach ($this->_evidence as $e) {
+			if (!empty($e['verifiedEnglish']) && isset($e['method'], $e['pageType']) && $e['method'] === 'html_main_content' && in_array($e['pageType'], self::NEUTRAL_SITE_TYPES, true)) $english[$e['resourceId']] = true;
+		}
+		$site = !$foreign && count($english) >= self::NEUTRAL_MIN_ENGLISH_PAGES;
+		$out = array();
+		foreach ($this->_evidence as $id => $e) {
+			$r = isset($e['resourceId'], $this->_resources[$e['resourceId']]) ? $this->_resources[$e['resourceId']] : null;
+			$out[$id] = $site && $r !== null && empty($e['verifiedEnglish']) && !empty($e['provenance']) && isset($e['language']) && $e['language'] === 'undetermined'
+				&& $r['acquisition'] === 'retrieved' && isset($r['reason']) && is_string($r['reason']) && strpos($r['reason'], 'language_undetermined') === 0
+				&& (!isset($r['mediaType']) || $r['mediaType'] === null || stripos((string) $r['mediaType'], 'html') !== false);
+		}
+		return $this->_neutral = $out;
 	}
 
 	/**

@@ -2,6 +2,10 @@
  * templates/gate.tpl
  *
  * Mandatory English-only first-use gate (Stage 01 F1, PROD-05).
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  *}
 {extends file="layouts/backend.tpl"}
 

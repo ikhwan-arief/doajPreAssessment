@@ -2,6 +2,10 @@
  * templates/actions.tpl
  *
  * Corrective Actions: register and new-action form.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  *}
 {extends file="layouts/backend.tpl"}
 

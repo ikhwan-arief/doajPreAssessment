@@ -13,6 +13,10 @@
  *    no Authorization or Cookie header is ever sent; TLS certificates are verified.
  *  - The body is capped after decompression (the write callback aborts beyond the cap), so compressed
  *    "bombs" cannot exhaust memory. Connect and total timeouts apply.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 require_once(dirname(__FILE__) . '/DoajPaUrlTools.inc.php');

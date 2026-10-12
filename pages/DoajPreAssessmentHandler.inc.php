@@ -16,6 +16,10 @@
  * Assessment runs are started and advanced only by POST ops (runStart, runStep, runResume, runCancel): each one
  * is CSRF-protected, journal-scoped and bounded (one crawl step of at most STEP_SECONDS, or one evaluation).
  * Denials of authenticated users are written to the audit log (best effort; never changes the decision).
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import('classes.handler.Handler');

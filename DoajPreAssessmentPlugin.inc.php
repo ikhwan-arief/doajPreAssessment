@@ -9,6 +9,10 @@
  * The plugin is backend-only. When disabled for a journal it registers no feature hooks, so its
  * page route does not exist (404). It never hooks public article/issue templates or the editorial
  * workflow.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');

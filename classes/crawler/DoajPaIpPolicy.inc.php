@@ -7,6 +7,10 @@
  * @brief Classifies IP addresses for SSRF protection (ADR-005). Pure; no OJS dependency.
  *  Only globally routable unicast addresses are public. IPv6 forms that embed an IPv4 address
  *  (IPv4-mapped, IPv4-compatible, NAT64 64:ff9b::/96, 6to4 2002::/16) are judged by that IPv4 address.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 class DoajPaIpPolicy {

@@ -5,6 +5,10 @@
  * (4.5:1) against their backgrounds. Layout reflows on narrow screens; wide tables scroll inside their wrapper.
  * Note: below about 768 px the OJS 3.3 backend keeps its side menu, leaving the page content a narrow column
  * (about 103 px at 375 px wide, the same for core OJS pages); plugin content must still fit inside it.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 .doajPa__page { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
 .doajPa__page select, .doajPa__page input, .doajPa__page textarea, .doajPa__page button { max-width: 100%; box-sizing: border-box; }

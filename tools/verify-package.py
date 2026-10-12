@@ -8,8 +8,9 @@ fixture rules), no executables (ELF, Mach-O, PE, shebang scripts, a pdftotext bi
 credentials; version.xml and plugin registration metadata; install.xml/upgrade.xml well formed and without a version
 attribute; MANIFEST.sha256 complete and correct; every template and locale key referenced exists; README states the
 English-only warning and the optional, unbundled pdftotext; release notes say the build is for internal testing with candidate criteria PENDING APPROVAL; no approved rule set or
-dataset, and the candidate dataset is packaged as proposed; no
-licence is asserted while the licence decision is open (ADR D7).
+dataset, and the candidate dataset is packaged as proposed; licence (decision D7, 2026-10-12): LICENSE is the verbatim GNU
+GPL v3 text, NOTICE.md names the copyright holder and GPL-3.0-or-later and licenses the DOAJ-derived dataset separately
+(CC BY-SA 4.0) with its attribution, every source file carries its SPDX line, and candidate results show the attribution.
 
 Usage: python3 tools/verify-package.py dist/doajPreAssessment-<release>.tar.gz [--json out.json]
 Exit code 0 only when every check passes.
@@ -19,9 +20,9 @@ import xml.etree.ElementTree as ET
 
 TOP = "doajPreAssessment"
 TOP_LEVEL = {"index.php", "version.xml", "install.xml", "upgrade.xml", "DoajPreAssessmentPlugin.inc.php", "classes", "pages",
-             "templates", "css", "locale", "README.md", "CHANGELOG.md", "RELEASE-NOTES.md", "MANIFEST.sha256"}
+             "templates", "css", "locale", "README.md", "CHANGELOG.md", "RELEASE-NOTES.md", "MANIFEST.sha256", "LICENSE", "NOTICE.md"}
 REQUIRED = ["index.php", "version.xml", "install.xml", "upgrade.xml", "DoajPreAssessmentPlugin.inc.php", "README.md",
-            "CHANGELOG.md", "RELEASE-NOTES.md", "MANIFEST.sha256", "locale/en_US/locale.po", "css/doajpa.css",
+            "CHANGELOG.md", "RELEASE-NOTES.md", "MANIFEST.sha256", "LICENSE", "NOTICE.md", "locale/en_US/locale.po", "css/doajpa.css",
             "pages/DoajPreAssessmentHandler.inc.php", "classes/migration/DoajPaSchemaMigration.inc.php",
             "classes/framework/DoajPaAssessmentOrchestrator.inc.php", "classes/services/DoajPaCrawlService.inc.php"]
 EXTENSIONS = (".php", ".tpl", ".xml", ".po", ".css", ".md", ".sha256")
@@ -32,6 +33,9 @@ FORBIDDEN_CONTENT = [rb"-----BEGIN [A-Z ]*PRIVATE KEY"]
 SWITCH = b"I-UNDERSTAND-THIS-IS-A-TEST-STACK"  # the loader's comparison constant; allowed in the loader only
 WARNING = ("ENGLISH-ONLY JOURNAL CONTENT. This plugin evaluates only publicly accessible English-language journal websites. "
            "It uses deterministic rules, not Artificial Intelligence or automatic translation.")
+GPL3_SHA256 = "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"  # FSF text of GPL v3, 29 June 2007
+COPYRIGHT = "Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>"
+DATASET = "classes/rules/data/DoajPaCandidateDataset.inc.php"
 RELEASE_PHRASE = "Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL"
 results = []
 
@@ -83,8 +87,8 @@ files = {x.name[len(TOP) + 1:]: tar.extractfile(x).read() for x in members if x.
 top = {n.split("/")[0] for n in files}
 check("A06", "Only the runtime file set at the top level, and every required file present",
       top <= TOP_LEVEL and all(r in files for r in REQUIRED), {"unexpected": sorted(top - TOP_LEVEL), "missing": [r for r in REQUIRED if r not in files]})
-ext = [n for n in files if not n.endswith(EXTENSIONS)]
-check("A07", f"Allowed file types only ({', '.join(EXTENSIONS)})", not ext, ext[:5])
+ext = [n for n in files if not n.endswith(EXTENSIONS) and n != "LICENSE"]
+check("A07", f"Allowed file types only ({', '.join(EXTENSIONS)}, plus LICENSE)", not ext, ext[:5])
 
 # ---------------------------------------------------------------- development code, binaries, secrets
 forbidden = [n for n in files if FORBIDDEN_PATHS.search(n)]
@@ -105,8 +109,21 @@ check("D05", "Only the dev-allowance loader references tests/support, and only t
       php_dev == ["classes/crawler/DoajPaAddressGuard.inc.php", "classes/framework/DoajPaAssessmentOrchestrator.inc.php"], php_dev)
 vendor = [n for n in files if re.search(r"(^|/)(composer\.(json|lock)|package(-lock)?\.json)$", n)]
 check("D06", "No bundled third-party dependencies (no vendor directory, no composer or npm manifests)", not vendor, vendor)
-licence = [n for n in files if re.search(r"(^|/)(LICEN[CS]E|COPYING)(\.|$)", n, re.I)]
-check("D07", "No licence file asserted while the licence decision is open (ADR D7)", not licence, licence)
+licence = sorted(n for n in files if re.search(r"(^|/)(LICEN[CS]E|COPYING)(\.|$)", n, re.I))
+notice = " ".join(files.get("NOTICE.md", b"").decode().split())
+check("D07", "Licence (D7): LICENSE is the verbatim GNU GPL v3 text; NOTICE.md: copyright holder, GPL-3.0-or-later, separate CC BY-SA 4.0 licence and attribution of the DOAJ-derived dataset; no other licence file",
+      licence == ["LICENSE"] and hashlib.sha256(files.get("LICENSE", b"")).hexdigest() == GPL3_SHA256
+      and all(t in notice for t in ("Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>", "either version 3 of the License, or (at your option) any later version", "GPL-3.0-or-later",
+                                    "classes/rules/data/DoajPaCandidateDataset.inc.php", "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/",
+                                    "COPE, DOAJ, OASPA, WAME", "https://creativecommons.org/licenses/by/4.0/", "Changes made", "No endorsement")),
+      {"licenceFiles": licence, "licenceSha256": hashlib.sha256(files.get("LICENSE", b"")).hexdigest()[:16]})
+SOURCE_EXT = (".php", ".tpl", ".xml", ".po", ".css")
+unlabelled = sorted(n for n, b in files.items() if n.endswith(SOURCE_EXT) and n != DATASET
+                    and not (COPYRIGHT.encode() in b and b"SPDX-License-Identifier: GPL-3.0-or-later" in b))
+ds = files.get(DATASET, b"")
+ds_ok = b"SPDX-License-Identifier: CC-BY-SA-4.0" in ds and b"GPL" not in ds and b"Full attribution: NOTICE.md" in ds
+check("D08", "Every packaged source file carries the copyright line and SPDX GPL-3.0-or-later; the DOAJ-derived dataset carries CC-BY-SA-4.0 and its attribution instead",
+      not unlabelled and ds_ok, {"unlabelled": unlabelled[:5], "dataset": ds_ok})
 
 # ---------------------------------------------------------------- metadata
 try:
@@ -186,6 +203,9 @@ check("C02", "The candidate dataset is packaged as PROPOSED (no approver), with 
       and b"const CANDIDATE_RULEBOOK = 'candidate-doajpa-criteria-0.1.0-draft';" in schema)
 check("C03", "Candidate results are labelled: the templates and locale carry the PENDING APPROVAL and not-a-DOAJ-result texts",
       b"Candidate criteria - PENDING APPROVAL." in files.get("locale/en_US/locale.po", b"") and b"candidate.label" in files.get("templates/partials/notResult.tpl", b""))
+check("C04", "DOAJ text shown in candidate results carries its attribution (licences, authors, wording unchanged, no endorsement)",
+      b"attribution.doaj" in files.get("templates/partials/notResult.tpl", b"")
+      and all(t in files.get("locale/en_US/locale.po", b"") for t in (b"CC BY-SA 4.0", b"COPE, DOAJ, OASPA, WAME, CC BY 4.0", b"wording unchanged", b"not reviewed or endorsed")))
 
 failed = [r["id"] for r in results if r["result"] != "PASS"]
 summary = {"archive": os.path.basename(path), "sha256": sha, "bytes": len(data), "entries": len(members), "files": len(files),

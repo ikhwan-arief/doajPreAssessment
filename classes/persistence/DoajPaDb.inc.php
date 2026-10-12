@@ -6,6 +6,10 @@
  * @class DoajPaDb
  * @brief Database helpers for the plugin's service layer: UTC clock, transactions, JSON and actors.
  *  All queries elsewhere use the Capsule query builder with bound parameters.
+ *
+ * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 use Illuminate\Database\Capsule\Manager as Capsule;
