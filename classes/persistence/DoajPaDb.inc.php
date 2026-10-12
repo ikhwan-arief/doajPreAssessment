@@ -23,6 +23,8 @@ class DoajPaNotFoundException extends DoajPaException {}
 class DoajPaValidationException extends DoajPaException {}
 /** The operation is not allowed in the record's current state (e.g. a completed run). */
 class DoajPaStateException extends DoajPaException {}
+/** A quota was reached (for example the number of reports of one run, Stage 01 F9). */
+class DoajPaQuotaException extends DoajPaStateException {}
 /** Optimistic-lock conflict, deadlock or duplicate key caused by a concurrent writer. */
 class DoajPaConcurrencyException extends DoajPaException {}
 

@@ -16,7 +16,7 @@
 	{include file=$doajPaNav}
 	<div class="app__contentPanel doajPa">
 		{if $doajPaSaved}<p class="doajPa-notice doajPa-notice--success" role="status">{translate key="plugins.generic.doajPreAssessment.reports.saved"} R-{$doajPaSaved|escape}</p>{/if}
-		{if $doajPaError}<p class="doajPa-notice doajPa-notice--error" role="alert"><strong>{translate key="plugins.generic.doajPreAssessment.gate.errorLabel"}</strong> {if $doajPaError == 'notReady'}{translate key="plugins.generic.doajPreAssessment.reports.notReady"}{else}{translate key="plugins.generic.doajPreAssessment.reports.invalid"}{/if}</p>{/if}
+		{if $doajPaError}<p class="doajPa-notice doajPa-notice--error" role="alert"><strong>{translate key="plugins.generic.doajPreAssessment.gate.errorLabel"}</strong> {if $doajPaError == 'notReady'}{translate key="plugins.generic.doajPreAssessment.reports.notReady"}{elseif $doajPaError == 'quota'}{translate key="plugins.generic.doajPreAssessment.reports.quota"}{else}{translate key="plugins.generic.doajPreAssessment.reports.invalid"}{/if}</p>{/if}
 		<p class="doajPa-notice doajPa-notice--info">{translate key="plugins.generic.doajPreAssessment.reports.about"}</p>
 
 		<h2 id="doajPaReportNew">{translate key="plugins.generic.doajPreAssessment.reports.generate"}</h2>

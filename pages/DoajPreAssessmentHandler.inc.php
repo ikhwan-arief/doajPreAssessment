@@ -322,6 +322,8 @@ class DoajPreAssessmentHandler extends Handler {
 				$pluginVersion ? $pluginVersion->getVersionString(false) : '', (string) Config::getVar('files', 'files_dir'));
 		} catch (DoajPaNotFoundException $e) {
 			return $this->_renderReports($request, 'invalid', 404);
+		} catch (DoajPaQuotaException $e) {
+			return $this->_renderReports($request, 'quota', 429);
 		} catch (DoajPaStateException $e) {
 			return $this->_renderReports($request, 'notReady', 409);
 		}

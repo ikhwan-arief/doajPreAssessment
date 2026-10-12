@@ -125,7 +125,7 @@ class DoajPaFacts {
 		return in_array('maxPages', $hit, true) || in_array('maxSeconds', $hit, true);
 	}
 
-	/** @return array Main-content (or PDF) item of a resource */
+	/** @return array|null Main-content (or PDF) item of a resource, or null when the resource has none */
 	public function mainOf($resourceId) {
 		foreach ($this->evidence as $e) {
 			if ($e['resourceId'] === $resourceId && in_array($e['method'], array('html_main_content', 'pdftotext_extraction'), true)) return $e;

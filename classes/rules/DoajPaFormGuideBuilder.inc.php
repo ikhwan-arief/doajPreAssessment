@@ -70,7 +70,7 @@ class DoajPaFormGuideBuilder {
 		return isset($this->o[$key]) ? $this->o[$key]['status'] : null;
 	}
 
-	/** @return array|null Verified-English facts only */
+	/** @return array Verified-English facts only (possibly empty) */
 	private static function v($facts) {
 		return array_values(array_filter($facts, function ($x) { return isset($x['evidence']) && $x['evidence']['verifiedEnglish']; }));
 	}

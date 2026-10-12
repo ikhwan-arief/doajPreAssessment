@@ -33,10 +33,14 @@ FORBIDDEN_CONTENT = [rb"-----BEGIN [A-Z ]*PRIVATE KEY"]
 SWITCH = b"I-UNDERSTAND-THIS-IS-A-TEST-STACK"  # the loader's comparison constant; allowed in the loader only
 WARNING = ("ENGLISH-ONLY JOURNAL CONTENT. This plugin evaluates only publicly accessible English-language journal websites. "
            "It uses deterministic rules, not Artificial Intelligence or automatic translation.")
+# Third-party assets: the DejaVu Sans fonts for readable Unicode PDF reports (Stage 05), unmodified (Debian fonts-dejavu-core 2.37-8)
+FONTS = {"classes/reports/fonts/DejaVuSans.ttf": "57f73e11f51999432bf7ab22ce55b6f945d5eca1bf824404cfa9ec2e3718c84e",
+         "classes/reports/fonts/DejaVuSans-Bold.ttf": "a4c5bc453ca281d90ea079e596da7ae0dfeb5777497c29ec254e76d97ff6f890"}
+FONT_LICENCE = "classes/reports/fonts/LICENSE-DejaVu.txt"
 GPL3_SHA256 = "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"  # FSF text of GPL v3, 29 June 2007
 COPYRIGHT = "Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>"
 DATASET = "classes/rules/data/DoajPaCandidateDataset.inc.php"
-RELEASE_PHRASE = "Stage 04 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL"
+RELEASE_PHRASE = "Operational release candidate 1; candidate DOAJ criteria are PENDING APPROVAL"
 results = []
 
 
@@ -87,8 +91,8 @@ files = {x.name[len(TOP) + 1:]: tar.extractfile(x).read() for x in members if x.
 top = {n.split("/")[0] for n in files}
 check("A06", "Only the runtime file set at the top level, and every required file present",
       top <= TOP_LEVEL and all(r in files for r in REQUIRED), {"unexpected": sorted(top - TOP_LEVEL), "missing": [r for r in REQUIRED if r not in files]})
-ext = [n for n in files if not n.endswith(EXTENSIONS) and n != "LICENSE"]
-check("A07", f"Allowed file types only ({', '.join(EXTENSIONS)}, plus LICENSE)", not ext, ext[:5])
+ext = [n for n in files if not n.endswith(EXTENSIONS) and n != "LICENSE" and n not in FONTS and n != FONT_LICENCE]
+check("A07", f"Allowed file types only ({', '.join(EXTENSIONS)}, plus LICENSE and the two pinned report fonts with their licence)", not ext, ext[:5])
 
 # ---------------------------------------------------------------- development code, binaries, secrets
 forbidden = [n for n in files if FORBIDDEN_PATHS.search(n)]
@@ -122,6 +126,12 @@ unlabelled = sorted(n for n, b in files.items() if n.endswith(SOURCE_EXT) and n 
                     and not (COPYRIGHT.encode() in b and b"SPDX-License-Identifier: GPL-3.0-or-later" in b))
 ds = files.get(DATASET, b"")
 ds_ok = b"SPDX-License-Identifier: CC-BY-SA-4.0" in ds and b"GPL" not in ds and b"Full attribution: NOTICE.md" in ds
+fonts_found = {n: hashlib.sha256(b).hexdigest() for n, b in files.items() if re.search(r"\.(ttf|otf|woff2?)$", n, re.I)}
+font_lic = " ".join(files.get(FONT_LICENCE, b"").decode(errors="replace").split())
+check("D09", "Third-party assets: exactly the DejaVu Sans regular and bold fonts (pinned SHA-256, unmodified) with their licence (Bitstream Vera and Arev, verbatim); attributed in NOTICE.md",
+      fonts_found == FONTS and "Bitstream Vera Fonts Copyright" in font_lic and "Arev Fonts Copyright" in font_lic
+      and "The Font Software may be sold as part of a larger software package" in font_lic and "DejaVu Sans" in notice and "LICENSE-DejaVu.txt" in notice,
+      {"fonts": {k: v[:12] for k, v in fonts_found.items()}})
 check("D08", "Every packaged source file carries the copyright line and SPDX GPL-3.0-or-later; the DOAJ-derived dataset carries CC-BY-SA-4.0 and its attribution instead",
       not unlabelled and ds_ok, {"unlabelled": unlabelled[:5], "dataset": ds_ok})
 

@@ -95,19 +95,31 @@ class DoajPaReportFixture {
 		return implode("\n", $out);
 	}
 
-	/** @return string Text drawn in a PDF written by DoajPaReportPdf (the Tj strings, Windows-1252 decoded) */
+	/** @return string Text drawn in a PDF written by DoajPaReportPdf: hex glyph strings through each font's ToUnicode map, or Windows-1252 strings */
 	public static function pdfText($pdf) {
-		$map = array_flip(DoajPaReportPdf::CP1252);
-		preg_match_all('/\((?:[^\\\\()]|\\\\.)*\) Tj/s', $pdf, $m);
+		$maps = array();
+		if (preg_match('#/Font << /F1 (\d+) 0 R /F2 (\d+) 0 R >>#', $pdf, $fm)) {
+			foreach (array('F1' => $fm[1], 'F2' => $fm[2]) as $name => $obj) {
+				if (!preg_match('#\n' . $obj . ' 0 obj\n<< /Type /Font /Subtype /Type0 [^\n]*?/ToUnicode (\d+) 0 R#', $pdf, $tm)) continue;
+				if (!preg_match('#\n' . $tm[1] . ' 0 obj\n<< /Length (\d+) >>\nstream\n#', $pdf, $sm, PREG_OFFSET_CAPTURE)) continue;
+				$cmap = substr($pdf, $sm[0][1] + strlen($sm[0][0]), (int) $sm[1][0]);
+				preg_match_all('/<([0-9A-F]{4})> <([0-9A-F]+)>/', $cmap, $pairs, PREG_SET_ORDER);
+				foreach ($pairs as $pr) $maps[$name][hexdec($pr[1])] = mb_convert_encoding(hex2bin($pr[2]), 'UTF-8', 'UTF-16BE');
+			}
+		}
+		$cp1252 = array_flip(DoajPaReportPdf::CP1252);
+		preg_match_all('#/(F[12]) [0-9.]+ Tf [0-9.\-]+ [0-9.\-]+ Td (<[0-9A-F]*>|\((?:[^\\\\()]|\\\\.)*\)) Tj#s', $pdf, $m, PREG_SET_ORDER);
 		$out = array();
-		foreach ($m[0] as $s) {
-			$s = substr($s, 1, -4);
-			$bytes = preg_replace_callback('/\\\\([0-7]{3}|.)/s', function ($x) { return strlen($x[1]) === 3 ? chr(octdec($x[1])) : $x[1]; }, $s);
+		foreach ($m as $x) {
 			$u = '';
-			for ($i = 0; $i < strlen($bytes); $i++) {
-				$b = ord($bytes[$i]);
-				$cp = isset($map[$b]) ? $map[$b] : $b;
-				$u .= mb_convert_encoding(pack('N', $cp), 'UTF-8', 'UCS-4BE');
+			if ($x[2][0] === '<') {
+				foreach (str_split(substr($x[2], 1, -1), 4) as $g) if ($g !== '') $u .= isset($maps[$x[1]][hexdec($g)]) ? $maps[$x[1]][hexdec($g)] : "\u{FFFD}";
+			} else {
+				$bytes = preg_replace_callback('/\\\\([0-7]{3}|.)/s', function ($y) { return strlen($y[1]) === 3 ? chr(octdec($y[1])) : $y[1]; }, substr($x[2], 1, -1));
+				for ($k = 0; $k < strlen($bytes); $k++) {
+					$b = ord($bytes[$k]);
+					$u .= mb_convert_encoding(pack('N', isset($cp1252[$b]) ? $cp1252[$b] : $b), 'UTF-8', 'UCS-4BE');
+				}
 			}
 			$out[] = $u;
 		}

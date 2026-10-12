@@ -27,6 +27,8 @@ require_once(dirname(__FILE__) . '/../reports/DoajPaReportDocx.inc.php');
 class DoajPaReportExportService {
 
 	const FILE_NAME_PATTERN = '/^[A-Za-z0-9][A-Za-z0-9_-]{0,100}\.(html|pdf|docx)$/';
+	/** Stage 01 F9 (attachment quotas): at most this many generated reports are kept per run */
+	const MAX_EXPORTS_PER_RUN = 30;
 	const MEDIA_TYPES = array('html' => 'text/html; charset=utf-8', 'pdf' => 'application/pdf',
 		'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
 
@@ -78,6 +80,8 @@ class DoajPaReportExportService {
 	 */
 	public static function generate($contextId, $runId, $format, $journal, $actor, $pluginVersion, $filesDir) {
 		DoajPaDb::oneOf($format, DoajPaSchema::EXPORT_FORMATS, 'export format');
+		$existing = (int) DoajPaDb::table(DoajPaSchema::T_EXPORT)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))->where('run_id', '=', DoajPaDb::id($runId, 'run'))->count();
+		if ($existing >= self::MAX_EXPORTS_PER_RUN) throw new DoajPaQuotaException('The report limit of this run is reached (' . self::MAX_EXPORTS_PER_RUN . ' reports); download an existing report.');
 		$in = self::modelInput($contextId, $runId, $journal, $actor, $pluginVersion);
 		$model = DoajPaReportModel::build($in);
 		$bytes = self::render($model, $format, $in['generatedAtUtc']);

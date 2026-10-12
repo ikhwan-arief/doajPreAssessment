@@ -5,16 +5,20 @@
  *
  * @class DoajPaReportPdf
  * @brief Renders a report model (DoajPaReportModel) as a PDF 1.4 document, A4 portrait (595.28 x 841.89 pt). Pure; no
- *  third-party library and no font files: the standard Type 1 fonts Helvetica and Helvetica-Bold with WinAnsiEncoding
- *  (Windows-1252), uncompressed content streams (the text can be extracted, for example by pdftotext), tables with
- *  repeated headers, rows split across pages when needed, and page numbers. Deterministic for a model.
- *  A character that Windows-1252 cannot encode is never dropped or replaced silently: it is written as [U+XXXX], and
- *  the report states how many there are (the HTML and DOCX formats show them unchanged).
+ *  third-party code. Text is written with the DejaVu Sans fonts shipped in classes/reports/fonts (embedded unmodified as
+ *  CID fonts, Identity-H, with a ToUnicode map), so Latin, Greek, Cyrillic and many other scripts are readable and can
+ *  be extracted (for example by pdftotext). If the font files are missing, the standard Type 1 fonts Helvetica and
+ *  Helvetica-Bold (Windows-1252) are used instead. Uncompressed content streams, tables with repeated headers, rows split
+ *  across pages when needed, and page numbers. Deterministic for a model.
+ *  A character the font cannot show is never dropped or replaced silently: it is written as [U+XXXX], and the report
+ *  states how many there are (the HTML and DOCX formats show them unchanged).
  *
  * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
+
+require_once(dirname(__FILE__) . '/DoajPaTrueType.inc.php');
 
 class DoajPaReportPdf {
 
@@ -41,18 +45,52 @@ class DoajPaReportPdf {
 	/** Width assumed for Windows-1252 characters above 126 (wider than most glyphs, so lines never overflow) */
 	const W_OTHER = 720;
 
+	const FONT_DIR = 'fonts';
+
 	private $pages = array();
 	private $out = '';
 	private $y = 0.0;
-	private $substituted = 0;
+	/** @var array bold (0|1) => DoajPaTrueType, or empty for the standard fonts */
+	private $ttf = array();
+	/** @var array font resource (F1|F2) => (glyph ID => Unicode code point) of the glyphs used */
+	private $used = array('F1' => array(), 'F2' => array());
 
-	/** @return string PDF bytes */
-	public static function render($model, $createdUtc = null) {
+	/**
+	 * @param $standardFonts boolean Use the standard Type 1 fonts (Windows-1252) even when the TrueType fonts exist
+	 * @return string PDF bytes
+	 */
+	public static function render($model, $createdUtc = null, $standardFonts = false) {
 		$r = new DoajPaReportPdf();
+		if (!$standardFonts) {
+			$dir = dirname(__FILE__) . '/' . self::FONT_DIR . '/';
+			$regular = DoajPaTrueType::load($dir . 'DejaVuSans.ttf', 'DejaVuSans');
+			$bold = DoajPaTrueType::load($dir . 'DejaVuSans-Bold.ttf', 'DejaVuSans-Bold');
+			if ($regular && $bold) $r->ttf = array(0 => $regular, 1 => $bold);
+		}
 		return $r->document($model, $createdUtc);
 	}
 
-	/** @return int Characters of the model that Windows-1252 cannot encode (written as [U+XXXX]) */
+	/** @return boolean Whether the embedded TrueType fonts are available */
+	public static function unicodeFonts() {
+		$dir = dirname(__FILE__) . '/' . self::FONT_DIR . '/';
+		return DoajPaTrueType::load($dir . 'DejaVuSans.ttf', 'DejaVuSans') !== null && DoajPaTrueType::load($dir . 'DejaVuSans-Bold.ttf', 'DejaVuSans-Bold') !== null;
+	}
+
+	/** @return int Characters of the model that the fonts in use cannot show (written as [U+XXXX]) */
+	private function missing($model) {
+		if (!$this->ttf) return self::unencodable($model);
+		$n = 0;
+		foreach (DoajPaReportModel::texts($model) as $t) {
+			foreach (preg_split('//u', (string) $t, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
+				if ($ch === "\n" || $ch === "\t") continue;
+				$cp = self::cp($ch);
+				if ($cp < 0x20 || ($cp >= 0x7F && $cp < 0xA0) || $this->ttf[0]->glyph($cp) === 0 || $this->ttf[1]->glyph($cp) === 0) $n++;
+			}
+		}
+		return $n;
+	}
+
+	/** @return int Characters of the model that Windows-1252 cannot encode (standard fonts: written as [U+XXXX]) */
 	public static function unencodable($model) {
 		$n = 0;
 		foreach (DoajPaReportModel::texts($model) as $t) {
@@ -70,8 +108,8 @@ class DoajPaReportPdf {
 		$this->y -= 2;
 		$this->wrapped($model['subtitle'], false, 10, 0);
 		$this->y -= 6;
-		$n = self::unencodable($model);
-		if ($n > 0) $this->notice($n . ' character(s) that the PDF standard fonts cannot show are written as [U+XXXX] code points; the HTML and DOCX reports show them unchanged.');
+		$n = $this->missing($model);
+		if ($n > 0) $this->notice($n . ' character(s) that the ' . ($this->ttf ? 'embedded DejaVu Sans font' : 'PDF standard fonts') . ' cannot show are written as [U+XXXX] code points; the HTML and DOCX reports show them unchanged.');
 		foreach ($model['sections'] as $s) {
 			$this->heading($s['heading']);
 			foreach ($s['blocks'] as $b) $this->block($b);
@@ -140,7 +178,7 @@ class DoajPaReportPdf {
 	/** Wrapped text at the current position; moves the position down */
 	private function wrapped($text, $bold, $size, $indent) {
 		$lead = $size * 1.3;
-		foreach (self::wrap($text, $bold, $size, $this->width() - $indent) as $line) {
+		foreach ($this->wrap($text, $bold, $size, $this->width() - $indent) as $line) {
 			$this->ensure($lead);
 			$this->text(self::MARGIN + $indent, $this->y - $size, $bold, $size, $line);
 			$this->y -= $lead;
@@ -149,7 +187,7 @@ class DoajPaReportPdf {
 
 	private function notice($text) {
 		$size = 9.5; $lead = $size * 1.3;
-		$lines = self::wrap('Notice: ' . $text, false, $size, $this->width() - 2 * self::PAD - 4);
+		$lines = $this->wrap('Notice: ' . $text, false, $size, $this->width() - 2 * self::PAD - 4);
 		while ($lines) {
 			$this->ensure($lead + 2 * self::PAD);
 			$fit = max(1, (int) floor(($this->y - self::MARGIN - self::FOOTER - 2 * self::PAD) / $lead));
@@ -170,13 +208,13 @@ class DoajPaReportPdf {
 		$cols = array();
 		foreach ($widths as $w) $cols[] = $this->width() * $w;
 		$headLines = array();
-		foreach ($head as $i => $c) $headLines[] = self::wrap($c, true, $size, $cols[$i] - 2 * self::PAD);
+		foreach ($head as $i => $c) $headLines[] = $this->wrap($c, true, $size, $cols[$i] - 2 * self::PAD);
 		$headH = $head ? max(array_map('count', $headLines)) * $lead + 2 * self::PAD : 0;
 		$this->ensure($headH + $lead + 2 * self::PAD);
 		if ($head) $this->tableRow($headLines, $cols, $size, $lead, true, true);
 		foreach ($rows as $r) {
 			$cells = array();
-			foreach ($r as $i => $c) $cells[] = self::wrap($c, $boldFirst && $i === 0, $size, $cols[$i] - 2 * self::PAD);
+			foreach ($r as $i => $c) $cells[] = $this->wrap($c, $boldFirst && $i === 0, $size, $cols[$i] - 2 * self::PAD);
 			while ($cells) {
 				$need = max(array_map('count', $cells)) * $lead + 2 * self::PAD;
 				$room = $this->y - self::MARGIN - self::FOOTER;
@@ -214,7 +252,30 @@ class DoajPaReportPdf {
 	}
 
 	private function text($x, $y, $bold, $size, $line) {
-		$this->out .= sprintf("BT /%s %.2F Tf %.2F %.2F Td (%s) Tj ET\n", $bold ? 'F2' : 'F1', $size, $x, $y, self::escape(self::encode($line)));
+		$font = $bold ? 'F2' : 'F1';
+		if (!$this->ttf) {
+			$this->out .= sprintf("BT /%s %.2F Tf %.2F %.2F Td (%s) Tj ET\n", $font, $size, $x, $y, self::escape(self::encode($line)));
+			return;
+		}
+		$hex = '';
+		foreach ($this->glyphs($line, $bold) as $g) {
+			$hex .= sprintf('%04X', $g[1]);
+			if (!isset($this->used[$font][$g[1]])) $this->used[$font][$g[1]] = $g[0];
+		}
+		$this->out .= sprintf("BT /%s %.2F Tf %.2F %.2F Td <%s> Tj ET\n", $font, $size, $x, $y, $hex);
+	}
+
+	/** @return array [code point, glyph ID] of a line in the TrueType font; a character without a glyph becomes [U+XXXX] */
+	private function glyphs($text, $bold) {
+		$font = $this->ttf[$bold ? 1 : 0];
+		$out = array();
+		foreach (preg_split('//u', (string) $text, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
+			$cp = $ch === "\t" ? 0x20 : self::cp($ch);
+			$gid = ($cp < 0x20 || ($cp >= 0x7F && $cp < 0xA0)) ? 0 : $font->glyph($cp);
+			if ($gid !== 0) { $out[] = array($cp, $gid); continue; }
+			foreach (str_split(sprintf('[U+%04X]', $cp)) as $c) $out[] = array(ord($c), $font->glyph(ord($c)));
+		}
+		return $out;
 	}
 
 	//
@@ -240,6 +301,15 @@ class DoajPaReportPdf {
 		return $out;
 	}
 
+	/** Width in points of a UTF-8 text in the fonts in use */
+	private function width_($text, $bold, $size) {
+		if (!$this->ttf) return self::measure(self::encode($text), $bold, $size);
+		$font = $this->ttf[$bold ? 1 : 0];
+		$w = 0;
+		foreach ($this->glyphs($text, $bold) as $g) $w += $font->advance($g[1]);
+		return $w * $size / 1000;
+	}
+
 	/** Width in points of Windows-1252 bytes */
 	private static function measure($bytes, $bold, $size) {
 		$w = 0;
@@ -253,18 +323,18 @@ class DoajPaReportPdf {
 	}
 
 	/** @return string[] UTF-8 lines that fit the width (words kept whole when possible; "\n" starts a new line) */
-	public static function wrap($text, $bold, $size, $width) {
+	private function wrap($text, $bold, $size, $width) {
 		$lines = array();
 		foreach (explode("\n", (string) $text) as $para) {
 			$line = '';
 			foreach (preg_split('/ +/', $para) as $word) {
 				$try = $line === '' ? $word : $line . ' ' . $word;
-				if (self::measure(self::encode($try), $bold, $size) <= $width) { $line = $try; continue; }
+				if ($this->width_($try, $bold, $size) <= $width) { $line = $try; continue; }
 				if ($line !== '') $lines[] = $line;
 				$line = '';
 				// A word longer than the line is broken by characters.
 				foreach (preg_split('//u', $word, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
-					if ($line !== '' && self::measure(self::encode($line . $ch), $bold, $size) > $width) { $lines[] = $line; $line = ''; }
+					if ($line !== '' && $this->width_($line . $ch, $bold, $size) > $width) { $lines[] = $line; $line = ''; }
 					$line .= $ch;
 				}
 			}
@@ -292,22 +362,49 @@ class DoajPaReportPdf {
 
 	private function assemble($title, $createdUtc) {
 		$total = count($this->pages);
+		$streams = array();
+		foreach ($this->pages as $i => $content) {
+			$this->out = '';
+			$this->text(self::MARGIN, self::MARGIN - 6, false, 8, 'DOAJ Pre-Assessment report - not a DOAJ decision - page ' . ($i + 1) . ' of ' . $total);
+			$streams[] = $content . $this->out;
+		}
 		$objects = array();
 		$objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
-		$kids = array();
-		$fontF1 = 3; $fontF2 = 4; $info = 5;
-		$objects[$fontF1] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
-		$objects[$fontF2] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
 		$date = $createdUtc ? 'D:' . preg_replace('/[^0-9]/', '', $createdUtc) . "Z" : null;
-		$objects[$info] = '<< /Title (' . self::escape(self::encode($title)) . ') /Producer (DOAJ Pre-Assessment plugin)' . ($date ? ' /CreationDate (' . $date . ')' : '') . ' >>';
-		$id = 6;
-		foreach ($this->pages as $i => $content) {
-			$footer = sprintf("BT /F1 8.00 Tf %.2F %.2F Td (%s) Tj ET\n", self::MARGIN, self::MARGIN - 6,
-				self::escape(self::encode('DOAJ Pre-Assessment report - not a DOAJ decision - page ' . ($i + 1) . ' of ' . $total)));
-			$stream = $content . $footer;
+		$objects[3] = '<< /Title <FEFF' . strtoupper(bin2hex(mb_convert_encoding((string) $title, 'UTF-16BE', 'UTF-8'))) . '> /Producer (DOAJ Pre-Assessment plugin)'
+			. ($date ? ' /CreationDate (' . $date . ')' : '') . ' >>';
+		$id = 4;
+		$fontRefs = array();
+		foreach (array('F1' => 0, 'F2' => 1) as $name => $bold) {
+			if (!$this->ttf) {
+				$objects[$id] = '<< /Type /Font /Subtype /Type1 /BaseFont /' . ($bold ? 'Helvetica-Bold' : 'Helvetica') . ' /Encoding /WinAnsiEncoding >>';
+				$fontRefs[$name] = $id++;
+				continue;
+			}
+			$font = $this->ttf[$bold];
+			$type0 = $id++; $cid = $id++; $desc = $id++; $file = $id++; $map = $id++;
+			$used = $this->used[$name];
+			ksort($used);
+			$w = '';
+			foreach ($used as $gid => $cp) $w .= $gid . ' [' . $font->advance($gid) . '] ';
+			$objects[$type0] = '<< /Type /Font /Subtype /Type0 /BaseFont /' . $font->postScriptName . ' /Encoding /Identity-H /DescendantFonts [' . $cid . ' 0 R] /ToUnicode ' . $map . ' 0 R >>';
+			$objects[$cid] = '<< /Type /Font /Subtype /CIDFontType2 /BaseFont /' . $font->postScriptName . ' /CIDSystemInfo << /Registry (Adobe) /Ordering (Identity) /Supplement 0 >>'
+				. ' /FontDescriptor ' . $desc . ' 0 R /CIDToGIDMap /Identity /DW 600 /W [' . trim($w) . '] >>';
+			$objects[$desc] = '<< /Type /FontDescriptor /FontName /' . $font->postScriptName . ' /Flags 32 /FontBBox [' . implode(' ', array_map(array($font, 'scale'), $font->bbox)) . ']'
+				. ' /ItalicAngle ' . $font->italicAngle . ' /Ascent ' . $font->scale($font->ascent) . ' /Descent ' . $font->scale($font->descent)
+				. ' /CapHeight ' . $font->scale($font->capHeight) . ' /StemV ' . ($bold ? 120 : 80) . ' /FontFile2 ' . $file . ' 0 R >>';
+			$data = $font->data;
+			$filter = '';
+			if (function_exists('gzcompress')) { $data = gzcompress($data, 6); $filter = ' /Filter /FlateDecode'; }
+			$objects[$file] = '<< /Length ' . strlen($data) . ' /Length1 ' . strlen($font->data) . $filter . " >>\nstream\n" . $data . "\nendstream";
+			$objects[$map] = self::toUnicode($used);
+			$fontRefs[$name] = $type0;
+		}
+		$kids = array();
+		foreach ($streams as $stream) {
 			$pageId = $id++; $contentId = $id++;
 			$objects[$pageId] = sprintf('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2F %.2F] /Resources << /Font << /F1 %d 0 R /F2 %d 0 R >> >> /Contents %d 0 R >>',
-				self::PAGE_W, self::PAGE_H, $fontF1, $fontF2, $contentId);
+				self::PAGE_W, self::PAGE_H, $fontRefs['F1'], $fontRefs['F2'], $contentId);
 			$objects[$contentId] = '<< /Length ' . strlen($stream) . " >>\nstream\n" . $stream . "endstream";
 			$kids[] = $pageId . ' 0 R';
 		}
@@ -323,6 +420,24 @@ class DoajPaReportPdf {
 		$max = max(array_keys($objects));
 		$pdf .= "xref\n0 " . ($max + 1) . "\n0000000000 65535 f \n";
 		for ($n = 1; $n <= $max; $n++) $pdf .= sprintf("%010d 00000 n \n", $offsets[$n]);
-		return $pdf . "trailer\n<< /Size " . ($max + 1) . " /Root 1 0 R /Info " . $info . " 0 R >>\nstartxref\n" . $xref . "\n%%EOF\n";
+		return $pdf . "trailer\n<< /Size " . ($max + 1) . " /Root 1 0 R /Info 3 0 R >>\nstartxref\n" . $xref . "\n%%EOF\n";
+	}
+
+	/** @return string ToUnicode CMap stream object: glyph ID => Unicode (UTF-16BE) for the glyphs used */
+	private static function toUnicode($used) {
+		$lines = array();
+		foreach (array_chunk($used, 100, true) as $chunk) {
+			$lines[] = count($chunk) . ' beginbfchar';
+			foreach ($chunk as $gid => $cp) $lines[] = sprintf('<%04X> <%s>', $gid, strtoupper(bin2hex(mb_convert_encoding(self::chr($cp), 'UTF-16BE', 'UTF-8'))));
+			$lines[] = 'endbfchar';
+		}
+		$cmap = "/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n"
+			. "/CMapName /Adobe-Identity-UCS def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n" . implode("\n", $lines)
+			. "\nendcmap\nCMapName currentdict /CMap defineresource pop\nend\nend\n";
+		return '<< /Length ' . strlen($cmap) . " >>\nstream\n" . $cmap . "endstream";
+	}
+
+	private static function chr($cp) {
+		return mb_convert_encoding(pack('N', $cp), 'UTF-8', 'UCS-4BE');
 	}
 }

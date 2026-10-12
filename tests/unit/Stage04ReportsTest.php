@@ -143,24 +143,31 @@ doajpa_test('S4-R03 PDF report: PDF 1.4 structure (objects, xref offsets, traile
 	$pages = preg_match_all('#/Type /Page /Parent#', $p);
 	doajpa_assert($pages >= 3, 'several pages: ' . $pages);
 	doajpa_same($pages, preg_match_all('#/MediaBox \[0 0 595\.28 841\.89\]#', $p), 'every page A4');
-	doajpa_assert(strpos($p, '/BaseFont /Helvetica /Encoding /WinAnsiEncoding') !== false && strpos($p, '/BaseFont /Helvetica-Bold') !== false, 'standard fonts');
+	doajpa_assert(DoajPaReportPdf::unicodeFonts(), 'DejaVu Sans fonts available');
+	doajpa_assert(strpos($p, '/Subtype /CIDFontType2 /BaseFont /DejaVuSans ') !== false && strpos($p, '/BaseFont /DejaVuSans-Bold') !== false
+		&& substr_count($p, '/FontFile2 ') === 2 && substr_count($p, '/ToUnicode ') === 2 && strpos($p, '/Encoding /Identity-H') !== false, 'embedded Unicode fonts with ToUnicode maps');
 	$text = DoajPaReportFixture::pdfText($p);
 	doajpa_assert(strpos($text, 'page 1 of ' . $pages) !== false && strpos($text, 'page ' . $pages . ' of ' . $pages) !== false, 'page numbers');
 	foreach (DoajPaReportModel::texts($m) as $t) doajpa_assert(DoajPaReportFixture::containsInOrder($text, $t), 'PDF contains: ' . mb_substr($t, 0, 80));
 });
 
-doajpa_test('S4-R04 PDF encoding: Windows-1252 text (Latin letters, typographic quotes, euro) unchanged; other characters written as [U+XXXX] with a notice, never dropped', function () {
+doajpa_test('S4-R04 PDF Unicode: Latin with diacritics, Greek, Cyrillic, typographic quotes and euro are written as readable text with the embedded DejaVu Sans fonts; a character without a glyph (CJK) is written as [U+XXXX] with a notice, never dropped; the standard-font fallback still works', function () {
+	$run = s4_bad();
+	$run['results'][0]['rationale'] = 'Name: Ştefan Ă (Bucureşti), Ελληνικά, Русский, José “q” € –, 中文.';
+	$m = s4_model($run);
+	$text = DoajPaReportFixture::pdfText(DoajPaReportPdf::render($m, null));
+	doajpa_assert(DoajPaReportFixture::containsInOrder($text, 'Name: Ştefan Ă (Bucureşti), Ελληνικά, Русский, José “q” € –, [U+4E2D][U+6587].'), 'readable Unicode; CJK as code points');
+	doajpa_assert(DoajPaReportFixture::containsInOrder($text, '2 character(s) that the embedded DejaVu Sans font cannot show are written as [U+XXXX] code points'), 'notice in the PDF');
+	doajpa_assert(strpos(DoajPaReportFixture::htmlText(DoajPaReportHtml::render($m)), 'Ştefan Ă (Bucureşti), Ελληνικά, Русский, José “q” € –, 中文.') !== false, 'HTML unchanged');
+	doajpa_assert(strpos(DoajPaReportFixture::docxText(DoajPaReportDocx::render($m)), 'Ştefan Ă (Bucureşti), Ελληνικά, Русский, José “q” € –, 中文.') !== false, 'DOCX unchanged');
+	// Fallback when the font files are missing: Windows-1252 text unchanged, the rest as code points with a notice.
 	doajpa_same("Jos\xE9 \x93q\x94 \x80 \x96", DoajPaReportPdf::encode("José “q” € –"), 'Windows-1252');
 	doajpa_same('[U+0103][U+4E2D]', DoajPaReportPdf::encode("ă中"), 'code points');
-	$run = s4_bad();
-	$run['results'][0]['rationale'] = 'Name: Ştefan Ă (Bucureşti).';
-	$m = s4_model($run);
-	doajpa_same(3, DoajPaReportPdf::unencodable($m), 'counted');
-	$text = DoajPaReportFixture::pdfText(DoajPaReportPdf::render($m, null));
-	doajpa_assert(DoajPaReportFixture::containsInOrder($text, '3 character(s) that the PDF standard fonts cannot show are written as [U+XXXX] code points'), 'notice in the PDF');
-	doajpa_assert(DoajPaReportFixture::containsInOrder($text, 'Name: [U+015E]tefan [U+0102] (Bucure[U+015F]ti).'), 'visible code points');
-	doajpa_assert(strpos(DoajPaReportFixture::htmlText(DoajPaReportHtml::render($m)), 'Ştefan Ă (Bucureşti)') !== false, 'HTML unchanged');
-	doajpa_assert(strpos(DoajPaReportFixture::docxText(DoajPaReportDocx::render($m)), 'Ştefan Ă (Bucureşti)') !== false, 'DOCX unchanged');
+	$std = DoajPaReportPdf::render($m, null, true);
+	doajpa_assert(strpos($std, '/BaseFont /Helvetica /Encoding /WinAnsiEncoding') !== false, 'standard fonts');
+	$st = DoajPaReportFixture::pdfText($std);
+	doajpa_assert(DoajPaReportFixture::containsInOrder($st, 'Name: [U+015E]tefan [U+0102] (Bucure[U+015F]ti)'), 'fallback code points');
+	doajpa_assert(DoajPaReportFixture::containsInOrder($st, 'character(s) that the PDF standard fonts cannot show are written as [U+XXXX] code points'), 'fallback notice');
 });
 
 doajpa_test('S4-R05 Parity and determinism: the three formats render the same model; the same model gives the same bytes', function () {

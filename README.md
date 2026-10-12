@@ -2,7 +2,7 @@
 
 > **ENGLISH-ONLY JOURNAL CONTENT.** This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. Do not rely on its findings for policies written in other languages. If essential non-English content is encountered, the affected check will be marked Unsupported Language / Needs Verification. This limitation applies to the plugin, not to DOAJ eligibility.
 
-> **Internal-testing build (0.8.0.0): Stage 04 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL.** No DOAJ criterion is approved. By default no criterion is evaluated; a Journal Manager may choose the candidate criteria for one run, and those results are labelled as candidate results. No result is a DOAJ assessment result. The build adds Before You Apply and HTML, PDF and DOCX reports. Licence: GPL-3.0-or-later (see License and Copyright). It is an internal-testing build, not a production release. See `RELEASE-NOTES.md`.
+> **Release candidate 0.9.0.0: Operational release candidate 1; candidate DOAJ criteria are PENDING APPROVAL.** No DOAJ criterion is approved, so the default assessment profile evaluates no criterion. A Journal Manager may choose the candidate criteria for one run, and those results are labelled as candidate results. No result is a DOAJ assessment result. The release candidate is **not accepted for operational use** until criteria are approved and the independent security audit is completed. Licence: GPL-3.0-or-later (see License and Copyright). See `RELEASE-NOTES.md`.
 
 ## Project Overview
 
@@ -176,11 +176,11 @@ Do not claim installation compatibility until it has been verified on a running 
 
 ## Installation (OJS 3.3.0-23)
 
-Version `0.8.0.0` is an internal-testing build. It contains:
+Version `0.9.0.0` is the first operational release candidate. It is not accepted for operational use (see the release notes). It contains:
 - the access guard and the English-only gates;
 - the database for assessment history, the backend views, the public website crawler and the assessment framework;
 - the Stage 03 deterministic evaluation engine with the **candidate** criteria dataset 0.1.0-draft (137 criteria, PENDING APPROVAL);
-- the Stage 04 Before You Apply list and the HTML, PDF and DOCX reports.
+- the Stage 04 Before You Apply list and the HTML, PDF and DOCX reports. The PDF embeds the DejaVu Sans fonts, so Unicode text is readable.
 
 A Journal Manager can start an assessment (with a fresh English-only confirmation for every run); the plugin reads
 the journal's public website in short steps and seals the run.
@@ -197,18 +197,38 @@ the journal's public website in short steps and seals the run.
   privately under the OJS files directory (`{files_dir}/doajPreAssessment/{journal}/reports/{run}/`). They can be
   downloaded only by users authorized for that journal.
 
+### Operational workflow
+
+1. **Install and activate:** upload the archive (Settings → Website → Plugins), then enable the plugin in each journal.
+2. **Acknowledge:** the first visit asks for the English-only confirmation.
+3. **Assess:**
+   - New Assessment: confirm English-only again, and choose the profile (approved criteria only; or candidate criteria, internal testing).
+   - The run page then advances the assessment in short steps. If a step fails, the run is marked "Interrupted" with the
+     reason; once the cause is removed, choose **Resume** (or **Cancel**).
+4. **Inspect:** Evidence (pages read, quotes, coverage gaps), Criteria & Findings, the run page, and the DOAJ Form Guide.
+5. **Act:**
+   - Before You Apply lists the corrections by page. "Create a corrective action" prefills an action; set its owner,
+     due date and priority under Corrective Actions.
+   - Completing an action is not evidence: only a new assessment can resolve a finding.
+6. **Report:** Reports generates HTML, PDF or DOCX (A4) of a completed run. Files are private; at most 30 reports are kept per run.
+7. **Correct and reassess:**
+   - After correcting the website, run a new assessment.
+   - Assessment History → Compare shows which findings are resolved (verified on new evidence), still open or need
+     verification. Finding IDs stay the same across runs.
+
 Supported: OJS 3.3.0-23 on PHP 7.3 to 8.2 (tested on PHP 7.3.33 and 8.2.34 in disposable stacks). OJS 3.4 and 3.5
 are **not** supported and were not tested.
 
 ### Package
 
-`doajPreAssessment-0.8.0.0.tar.gz` contains one directory, `doajPreAssessment/`, with:
+`doajPreAssessment-0.9.0.0.tar.gz` contains one directory, `doajPreAssessment/`, with:
 - the plugin code, templates, stylesheet and English locale;
 - this README, the change log, the release notes, `LICENSE` and `NOTICE.md`;
+- the DejaVu Sans fonts for the PDF reports, with their licence (`classes/reports/fonts/`);
 - `MANIFEST.sha256` (the SHA-256 of every other file).
 
-It contains no test code, no development tools, no third-party libraries and no executables. Check the archive
-against the published SHA-256 before installing (`shasum -a 256 doajPreAssessment-0.8.0.0.tar.gz`).
+It contains no test code, no development tools, no third-party code libraries and no executables. Check the archive
+against the published SHA-256 before installing (`shasum -a 256 doajPreAssessment-0.9.0.0.tar.gz`).
 Maintainers build it with `tools/build-package.sh` (reproducible: the same commit always gives the same archive).
 
 ### Install and activate
@@ -332,6 +352,9 @@ Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin ha
   review packet, language-neutral facts under safeguards PENDING APPROVAL)
 - Stage 04: Before You Apply (corrections by page with accountable action rows) and HTML, PDF and DOCX reports from
   the stored run record (private, guarded downloads); see `docs/stage04/04-report.md`
+- Stage 05: operational release candidate 0.9.0.0, with end-to-end acceptance on OJS 3.3.0-23 (PHP 7.3 and 8.2) and the
+  normative approval package; see `docs/stage05/05-final-acceptance-report.md`. **RC NOT ACCEPTED**: no criterion is
+  approved, and the independent audit is BLOCKED.
 - DOAJ assessment rules: none approved (candidate criteria for internal testing only)
 - Production readiness: Not established
 

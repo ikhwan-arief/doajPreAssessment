@@ -3,6 +3,25 @@
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
 They are not compliance-ready and do not contain approved DOAJ assessment rules.
 
+## [0.9.0.0] - 2026-10-12 (Stage 05, operational release candidate 1; not accepted for operational use)
+
+Operational release candidate 1; candidate DOAJ criteria are PENDING APPROVAL. See `RELEASE-NOTES.md`.
+
+### Added
+
+- PDF reports embed the DejaVu Sans fonts (unmodified, licence in `classes/reports/fonts/LICENSE-DejaVu.txt`). Unicode
+  text is readable and extractable; characters without a glyph are written as [U+XXXX] with a notice. The package
+  verifier pins the font files (D09).
+- Report quota: at most 30 generated reports per run; further requests get HTTP 429 (Stage 01 F9).
+- Normative approval package for the 137 criteria and the FQ mapping (documentation only; nothing approved).
+
+### Fixed
+
+- A passing unapproved-metric check now verify-clears the pages it searched, and a passing endogeny check clears the
+  issues it read. Before this fix, page- and issue-level findings could only become "needs verification", never
+  "resolved", after a correction. Found by the Stage 05 end-to-end test.
+- Inaccurate code documentation (S3-SEC-6, and two report helpers).
+
 ## [0.8.0.0] - 2026-10-12 (Stage 04, internal-testing build)
 
 Stage 04 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL. See `RELEASE-NOTES.md`.

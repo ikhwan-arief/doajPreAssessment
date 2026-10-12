@@ -934,7 +934,13 @@ class DoajPaChecks {
 			return $h->outcome('fail', 'Endogeny exceeds 25% in at least one of the latest two issues. ' . $text, $cite, array(), $d, 'Reduce the share of research articles authored by editors, board members or reviewers to 25% or less per issue.');
 		}
 		if ($unknown) return $h->unverifiable('Endogeny cannot be established without human confirmation of uncertain names or article types. ' . $text, array());
-		return $h->outcome('pass', 'Endogeny is at most 25% in each of the latest two issues. ' . $text, $cite, array(), array(), null, 'observation');
+		$clear = array();
+		foreach ($units as $u) {
+			if ($u['issue']['structured'] && $u['issue']['structured']['verifiedEnglish']) {
+				$clear[] = array('subtype' => 'endogeny-over-25', 'targetType' => 'issue', 'target' => $u['issue']['url'], 'evidenceId' => $u['issue']['structured']['id']);
+			}
+		}
+		return $h->outcome('pass', 'Endogeny is at most 25% in each of the latest two issues. ' . $text, $cite, $clear, array(), null, 'observation');
 	}
 	private static function c_guide_endogeny_minimised($h, $f) { return self::c_guide_endogeny_25_issues($h, $f); }
 
@@ -960,7 +966,23 @@ class DoajPaChecks {
 		$unnamed = array_values(array_filter($v, function ($c) { return $c['unnamed']; }));
 		if ($unnamed) return $h->review('An impact factor or ranking claim is displayed without naming the service; whether it is an allowed metric needs human review.', $unnamed);
 		if ($claims && !$v) return $h->unverifiable('Metric claims appear only on pages whose language is not verified English.', $claims);
-		return $h->absent($f->items(array('home', 'about', 'custom', 'information')), $v ? 'Only metrics the Guide lists as allowed are displayed.' : 'No impact factor or ranking claim was found on the pages read.');
+		$items = $f->items(array('home', 'about', 'custom', 'information'));
+		$o = $h->absent($items, $v ? 'Only metrics the Guide lists as allowed are displayed.' : 'No impact factor or ranking claim was found on the pages read.');
+		// Each verified page searched is clear of an unapproved metric: an earlier page-level finding there is resolved by this
+		// new evidence (a page that was not searched again keeps its finding open or "needs verification").
+		return $o['status'] === 'pass' ? self::clearTargets($o, DoajPaFacts::verified($items), 'unapproved-metric', 'page') : $o;
+	}
+
+	/** Adds a verified-clear item per target (page or issue URL) whose verified evidence a passing outcome searched */
+	private static function clearTargets($o, $items, $subtype, $targetType) {
+		$seen = array();
+		foreach ($items as $e) {
+			$url = $e['url'];
+			if (isset($seen[$url]) || !$e['verifiedEnglish']) continue;
+			$seen[$url] = true;
+			$o['verifiedClear'][] = array('subtype' => $subtype, 'targetType' => $targetType, 'target' => $url, 'evidenceId' => $e['id']);
+		}
+		return $o;
 	}
 
 	private static function c_guide_avoid_unreliable_indexes($h, $f) {

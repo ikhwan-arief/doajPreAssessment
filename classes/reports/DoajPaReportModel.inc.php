@@ -267,7 +267,7 @@ class DoajPaReportModel {
 		);
 	}
 
-	/** @return string Every text of the model, one per line, for parity checks between formats */
+	/** @return string[] Every text of the model, in order, for parity checks between formats */
 	public static function texts($model) {
 		$out = array($model['title'], $model['subtitle']);
 		foreach ($model['sections'] as $s) {

@@ -491,3 +491,16 @@ doajpa_test('S3-X02 Regression: an absence pass is withdrawn when a relevant pol
 	list($c, $g) = s3_eval('good');
 	doajpa_same('pass', $g['guide.no-all-rights-reserved']['status'], 'undetermined galley viewer pages do not block');
 });
+doajpa_test('S3-X03 Regression (Stage 05 E2E): a passing metric or endogeny check verify-clears the page or issue targets it searched, so an earlier page- or issue-level finding there can be resolved on new evidence', function () {
+	list($c, $o) = s3_eval('good');
+	$clears = array();
+	foreach ($o['guide.no-unapproved-metrics']['verifiedClear'] as $x) $clears[$x['subtype'] . '|' . $x['targetType']][] = $x['target'];
+	doajpa_same('pass', $o['guide.no-unapproved-metrics']['status'], 'metrics pass');
+	doajpa_assert(isset($clears['unapproved-metric|page']) && in_array('http://fixtures:8080/s3/index.php/good/about', $clears['unapproved-metric|page'], true), 'page target cleared');
+	doajpa_assert(isset($clears['not-met|journal']), 'journal-level item kept');
+	$issues = array();
+	foreach ($o['guide.endogeny-25-issues']['verifiedClear'] as $x) if ($x['subtype'] === 'endogeny-over-25') $issues[] = $x['target'];
+	doajpa_same(array('http://fixtures:8080/s3/index.php/good/issue/view/3', 'http://fixtures:8080/s3/index.php/good/issue/view/2'), $issues, 'both issues cleared');
+	list($cb, $ob) = s3_eval('bad');
+	doajpa_same(array(), $ob['guide.no-unapproved-metrics']['verifiedClear'], 'a failing check clears nothing');
+});

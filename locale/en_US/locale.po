@@ -919,3 +919,6 @@ msgstr "PDF (A4)"
 
 msgid "plugins.generic.doajPreAssessment.reports.formatDocx"
 msgstr "DOCX (Word, A4)"
+
+msgid "plugins.generic.doajPreAssessment.reports.quota"
+msgstr "This run already has the maximum number of generated reports (30). Download an existing report of this run."
