@@ -224,7 +224,19 @@ class DoajPaAssessmentOrchestrator {
 			$step = DoajPaCrawlService::step($contextId, $runId, $actor, $budget, $crawlOptions);
 			if (!empty($step['busy'])) return array('phase' => 'busy');
 			if (empty($step['done'])) return array('phase' => 'crawling', 'crawl' => $step);
-			return array('phase' => 'completed', 'result' => self::evaluate($contextId, $runId, $actor, $rules, $hooks));
+			// One evaluation at a time: parallel steps that all see a finished crawl must not evaluate concurrently
+			// (a failure of one would interrupt the run for all). The others report "busy"; the next step sees the result.
+			$lock = @fopen(DoajPaCrawlService::workDir($contextId, $runId) . '/evaluate.lock', 'c');
+			if (!$lock) throw new DoajPaStateException('Cannot open the evaluation lock.');
+			if (!flock($lock, LOCK_EX | LOCK_NB)) { fclose($lock); return array('phase' => 'busy'); }
+			try {
+				$current = DoajPaAssessmentRunService::getRun($contextId, $runId);
+				if ($current->status !== 'running') return array('phase' => $current->status);
+				return array('phase' => 'completed', 'result' => self::evaluate($contextId, $runId, $actor, $rules, $hooks));
+			} finally {
+				flock($lock, LOCK_UN);
+				fclose($lock);
+			}
 		});
 	}
 

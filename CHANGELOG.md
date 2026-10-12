@@ -32,6 +32,13 @@ Stage 04 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL. S
 - Language-neutral facts from short pages of an English site (ADR-013, PENDING APPROVAL D-03-9): outcome basis
   "neutral", accepted by the outcome guard only for eligible evidence; labelled; never resolves a finding.
 
+### Fixed
+
+- Parallel assessment steps (pre-existing since 0.5.0.0): when several steps saw a finished crawl at the same time, all
+  of them evaluated the run concurrently. An intermittent failure of one moved the run to "interrupted" for all, and it
+  was never sealed. This was seen once in the Stage 04 regression matrix (PHP 7.3). Evaluation is now serialized by its
+  own lock; the other steps report "busy". The security suite runs the six-parallel-steps scenario three times.
+
 ## [0.7.0.0] - 2026-10-12 (Stage 03, internal-testing build)
 
 Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL. See `RELEASE-NOTES.md`.
