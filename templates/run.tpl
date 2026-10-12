@@ -47,11 +47,18 @@
 				<p><input type="checkbox" id="doajPaAutoContinue" checked /> <label for="doajPaAutoContinue">{translate key="plugins.generic.doajPreAssessment.run.autoContinue"}</label></p>
 				{literal}<script>
 				(function () {
-					var form = document.getElementById('doajPaStepForm'), box = document.getElementById('doajPaAutoContinue');
-					if (!form || !box) return;
-					try { if (window.sessionStorage.getItem('doajPaAutoContinue') === 'off') box.checked = false; } catch (e) {}
-					box.addEventListener('change', function () { try { window.sessionStorage.setItem('doajPaAutoContinue', box.checked ? 'on' : 'off'); } catch (e) {} });
-					window.setTimeout(function () { if (box.checked) form.submit(); }, 1500);
+					// The OJS 3.3 backend re-renders the page after this script runs, so elements are looked up when used,
+					// never kept: a kept reference is detached and its submit() is cancelled by the browser.
+					function off() { try { return window.sessionStorage.getItem('doajPaAutoContinue') === 'off'; } catch (e) { return false; } }
+					function sync() { var box = document.getElementById('doajPaAutoContinue'); if (box && off()) box.checked = false; }
+					document.addEventListener('change', function (e) {
+						if (e.target && e.target.id === 'doajPaAutoContinue') { try { window.sessionStorage.setItem('doajPaAutoContinue', e.target.checked ? 'on' : 'off'); } catch (x) {} }
+					});
+					window.setTimeout(sync, 0); window.setTimeout(sync, 500);
+					window.setTimeout(function () {
+						var form = document.getElementById('doajPaStepForm'), box = document.getElementById('doajPaAutoContinue');
+						if (form && box && box.checked && !off()) form.submit();
+					}, 1500);
 				})();
 				</script>{/literal}
 			{/if}

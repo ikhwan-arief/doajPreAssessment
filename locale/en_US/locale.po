@@ -45,7 +45,7 @@ msgid "plugins.generic.doajPreAssessment.overview.statusLabel"
 msgstr "Status:"
 
 msgid "plugins.generic.doajPreAssessment.overview.status"
-msgstr "Development build. No approved DOAJ rule set is installed: an assessment reads the public website and records evidence and coverage only; no DOAJ criterion is evaluated."
+msgstr "Internal-testing build. No approved DOAJ rule set is installed: by default an assessment reads the public website and records evidence and coverage only; candidate criteria (PENDING APPROVAL) are evaluated only in runs where they are chosen."
 
 msgid "plugins.generic.doajPreAssessment.overview.disclaimer"
 msgstr "DOAJ Pre-Assessment is an independent self-evaluation tool. It is not an official DOAJ evaluation and does not predict or guarantee acceptance. Only DOAJ decides on journal applications."
@@ -258,7 +258,7 @@ msgid "plugins.generic.doajPreAssessment.criteria.notApproved"
 msgstr "This criterion is not from an approved DOAJ criteria dataset. Dataset:"
 
 msgid "plugins.generic.doajPreAssessment.criteria.notAssessed"
-msgstr "No approved DOAJ criteria are installed in this build, so no criterion has been assessed. Criteria listed below, if any, come from development or test datasets."
+msgstr "No approved DOAJ criteria are installed in this build, so no criterion has been assessed against an approved rule set. Criteria listed below, if any, come from candidate (PENDING APPROVAL), development or test datasets."
 
 msgid "plugins.generic.doajPreAssessment.criteria.title"
 msgstr "Criteria"
@@ -267,10 +267,10 @@ msgid "plugins.generic.doajPreAssessment.crossCheck"
 msgstr "Cross-check with DOAJ:"
 
 msgid "plugins.generic.doajPreAssessment.devBuild.label"
-msgstr "Development build."
+msgstr "Internal-testing build."
 
 msgid "plugins.generic.doajPreAssessment.devBuild.text"
-msgstr "No approved DOAJ rule set is installed, so no DOAJ criterion is evaluated (NOT IMPLEMENTED). Assessments record public website evidence and coverage only; nothing shown here is a DOAJ assessment result."
+msgstr "No approved DOAJ rule set is installed. By default no DOAJ criterion is evaluated; candidate criteria (PENDING APPROVAL) are evaluated only in runs where a Journal Manager chose them. Nothing shown here is a DOAJ assessment result."
 
 msgid "plugins.generic.doajPreAssessment.evidence.excerpts"
 msgstr "Evidence excerpts"
@@ -624,7 +624,7 @@ msgid "plugins.generic.doajPreAssessment.newAssessment.scope"
 msgstr "The plugin reads this journal's public website without logging in, in small steps that you can follow, pause and resume. It stores every page it read, every page it could not read and the extracted text, with addresses, times and fingerprints. The completed run is sealed and cannot be changed afterwards."
 
 msgid "plugins.generic.doajPreAssessment.newAssessment.notImplemented"
-msgstr "No approved DOAJ criteria are installed in this version, so no criterion is evaluated and nothing is passed or failed. The DOAJ Form Guide questions FQ-01 to FQ-20 are recorded as not yet assessed. The following modules are planned and not available:"
+msgstr "No approved DOAJ criteria are installed in this version. With \"Approved DOAJ criteria only\", no criterion is evaluated, nothing is passed or failed, and the DOAJ Form Guide questions FQ-01 to FQ-20 are recorded as not yet assessed. The following modules are not available as approved rules (they exist only as candidate criteria, PENDING APPROVAL):"
 
 msgid "plugins.generic.doajPreAssessment.newAssessment.pdf"
 msgstr "PDF text extraction uses the optional external Poppler pdftotext program. On this server:"
