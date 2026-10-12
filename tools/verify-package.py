@@ -36,7 +36,7 @@ WARNING = ("ENGLISH-ONLY JOURNAL CONTENT. This plugin evaluates only publicly ac
 GPL3_SHA256 = "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"  # FSF text of GPL v3, 29 June 2007
 COPYRIGHT = "Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>"
 DATASET = "classes/rules/data/DoajPaCandidateDataset.inc.php"
-RELEASE_PHRASE = "Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL"
+RELEASE_PHRASE = "Stage 04 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL"
 results = []
 
 

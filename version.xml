@@ -4,7 +4,7 @@
   * version.xml
   *
   * DOAJ Pre-Assessment plugin version information.
-  * Internal-testing build (Stage 03): candidate DOAJ criteria, PENDING APPROVAL. Not a compliance-ready product.
+  * Internal-testing build (Stage 04): reports and corrective actions; candidate DOAJ criteria, PENDING APPROVAL. Not a compliance-ready product.
   *
   * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
   * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
@@ -13,7 +13,7 @@
 <version>
 	<application>doajPreAssessment</application>
 	<type>plugins.generic</type>
-	<release>0.7.0.0</release>
+	<release>0.8.0.0</release>
 	<date>2026-10-12</date>
 	<lazy-load>1</lazy-load>
 	<class>DoajPreAssessmentPlugin</class>

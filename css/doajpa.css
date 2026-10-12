@@ -60,3 +60,13 @@
 	.doajPa-nav__link { display: block; padding: 0.3rem 0.4rem; overflow-wrap: anywhere; }
 	.doajPa-table { min-width: 0; }
 }
+
+/* Stage 04: Before You Apply groups, action rows, report form */
+.doajPa-group { margin: 1.5rem 0; }
+.doajPa-group h2 { overflow-wrap: anywhere; }
+.doajPa-actionRow { margin: 0 0 0.5rem; }
+.doajPa-form--inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.5rem 0 1rem; }
+.doajPa-form--inline select { max-width: 100%; }
+.doajPa-choice { display: block; margin: 0.25rem 0; }
+.doajPa-list li { margin: 0 0 0.4rem; overflow-wrap: anywhere; }
+.doajPa-meta { color: #555; font-size: 0.875rem; overflow-wrap: anywhere; }

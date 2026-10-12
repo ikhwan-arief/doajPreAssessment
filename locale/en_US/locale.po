@@ -847,3 +847,75 @@ msgstr "These answers come from the candidate profile of the latest completed ru
 
 msgid "plugins.generic.doajPreAssessment.attribution.doaj"
 msgstr "DOAJ text quoted in candidate results: excerpts, wording unchanged, from the DOAJ Guide to applying, Licensing & copyright and Application form (© DOAJ, CC BY-SA 4.0) and from the Principles of Transparency and Best Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME, CC BY 4.0). DOAJ has not reviewed or endorsed this plugin. Full attribution: NOTICE.md in the plugin package."
+
+msgid "plugins.generic.doajPreAssessment.bya.noRun"
+msgstr "No completed assessment run yet. Run an assessment first; the corrections of the latest completed run are listed here."
+
+msgid "plugins.generic.doajPreAssessment.bya.intro"
+msgstr "Corrections from one completed run, grouped by the website page to correct. Each task shows the run's recommended correction and the DOAJ clause, the finding, and the corrective actions recorded for it. Results that could not be verified are listed separately: they are not deficiencies."
+
+msgid "plugins.generic.doajPreAssessment.bya.show"
+msgstr "Show"
+
+msgid "plugins.generic.doajPreAssessment.bya.openRun"
+msgstr "Open the run"
+
+msgid "plugins.generic.doajPreAssessment.bya.counts"
+msgstr "{$tasks} corrections on {$pages} page group(s), {$withAction} with a corrective action; {$verify} criteria need verification."
+
+msgid "plugins.generic.doajPreAssessment.bya.none"
+msgstr "No failed, warned or contradicted criterion in this run."
+
+msgid "plugins.generic.doajPreAssessment.bya.page"
+msgstr "Page:"
+
+msgid "plugins.generic.doajPreAssessment.bya.noPage"
+msgstr "The journal website (no single page)"
+
+msgid "plugins.generic.doajPreAssessment.bya.tasks"
+msgstr "Corrections for this page"
+
+msgid "plugins.generic.doajPreAssessment.bya.correction"
+msgstr "Recommended correction"
+
+msgid "plugins.generic.doajPreAssessment.bya.actions"
+msgstr "Corrective actions"
+
+msgid "plugins.generic.doajPreAssessment.bya.createAction"
+msgstr "Create a corrective action"
+
+msgid "plugins.generic.doajPreAssessment.bya.verify"
+msgstr "Needs verification ({$count} criteria)"
+
+msgid "plugins.generic.doajPreAssessment.bya.verifyIntro"
+msgstr "These criteria could not be established from the pages read (an unread or unverified page is never a deficiency). Check the pages listed, or run the assessment again."
+
+msgid "plugins.generic.doajPreAssessment.reports.saved"
+msgstr "Report generated:"
+
+msgid "plugins.generic.doajPreAssessment.reports.notReady"
+msgstr "A report can be generated only for a completed run whose sealed snapshot verifies."
+
+msgid "plugins.generic.doajPreAssessment.reports.invalid"
+msgstr "Choose a completed run of this journal and a format (HTML, PDF or DOCX)."
+
+msgid "plugins.generic.doajPreAssessment.reports.about"
+msgstr "Reports are generated from the stored record of one completed run; the HTML, PDF and DOCX formats carry the same content (A4). Every report includes the method, the sources inspected and not inspected, the results with their evidence, the corrections by page, the corrective action register, the DOAJ Form Guide, the limitations and the disclaimer: it is not a DOAJ decision. Files are stored privately and can be downloaded only by authorized users of this journal."
+
+msgid "plugins.generic.doajPreAssessment.reports.generate"
+msgstr "Generate a report"
+
+msgid "plugins.generic.doajPreAssessment.reports.create"
+msgstr "Generate report"
+
+msgid "plugins.generic.doajPreAssessment.reports.noCompletedRun"
+msgstr "No completed assessment run yet."
+
+msgid "plugins.generic.doajPreAssessment.reports.formatHtml"
+msgstr "HTML (web page)"
+
+msgid "plugins.generic.doajPreAssessment.reports.formatPdf"
+msgstr "PDF (A4)"
+
+msgid "plugins.generic.doajPreAssessment.reports.formatDocx"
+msgstr "DOCX (Word, A4)"

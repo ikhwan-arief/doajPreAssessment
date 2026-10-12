@@ -1,13 +1,14 @@
-# Release Notes — DOAJ Pre-Assessment 0.7.0.0
+# Release Notes — DOAJ Pre-Assessment 0.8.0.0
 
 **Release type:** internal-testing build (not compliance-ready; never 1.0 before Stage 03–05 acceptance)
 **Date:** 2026-10-12
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
-**Distribution:** internal testing only. The licence is not decided; no external redistribution.
+**Licence:** GPL-3.0-or-later (plugin code). The DOAJ-derived reference material is licensed separately under CC BY-SA 4.0, with attribution in `NOTICE.md`.
+**Distribution:** internal-testing build, not a production release. The candidate criteria are PENDING APPROVAL, and the independent security audit is BLOCKED.
 
-**Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL.** No DOAJ criterion is approved.
-Every run is labelled "Not a DOAJ assessment result." Nothing in it states, predicts or guarantees DOAJ eligibility
-or acceptance.
+**Stage 04 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL.** No DOAJ criterion is approved.
+Every run and every report is labelled "Not a DOAJ assessment result". Nothing in it states, predicts or guarantees DOAJ
+eligibility or acceptance.
 
 > **ENGLISH-ONLY JOURNAL CONTENT.** The plugin evaluates only publicly accessible English-language journal websites,
 > with deterministic rules and without Artificial Intelligence or automatic translation. A confirmation is required
@@ -15,21 +16,28 @@ or acceptance.
 
 ## What this release contains
 
-- Everything in 0.6.0.0: access guard, English-only gates, sealed assessment history with stable finding IDs,
-  backend views, SSRF-protected website reader, resumable assessment framework.
-- Main-content language identification (ADR-011): navigation, breadcrumbs, sidebars and footers do not decide a
-  page's language; too little text stays undetermined and is never verified English.
-- Deterministic evaluation engine with the candidate criteria dataset 0.1.0-draft (137 criteria from the DOAJ
-  Guide v2.9, the Principles of Transparency v4.0 and DOAJ Licensing & copyright v2.1, captured 2026-10-10).
-- Two assessment profiles on New Assessment:
-  - **Approved DOAJ criteria only** (default): none are approved, so no criterion is evaluated;
-  - **Candidate criteria, pending approval**: an explicit, per-run choice with an extra confirmation; results are
-    labelled "Candidate criteria - PENDING APPROVAL".
-- Candidate results quote the verified English text they rely on, with page addresses; fail, warning and
-  contradiction results include a recommended correction citing the DOAJ clause; deficiencies become findings
-  tracked across runs.
-- DOAJ Form Guide FQ-01 to FQ-20 answered from verified English evidence only in candidate runs (supported, not
-  found, needs verification); FQ-08 (keywords) is never answered automatically.
+- Everything in 0.7.0.0. That includes the candidate criteria (137, dataset 0.1.0-draft, PENDING APPROVAL), which
+  run only in the explicit candidate profile.
+- **Before You Apply:** the corrections of a completed run, grouped by the website page to correct. Each one carries:
+  - the run's recommended correction and the DOAJ clause;
+  - the finding;
+  - the corrective actions recorded for it (owner, due date, priority, status);
+  - a link that creates a prefilled corrective action.
+
+  Results that could not be verified are listed separately; they are not deficiencies.
+- **Reports in HTML, PDF and DOCX (A4)**, generated from the stored record of one completed run:
+  - The three formats carry the same content: run, normative baseline, method, sources inspected and not inspected,
+    results with their stored rationales, findings and history, corrections by page, corrective action register,
+    DOAJ Form Guide, limitations, references and attribution, and the disclaimer.
+  - Files are stored privately under the OJS files directory. Downloads are re-authorized and checked against the
+    recorded SHA-256 on every request; a changed file is never served.
+  - No third-party library is used.
+- Stage 03 conditions:
+  - all 597 per-criterion acceptance cases are executed;
+  - the engine corrections they found are applied;
+  - language-neutral facts (names, dates, ISSNs, counts) can be read from short pages of an English site, under
+    explicit safeguards; this is PENDING APPROVAL (D-03-9) and every such result is labelled;
+  - licence files and attribution are included.
 
 ## Not available in this release
 
@@ -39,17 +47,18 @@ or acceptance.
 | FQ-01..FQ-20 mapping | **PENDING APPROVAL** (decision D-03-2); answers are candidate answers |
 | ISSN Portal and DOI resolver lookups | Not performed (decision D-03-4); those criteria are always "unverifiable" |
 | Unreliable-index classification | Not performed (decision D-03-5); indexing claims are listed as unverified |
-| Before You Apply task list | Not available (needs approved criteria) |
-| HTML, PDF and DOCX reports | Not available; export metadata only (Stage 04) |
 | Human confirmation of machine results | Not available (later stage) |
 | Unattended (scheduled) assessments | Not available: steps run from the manager's browser |
 | Independent code review (Codex) of Stage 02 and Stage 03 | **BLOCKED** (not executed) |
-| Licence | Not decided: no licence is granted by this release; no external redistribution |
+| Production release | Not yet: the criteria are PENDING APPROVAL (D-03-1), and the independent security audit is BLOCKED (B-1) |
 
 ## Known limitations
 
 - Pages that list mostly names (editorial board, contact) often have too little prose for the language check; they
-  stay "undetermined" (ADR-011) and results that depend on them are "unverifiable".
+  stay "undetermined" (ADR-011). Only language-neutral facts may be read from them (ADR-013, labelled, PENDING
+  APPROVAL). Statements on such pages are never read, so results that depend on them are "unverifiable".
+- The PDF report uses the standard PDF fonts (Windows-1252). Characters outside that set are written as [U+XXXX]
+  code points, and the report says so; the HTML and DOCX reports show them unchanged.
 - Checks read only the pages crawled in the run, within the crawl limits. A sample cannot prove "all content".
 - Matching is by curated English patterns; wording outside them is reported as unverifiable or for DOAJ review,
   never as a pass.

@@ -275,7 +275,7 @@ class DoajPaFormGuideBuilder {
 	private function fq16() {
 		$a = $this->linkFrom('guide.disclosure-editorial-board', 'editorial board');
 		if ($a['status'] === 'supported' && $this->status('guide.board-names-affiliations') === 'fail') {
-			$a['uncertainty'] = 'Some members have no affiliation: ' . mb_substr($this->o['guide.board-names-affiliations']['rationale'], 0, 300, 'UTF-8');
+			$a['uncertainty'] = trim($a['uncertainty'] . ' Some members have no affiliation: ' . mb_substr($this->o['guide.board-names-affiliations']['rationale'], 0, 300, 'UTF-8'));
 		}
 		return $a;
 	}

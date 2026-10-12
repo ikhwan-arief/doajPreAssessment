@@ -3,6 +3,35 @@
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
 They are not compliance-ready and do not contain approved DOAJ assessment rules.
 
+## [0.8.0.0] - 2026-10-12 (Stage 04, internal-testing build)
+
+Stage 04 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL. See `RELEASE-NOTES.md`.
+
+### Added
+
+- Before You Apply (Stage 01 F7 item 4, AC-14): corrections of a completed run grouped by the website page to correct,
+  with the run's recommended correction and DOAJ clause, the finding and the accountable corrective-action rows. A
+  corrective action can be created from a task, prefilled. Unverifiable results are listed as "needs verification".
+- Reports (AC-18): HTML, PDF and DOCX, A4, from one report model built from the stored run record (parity), with the
+  disclaimer, normative baseline, method, sources not inspected, results, findings, corrections by page, action
+  register, Form Guide, limitations, references and attribution. Private storage under `files_dir`. Guarded,
+  audited downloads checked against the recorded SHA-256. No third-party library.
+- Licence: `LICENSE` (GPL-3.0-or-later) and `NOTICE.md`; an SPDX line in every source file; separate CC BY-SA 4.0
+  attribution of the DOAJ-derived dataset, also shown with candidate results.
+
+### Changed
+
+- Candidate engine corrections from the per-criterion acceptance cases (ADR-012 R1.9):
+  - abstention is applied consistently ("not applicable", "no contradiction", activity, endogeny);
+  - headings and menu labels are not statements;
+  - negations inside a claim are respected;
+  - conditional "should" clauses give warnings;
+  - fee no-charge statements are scoped to the fees they name;
+  - HTML/PDF media types are checked;
+  - shared article URLs are detected.
+- Language-neutral facts from short pages of an English site (ADR-013, PENDING APPROVAL D-03-9): outcome basis
+  "neutral", accepted by the outcome guard only for eligible evidence; labelled; never resolves a finding.
+
 ## [0.7.0.0] - 2026-10-12 (Stage 03, internal-testing build)
 
 Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL. See `RELEASE-NOTES.md`.

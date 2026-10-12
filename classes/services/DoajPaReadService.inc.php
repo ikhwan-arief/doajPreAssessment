@@ -333,12 +333,12 @@ class DoajPaReadService {
 			->where('ack_type', '=', 'first_use')->orderBy('acknowledgement_id', 'desc')->limit(self::LIST_LIMIT)->get()->all());
 	}
 
-	/** @return array Recorded report exports (metadata only) */
+	/** @return array Generated reports of the journal (metadata; files are downloaded through the guarded reportDownload op) */
 	public static function exports($contextId) {
 		return self::rowsArray(DoajPaDb::table(DoajPaSchema::T_EXPORT . ' as x')
 			->join(DoajPaSchema::T_RUN . ' as r', function ($join) { $join->on('r.run_id', '=', 'x.run_id')->on('r.context_id', '=', 'x.context_id'); })
 			->where('x.context_id', '=', DoajPaDb::id($contextId, 'context'))->orderBy('x.export_id', 'desc')->limit(self::LIST_LIMIT)
-			->get(array('x.export_id', 'x.format', 'x.file_name', 'x.created_at_utc', 'x.run_id', 'r.run_number', 'x.rulebook_version'))->all());
+			->get(array('x.export_id', 'x.format', 'x.file_name', 'x.created_at_utc', 'x.run_id', 'r.run_number', 'x.rulebook_version', 'x.file_sha256', 'x.byte_length'))->all());
 	}
 
 	//

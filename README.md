@@ -2,7 +2,7 @@
 
 > **ENGLISH-ONLY JOURNAL CONTENT.** This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. Do not rely on its findings for policies written in other languages. If essential non-English content is encountered, the affected check will be marked Unsupported Language / Needs Verification. This limitation applies to the plugin, not to DOAJ eligibility.
 
-> **Internal-testing build (0.7.0.0): Stage 03 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL.** No DOAJ criterion is approved. By default no criterion is evaluated; a Journal Manager may choose the candidate criteria for one run, and those results are labelled as candidate results. No result is a DOAJ assessment result. Internal testing only: no external redistribution (licence not decided). See `RELEASE-NOTES.md`.
+> **Internal-testing build (0.8.0.0): Stage 04 internal-testing build; candidate DOAJ criteria are PENDING APPROVAL.** No DOAJ criterion is approved. By default no criterion is evaluated; a Journal Manager may choose the candidate criteria for one run, and those results are labelled as candidate results. No result is a DOAJ assessment result. The build adds Before You Apply and HTML, PDF and DOCX reports. Licence: GPL-3.0-or-later (see License and Copyright). It is an internal-testing build, not a production release. See `RELEASE-NOTES.md`.
 
 ## Project Overview
 
@@ -176,9 +176,12 @@ Do not claim installation compatibility until it has been verified on a running 
 
 ## Installation (OJS 3.3.0-23)
 
-Version `0.7.0.0` is an internal-testing build. It contains the access guard, the English-only gates, the database
-for assessment history, the backend views, the public website crawler, the assessment framework and the Stage 03
-deterministic evaluation engine with the **candidate** criteria dataset 0.1.0-draft (137 criteria, PENDING APPROVAL).
+Version `0.8.0.0` is an internal-testing build. It contains:
+- the access guard and the English-only gates;
+- the database for assessment history, the backend views, the public website crawler and the assessment framework;
+- the Stage 03 deterministic evaluation engine with the **candidate** criteria dataset 0.1.0-draft (137 criteria, PENDING APPROVAL);
+- the Stage 04 Before You Apply list and the HTML, PDF and DOCX reports.
+
 A Journal Manager can start an assessment (with a fresh English-only confirmation for every run); the plugin reads
 the journal's public website in short steps and seals the run.
 
@@ -189,15 +192,23 @@ the journal's public website in short steps and seals the run.
   answered only from verified English evidence. Results and answers are labelled "Candidate criteria - PENDING
   APPROVAL" and "Not a DOAJ assessment result". They are not approved DOAJ rules and not a compliance claim.
 
+- **Before You Apply** lists the corrections of a completed run by website page, with the corrective actions recorded
+  for each finding. **Reports** generates an HTML, PDF or DOCX report (A4) of a completed run. Reports are stored
+  privately under the OJS files directory (`{files_dir}/doajPreAssessment/{journal}/reports/{run}/`). They can be
+  downloaded only by users authorized for that journal.
+
 Supported: OJS 3.3.0-23 on PHP 7.3 to 8.2 (tested on PHP 7.3.33 and 8.2.34 in disposable stacks). OJS 3.4 and 3.5
 are **not** supported and were not tested.
 
 ### Package
 
-`doajPreAssessment-0.7.0.0.tar.gz` contains one directory, `doajPreAssessment/`, with the plugin code, templates,
-stylesheet, English locale, this README, the change log, the release notes and `MANIFEST.sha256` (the SHA-256 of every
-other file). It contains no test code, no development tools, no third-party libraries and no executables. Check the
-archive against the published SHA-256 before installing (`shasum -a 256 doajPreAssessment-0.7.0.0.tar.gz`).
+`doajPreAssessment-0.8.0.0.tar.gz` contains one directory, `doajPreAssessment/`, with:
+- the plugin code, templates, stylesheet and English locale;
+- this README, the change log, the release notes, `LICENSE` and `NOTICE.md`;
+- `MANIFEST.sha256` (the SHA-256 of every other file).
+
+It contains no test code, no development tools, no third-party libraries and no executables. Check the archive
+against the published SHA-256 before installing (`shasum -a 256 doajPreAssessment-0.8.0.0.tar.gz`).
 Maintainers build it with `tools/build-package.sh` (reproducible: the same commit always gives the same archive).
 
 ### Install and activate
@@ -317,7 +328,10 @@ Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin ha
 - Stage 02.07: Assessment framework and orchestration; see `docs/stage02/02.07-report.md`
 - Stage 02.08: Installation package; see `docs/stage02/02.08-report.md`
 - Stage 03: deterministic evaluation engine and candidate criteria dataset 0.1.0-draft (PENDING APPROVAL); see
-  `docs/stage03/03-acceptance-report.md`
+  `docs/stage03/03-acceptance-report.md`; conditions completed (all per-criterion acceptance cases executed, normative
+  review packet, language-neutral facts under safeguards PENDING APPROVAL)
+- Stage 04: Before You Apply (corrections by page with accountable action rows) and HTML, PDF and DOCX reports from
+  the stored run record (private, guarded downloads); see `docs/stage04/04-report.md`
 - DOAJ assessment rules: none approved (candidate criteria for internal testing only)
 - Production readiness: Not established
 

@@ -452,6 +452,7 @@ doajpa_test('S3-Q02 Form guide: "not found" only when the governing criterion es
 	doajpa_same('not_found', $fq['FQ-01']['answerStatus'], 'OA statement absent on verified pages');
 	doajpa_same('supported', $fq['FQ-16']['answerStatus'], 'board names read as language-neutral facts (ADR-013)');
 	doajpa_assert(strpos($fq['FQ-16']['uncertainty'], 'Some members have no affiliation') !== false, 'FQ-16 states the missing affiliations');
+	doajpa_assert(strpos($fq['FQ-16']['uncertainty'], 'language-neutral facts') !== false && strpos($fq['FQ-16']['uncertainty'], 'ADR-013') !== false, 'FQ-16 keeps the ADR-013 label');
 	doajpa_same('needs_verification', $fq['FQ-10']['answerStatus'], 'conflicting licences');
 	doajpa_same('needs_verification', $fq['FQ-05']['answerStatus'], 'invalid ISSN');
 	foreach ($fq as $k => $a) if ($a['answerStatus'] === 'not_found') doajpa_assert(strpos($a['uncertainty'], '(fail)') !== false || strpos($a['uncertainty'], '(warning)') !== false || $k === 'FQ-07', $k);

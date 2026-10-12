@@ -32,6 +32,8 @@ require_once(dirname(__FILE__) . '/../classes/services/DoajPaReadService.inc.php
 require_once(dirname(__FILE__) . '/../classes/services/DoajPaCorrectiveActionService.inc.php');
 require_once(dirname(__FILE__) . '/../classes/ui/DoajPaLabels.inc.php');
 require_once(dirname(__FILE__) . '/../classes/framework/DoajPaAssessmentOrchestrator.inc.php');
+require_once(dirname(__FILE__) . '/../classes/services/DoajPaReportExportService.inc.php');
+require_once(dirname(__FILE__) . '/../classes/reports/DoajPaActionPlan.inc.php');
 
 class DoajPreAssessmentHandler extends Handler {
 
@@ -60,6 +62,8 @@ class DoajPreAssessmentHandler extends Handler {
 		'run' => array('GET', 'HEAD'),
 		'compare' => array('GET', 'HEAD'),
 		'reports' => array('GET', 'HEAD'),
+		'reportCreate' => array('POST'),
+		'reportDownload' => array('GET', 'HEAD'),
 		'settings' => array('GET', 'HEAD'),
 	);
 
@@ -208,10 +212,27 @@ class DoajPreAssessmentHandler extends Handler {
 		));
 	}
 
-	/** Before You Apply: not available until approved criteria exist. */
+	/**
+	 * Before You Apply (Stage 01 F7 item 4, AC-14): the corrections of one completed run (default: the latest), grouped by
+	 * the website page to correct, with the journal's corrective-action rows for each finding. ?run= selects a run.
+	 */
 	public function beforeYouApply($args, $request) {
 		$this->_requireGate($request, $args);
-		return $this->_render($request, 'unavailable.tpl', 'beforeYouApply', array('doajPaUnavailable' => 'beforeYouApply'));
+		$contextId = self::_contextId($request);
+		$completed = array_values(array_filter(DoajPaReadService::runs($contextId), function ($r) { return $r['status'] === 'completed'; }));
+		$runId = self::_idParam($request, 'run');
+		if ($runId === null && $completed) $runId = (int) $completed[0]['run_id'];
+		$run = null; $plan = null;
+		if ($runId !== null) {
+			try {
+				$run = DoajPaReadService::run($contextId, $runId);
+			} catch (DoajPaNotFoundException $e) {
+				DoajPaResponse::notFound();
+			}
+			if ($run['status'] !== 'completed') DoajPaResponse::notFound();
+			$plan = DoajPaActionPlan::build($run, DoajPaReadService::actions($contextId));
+		}
+		return $this->_render($request, 'beforeYouApply.tpl', 'beforeYouApply', array('doajPaRun' => $run, 'doajPaPlan' => $plan, 'doajPaCompletedRuns' => $completed));
 	}
 
 	/** Corrective Actions: register and create form. */
@@ -219,7 +240,24 @@ class DoajPreAssessmentHandler extends Handler {
 		$this->_requireGate($request, $args);
 		$form = self::_emptyActionForm();
 		$preselect = self::_idValue($request->getUserVar('findingId'));
-		if ($preselect) $form['findingId'] = (string) $preselect;
+		if ($preselect) {
+			$form['findingId'] = (string) $preselect;
+			// From Before You Apply (?run=): prefill the run's recommended correction, the page and the suggested priority.
+			$fromRun = self::_idValue($request->getUserVar('run'));
+			if ($fromRun) {
+				try {
+					$plan = DoajPaActionPlan::build(DoajPaReadService::run(self::_contextId($request), $fromRun), array());
+					foreach ($plan['groups'] as $g) foreach ($g['tasks'] as $t) {
+						if ($t['findingId'] !== $preselect) continue;
+						$form['recommendation'] = (string) ($t['recommendation'] !== null ? $t['recommendation'] : $t['rationale']);
+						$form['targetUrl'] = (string) $g['page'];
+						$form['priority'] = $t['suggestedPriority'];
+					}
+				} catch (DoajPaNotFoundException $e) {
+					// another journal's or unknown run: nothing is prefilled
+				}
+			}
+		}
 		return $this->_renderActions($request, $form, null, 200);
 	}
 
@@ -263,10 +301,61 @@ class DoajPreAssessmentHandler extends Handler {
 		return $this->_render($request, 'compare.tpl', 'history', array('doajPaCompare' => $comparison));
 	}
 
-	/** Reports: export metadata only; report generation is not available in this build. */
+	/** Reports (Stage 04, AC-18): generate HTML, PDF or DOCX reports of completed runs; private, guarded downloads. */
 	public function reports($args, $request) {
 		$this->_requireGate($request, $args);
-		return $this->_render($request, 'reports.tpl', 'reports', array('doajPaExports' => DoajPaReadService::exports(self::_contextId($request))));
+		return $this->_renderReports($request, null, 200);
+	}
+
+	/** Generate one report of a completed run (POST + CSRF, checked in authorize()). */
+	public function reportCreate($args, $request) {
+		$this->_requireGate($request, $args);
+		$contextId = self::_contextId($request);
+		$runId = self::_idValue($request->getUserVar('runId'));
+		$format = $request->getUserVar('format');
+		if (!$runId || !is_string($format) || !in_array($format, DoajPaSchema::EXPORT_FORMATS, true)) return $this->_renderReports($request, 'invalid', 400);
+		$context = $request->getContext();
+		$pluginVersion = self::$_plugin->getCurrentVersion();
+		try {
+			$id = DoajPaReportExportService::generate($contextId, $runId, $format,
+				array('name' => (string) $context->getLocalizedName(), 'url' => $request->url(null, 'index')), self::_actor($request),
+				$pluginVersion ? $pluginVersion->getVersionString(false) : '', (string) Config::getVar('files', 'files_dir'));
+		} catch (DoajPaNotFoundException $e) {
+			return $this->_renderReports($request, 'invalid', 404);
+		} catch (DoajPaStateException $e) {
+			return $this->_renderReports($request, 'notReady', 409);
+		}
+		$request->redirect(null, DoajPreAssessmentPlugin::PAGE, 'reports', null, array('saved' => $id));
+	}
+
+	/**
+	 * Download one report: authorization, journal and run are checked on every request (authorize(), F8); the file is
+	 * read from the private reports directory and must still have its recorded SHA-256. Sent as an attachment, never
+	 * cached, with a sandboxing Content-Security-Policy.
+	 */
+	public function reportDownload($args, $request) {
+		$this->_requireGate($request, array());
+		$exportId = self::_idArg($args);
+		$contextId = self::_contextId($request);
+		try {
+			$file = DoajPaReportExportService::file($contextId, $exportId, (string) Config::getVar('files', 'files_dir'));
+		} catch (DoajPaNotFoundException $e) {
+			DoajPaResponse::notFound();
+		} catch (DoajPaStateException $e) {
+			DoajPaResponse::terminate(409, '409 Conflict. The report file no longer matches its recorded hash and is not served. Generate the report again.');
+		}
+		if (strtoupper((string) $_SERVER['REQUEST_METHOD']) === 'GET') {
+			DoajPaAuditService::record($contextId, 'report_export_downloaded', self::_actor($request), $file['runId'], 'report_export', $file['exportId'], array('format' => $file['format']));
+		}
+		header('Content-Type: ' . $file['mediaType']);
+		header('Content-Length: ' . strlen($file['bytes']));
+		header('Content-Disposition: attachment; filename="' . $file['fileName'] . '"');
+		header('Cache-Control: no-store, private');
+		header('X-Content-Type-Options: nosniff');
+		header("Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox");
+		header('X-Report-SHA256: ' . $file['sha256']);
+		echo $file['bytes'];
+		exit;
 	}
 
 	/** Settings: plugin and schema status, acknowledgements and the audit log (read-only). */
@@ -509,6 +598,18 @@ class DoajPreAssessmentHandler extends Handler {
 			'doajPaActions' => DoajPaReadService::actions($contextId),
 			'doajPaFindingChoices' => DoajPaReadService::findingChoices($contextId),
 			'doajPaForm' => $formValues,
+			'doajPaError' => $error,
+			'doajPaSaved' => self::_idValue($request->getUserVar('saved')),
+		), $status);
+	}
+
+	private function _renderReports($request, $error, $status) {
+		$contextId = self::_contextId($request);
+		$completed = array_values(array_filter(DoajPaReadService::runs($contextId), function ($r) { return $r['status'] === 'completed'; }));
+		return $this->_render($request, 'reports.tpl', 'reports', array(
+			'doajPaExports' => DoajPaReadService::exports($contextId),
+			'doajPaCompletedRuns' => $completed,
+			'doajPaFormats' => DoajPaSchema::EXPORT_FORMATS,
 			'doajPaError' => $error,
 			'doajPaSaved' => self::_idValue($request->getUserVar('saved')),
 		), $status);
