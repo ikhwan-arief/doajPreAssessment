@@ -119,6 +119,9 @@
 		{elseif $a.criteria == 'candidate_rules_pending_approval'}
 			<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.candidate.label"}</strong> {translate key="plugins.generic.doajPreAssessment.run.candidateRules"}
 			{if $a.candidateDataset}<code>{$a.candidateDataset.version|escape}</code> ({$a.candidateDataset.approval|escape}).{/if}</p>
+		{elseif $a.criteria == 'approved_rules'}
+			<p class="doajPa-notice doajPa-notice--info" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.approved.label"}</strong> {translate key="plugins.generic.doajPreAssessment.run.approvedRules"}
+			{if $a.approvedDataset}<code>{$a.approvedDataset.version|escape}</code> ({$a.approvedDataset.approval|escape}).{/if}</p>
 		{elseif $a.criteria == 'test_fixture_rules'}
 			<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.run.testRulesLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.run.testRules"}</p>
 		{/if}

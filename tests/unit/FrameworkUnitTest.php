@@ -13,10 +13,20 @@ function doajpa_fw_evidence() {
 	);
 }
 
-doajpa_test('Framework: no live rules and no approved datasets in this version (every live run is NOT IMPLEMENTED)', function () {
-	doajpa_same(array(), DoajPaRuleRegistry::liveRules(), 'live rules');
-	doajpa_same(array(), DoajPaSchema::APPROVED_DATASETS, 'approved datasets');
-	doajpa_same(array(), DoajPaSchema::APPROVED_RULEBOOKS, 'approved rulebooks');
+doajpa_test('Framework: live rules come only from the approved dataset named in DoajPaSchema (none when nothing is approved)', function () {
+	$rules = DoajPaRuleRegistry::liveRules();
+	doajpa_same(count(DoajPaSchema::APPROVED_DATASETS), count(DoajPaSchema::APPROVED_RULEBOOKS), 'one rule set per dataset');
+	if (!DoajPaSchema::APPROVED_DATASETS) {
+		doajpa_same(array(), $rules, 'no live rules');
+		return;
+	}
+	doajpa_assert(count($rules) > 0, 'approved rules');
+	foreach ($rules as $r) {
+		doajpa_assert($r instanceof DoajPaApprovedRule && in_array($r->datasetVersion(), DoajPaSchema::APPROVED_DATASETS, true), $r->key() . ' approved dataset');
+		doajpa_same(array(2, 1), array($r->version(), $r->lineage()), $r->key() . ' version 2 of lineage 1');
+	}
+	doajpa_same(array(DoajPaApprovedDataset::RULEBOOK), DoajPaSchema::APPROVED_RULEBOOKS, 'approved rule set');
+	doajpa_same(false, DoajPaSchema::CANDIDATE_PROFILE_ENABLED, 'candidate profile off');
 });
 doajpa_test('Guard: pass with a verbatim quote from verified-English evidence stays pass', function () {
 	$o = DoajPaOutcomeGuard::apply(array('status' => 'pass', 'rationale' => 'ok', 'evidenceIds' => array(1),

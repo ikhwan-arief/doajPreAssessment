@@ -124,7 +124,7 @@ doajpa_test('S3-G01 Guard: absence/observation pass needs cited, verified-Englis
 // Candidate dataset and registry
 //
 
-doajpa_test('S3-D01 Dataset: generated PHP copy matches the proposed JSON; status proposed; nothing approved or activated', function () {
+doajpa_test('S3-D01 Dataset: generated PHP copy matches the proposed JSON; status proposed; the proposed version itself is never approved', function () {
 	$json = file_get_contents(__DIR__ . '/../../docs/stage03/criteria/doaj-criteria-0.1.0-draft.json');
 	doajpa_same(hash('sha256', $json), DoajPaCandidateDataset::SOURCE_SHA256, 'source hash');
 	$j = json_decode($json, true);
@@ -136,9 +136,7 @@ doajpa_test('S3-D01 Dataset: generated PHP copy matches the proposed JSON; statu
 	foreach ($j['criteria'] as $i => $c) {
 		foreach (array('key', 'quote', 'level', 'evidence', 'assessability', 'abstainWhen', 'doajReferenceUrl') as $f) doajpa_same($c[$f], $d['criteria'][$i][$f], $c['key'] . ' ' . $f);
 	}
-	doajpa_same(array(), DoajPaSchema::APPROVED_DATASETS, 'approved datasets empty');
-	doajpa_same(array(), DoajPaSchema::APPROVED_RULEBOOKS, 'approved rulebooks empty');
-	doajpa_same(array(), DoajPaRuleRegistry::liveRules(), 'no live rules');
+	doajpa_assert(!in_array(DoajPaCandidateDataset::VERSION, DoajPaSchema::APPROVED_DATASETS, true), 'the proposed version is never approved');
 	doajpa_assert(!in_array(DoajPaSchema::CANDIDATE_RULEBOOK, DoajPaSchema::APPROVED_RULEBOOKS, true), 'candidate rulebook is never approved');
 	doajpa_same('candidate-doajpa-criteria-' . DoajPaCandidateDataset::VERSION, DoajPaSchema::CANDIDATE_RULEBOOK, 'rulebook label names the dataset');
 	doajpa_same(20, count($d['fqMapping']), 'FQ mapping');
@@ -285,7 +283,7 @@ doajpa_test('S3-R05 Metrics and indexing: a named non-Guide metric fails; indexi
 	doajpa_same('page', $o['guide.no-unapproved-metrics']['detections'][0]['targetType'], 'page detection');
 	$i = $o['guide.avoid-unreliable-indexes'];
 	doajpa_same('unverifiable', $i['status'], 'indexes never judged');
-	doajpa_assert(strpos($i['rationale'], 'No index is classified as unreliable') !== false && strpos($i['rationale'], 'D-03-5 PENDING APPROVAL') !== false, 'reason');
+	doajpa_assert(strpos($i['rationale'], 'No index is classified as unreliable') !== false && strpos($i['rationale'], '(decision D-03-5)') !== false, 'reason');
 	doajpa_assert(strpos($i['rationale'], 'Index Copernicus') !== false, 'claim inventoried');
 	// unnamed impact factor -> human review; a Guide-listed service -> pass
 	$pages = DoajPaRuleFixture::pages('good');
@@ -350,7 +348,7 @@ doajpa_test('S3-N01 ADR-013: language-neutral facts from a short (undetermined) 
 	foreach (array('guide.disclosure-editorial-board' => 'pass', 'guide.board-names-affiliations' => 'fail', 'guide.endogeny-25-issues' => 'fail') as $k => $want) {
 		doajpa_same($want, $o[$k]['status'], $k);
 		doajpa_same('neutral', $o[$k]['basis'], $k . ' basis');
-		doajpa_assert(strpos($o[$k]['rationale'], 'Language-neutral facts (ADR-013, PENDING APPROVAL)') !== false, $k . ' labelled');
+		doajpa_assert(strpos($o[$k]['rationale'], 'Language-neutral facts (ADR-013)') !== false, $k . ' labelled');
 		doajpa_same(array(), $o[$k]['verifiedClear'], $k . ' never verified clear');
 	}
 	doajpa_same('unverifiable', s3_status($o, 'guide.contact-person-email'), 'a missing contact name on an undetermined page is never a finding');
@@ -462,6 +460,47 @@ doajpa_test('S3-Q02 Form guide: "not found" only when the governing criterion es
 // Regression tests for defects found on the real OJS 3.3 journal (Stage 03 integration, PHP 8.2)
 //
 
+doajpa_test('S5-A01 Approved dataset (activation): generated from the signed approval; every approved criterion and FQ row is the reviewed one, unchanged; approved runs answer only approved FQs', function () {
+	if (!DoajPaSchema::APPROVED_DATASETS) {
+		doajpa_same(array(), DoajPaRuleRegistry::liveRules(), 'nothing approved, no live rules');
+		return;
+	}
+	require_once __DIR__ . '/../../classes/rules/DoajPaApprovedRule.inc.php';
+	require_once __DIR__ . '/../../classes/rules/DoajPaFormGuideBuilder.inc.php';
+	$json = file_get_contents(__DIR__ . '/../../docs/stage03/criteria/doaj-criteria-' . DoajPaApprovedDataset::VERSION . '.json');
+	doajpa_same(hash('sha256', $json), DoajPaApprovedDataset::SOURCE_SHA256, 'source hash');
+	doajpa_same(array(DoajPaApprovedDataset::VERSION), DoajPaSchema::APPROVED_DATASETS, 'approved dataset');
+	doajpa_same('approved', DoajPaApprovedDataset::STATUS, 'status');
+	doajpa_assert(DoajPaApprovedDataset::APPROVED_BY !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', DoajPaApprovedDataset::APPROVED_AT_UTC) === 1, 'approver and date');
+	$a = DoajPaApprovedDataset::data();
+	$c = DoajPaCandidateDataset::data();
+	$cand = array();
+	foreach ($c['criteria'] as $x) $cand[$x['key']] = $x;
+	doajpa_assert(count($a['criteria']) > 0 && count($a['criteria']) <= 137, 'approved wave');
+	foreach ($a['criteria'] as $x) doajpa_same($cand[$x['key']], $x, $x['key'] . ' unchanged from the reviewed criterion');
+	$keys = array_map(function ($x) { return $x['key']; }, $a['criteria']);
+	$fqs = array();
+	foreach ($c['fqMapping'] as $m) $fqs[$m['fq']] = $m;
+	foreach ($a['fqMapping'] as $m) {
+		doajpa_same($fqs[$m['fq']], $m, $m['fq'] . ' unchanged');
+		doajpa_same(array(), array_values(array_diff($m['criteria'], $keys)), $m['fq'] . ' maps approved criteria only');
+	}
+	// same outcomes as the reviewed candidate criteria on the conforming fixture
+	$ctx = s3_ctx('good');
+	foreach (DoajPaApprovedRule::all() as $r) {
+		$o = $r->evaluate($ctx);
+		$k = new DoajPaCandidateRule($cand[$r->key()]);
+		doajpa_same($k->evaluate($ctx), $o, $r->key() . ' same outcome as the reviewed criterion');
+	}
+	// FQs whose mapping is not approved are never answered
+	$b = new DoajPaFormGuideBuilder(DoajPaFacts::of($ctx), array(), $a['fqMapping'], DoajPaApprovedDataset::FQ_LABEL, DoajPaAssessmentOrchestrator::FQ_NOT_APPROVED);
+	$mapped = array_map(function ($m) { return $m['fq']; }, $a['fqMapping']);
+	foreach ($b->build() as $e) {
+		if (in_array($e['questionKey'], $mapped, true)) doajpa_assert(strpos($e['uncertainty'], 'PENDING') === false && strpos($e['uncertainty'], DoajPaApprovedDataset::FQ_LABEL) !== false, $e['questionKey'] . ' approved label');
+		else doajpa_same(array('not_yet_assessed', null, DoajPaAssessmentOrchestrator::FQ_NOT_APPROVED), array($e['answerStatus'], $e['answerText'], $e['uncertainty']), $e['questionKey'] . ' not answered');
+	}
+	doajpa_same(false, DoajPaSchema::CANDIDATE_PROFILE_ENABLED, 'candidate profile off in the operational release');
+});
 doajpa_test('S3-X01 Regression: "a Creative Commons licence" without its variant is CC (unspecified), never CC BY, and never contradicts a named variant', function () {
 	$f = DoajPaFacts::of(DoajPaRuleFixture::context(array('/about' => array('html', s3_page('<p>' . S3_EN . ' All articles in this journal are open access and are published under a Creative Commons licence.</p>'))), array('site' => 'cc')));
 	$codes = array_map(function ($l) { return $l['code']; }, $f->licences());

@@ -439,6 +439,9 @@ class DoajPreAssessmentHandler extends Handler {
 		if (!in_array($profile, array(DoajPaAssessmentOrchestrator::PROFILE_APPROVED, DoajPaAssessmentOrchestrator::PROFILE_CANDIDATE), true)) {
 			return $this->_renderNewAssessment($request, 'profile', 400);
 		}
+		if ($profile === DoajPaAssessmentOrchestrator::PROFILE_CANDIDATE && !DoajPaSchema::CANDIDATE_PROFILE_ENABLED) {
+			return $this->_renderNewAssessment($request, 'profile', 400);
+		}
 		if ($profile === DoajPaAssessmentOrchestrator::PROFILE_CANDIDATE && $request->getUserVar('confirmCandidate') !== '1') {
 			return $this->_renderNewAssessment($request, 'candidate', 400);
 		}
@@ -529,8 +532,9 @@ class DoajPreAssessmentHandler extends Handler {
 			'doajPaError' => $error,
 			'doajPaPdfTool' => $pdfTool,
 			'doajPaPdfAvailable' => $pdfTool !== 'unavailable',
-			'doajPaRulebook' => DoajPaAssessmentOrchestrator::LIVE_RULEBOOK,
+			'doajPaRulebook' => DoajPaAssessmentOrchestrator::liveRulebook(),
 			'doajPaCandidateRulebook' => DoajPaAssessmentOrchestrator::CANDIDATE_RULEBOOK,
+			'doajPaCandidateEnabled' => DoajPaSchema::CANDIDATE_PROFILE_ENABLED,
 			'doajPaFutureModules' => DoajPaAssessmentOrchestrator::FUTURE_MODULES,
 		), $status);
 	}
@@ -549,7 +553,8 @@ class DoajPreAssessmentHandler extends Handler {
 			'doajPaProgress' => $active ? DoajPaCrawlService::progress($contextId, $runId) : null,
 			'doajPaStepNotice' => is_string($notice) && in_array($notice, self::STEP_NOTICES, true) ? $notice : null,
 			'doajPaError' => $error,
-			'doajPaCanAdvance' => $run['status'] === 'running' && in_array($run['rulebook_version'], array(DoajPaAssessmentOrchestrator::LIVE_RULEBOOK, DoajPaAssessmentOrchestrator::CANDIDATE_RULEBOOK), true),
+			'doajPaCanAdvance' => $run['status'] === 'running' && (in_array($run['rulebook_version'], array_merge(array(DoajPaAssessmentOrchestrator::LIVE_RULEBOOK), DoajPaSchema::APPROVED_RULEBOOKS), true)
+				|| (DoajPaSchema::CANDIDATE_PROFILE_ENABLED && $run['rulebook_version'] === DoajPaAssessmentOrchestrator::CANDIDATE_RULEBOOK)),
 			'doajPaCanCancel' => in_array($run['status'], DoajPaSchema::RUN_ACTIVE, true),
 			'doajPaFutureModules' => DoajPaAssessmentOrchestrator::FUTURE_MODULES,
 		), $status);
@@ -588,6 +593,7 @@ class DoajPreAssessmentHandler extends Handler {
 			'doajPaJournalName' => $request->getContext()->getLocalizedName(),
 			'doajPaPluginVersion' => $pluginVersion ? $pluginVersion->getVersionString(false) : '',
 			'doajPaPage' => DoajPreAssessmentPlugin::PAGE,
+			'doajPaApprovedRulebook' => DoajPaSchema::APPROVED_RULEBOOKS ? DoajPaAssessmentOrchestrator::liveRulebook() : '',
 			'doajPaReferences' => array('https://doaj.org/apply/guide/', 'https://doaj.org/apply/transparency/', 'https://doaj.org/apply/copyright-and-licensing/'),
 		), $vars));
 		if ($status !== 200) http_response_code($status);

@@ -15,17 +15,22 @@
 class DoajPaSchema {
 
 	/**
-	 * Approved DOAJ rule sets and criterion datasets. Stage 02 has none: every stored run and definition is a
-	 * development or test record and the UI labels it "not a DOAJ assessment result". Stage 03 adds the
-	 * approved, pinned versions here after review (Stage 01 F2).
+	 * Approved rule sets and criterion datasets (Stage 01 F2): criteria approved by the product owner for this plugin
+	 * (not by DOAJ). Written only by tools/apply-approval.py from the signed approval record, together with
+	 * classes/rules/data/DoajPaApprovedDataset.inc.php; never edited by hand. Empty means nothing is approved.
 	 */
-	const APPROVED_RULEBOOKS = array();
-	const APPROVED_DATASETS = array();
+	const APPROVED_RULEBOOKS = array('doajpa-criteria-1.0.0');
+	const APPROVED_DATASETS = array('1.0.0');
 	/**
 	 * Rule set label of runs that apply the PROPOSED criteria dataset (Stage 03 candidate profile, PENDING APPROVAL
 	 * D-03-1). Never an approved rule set: it must never be added to APPROVED_RULEBOOKS.
 	 */
 	const CANDIDATE_RULEBOOK = 'candidate-doajpa-criteria-0.1.0-draft';
+	/**
+	 * Whether a Journal Manager may start a candidate-profile run (D-03-6). Off in the operational release: only
+	 * approved criteria are evaluated. Candidate runs stored by earlier versions stay readable.
+	 */
+	const CANDIDATE_PROFILE_ENABLED = false;
 
 	/** Schema level written by DoajPaSchemaMigration (plugin_settings, context 0, 'schemaVersion'). */
 	const VERSION = 1;

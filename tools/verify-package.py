@@ -7,10 +7,12 @@ only the runtime file set and allowed extensions; no development-only code (test
 fixture rules), no executables (ELF, Mach-O, PE, shebang scripts, a pdftotext binary), no archives, dumps, keys or test
 credentials; version.xml and plugin registration metadata; install.xml/upgrade.xml well formed and without a version
 attribute; MANIFEST.sha256 complete and correct; every template and locale key referenced exists; README states the
-English-only warning and the optional, unbundled pdftotext; release notes say the build is for internal testing with candidate criteria PENDING APPROVAL; no approved rule set or
-dataset, and the candidate dataset is packaged as proposed; licence (decision D7, 2026-10-12): LICENSE is the verbatim GNU
-GPL v3 text, NOTICE.md names the copyright holder and GPL-3.0-or-later and licenses the DOAJ-derived dataset separately
-(CC BY-SA 4.0) with its attribution, every source file carries its SPDX line, and candidate results show the attribution.
+English-only warning and the optional, unbundled pdftotext; release notes state the release (approved criteria only,
+candidate profile disabled); the approved rule set and dataset are the ones written by tools/apply-approval.py from a
+signed, non-synthetic approval, and the candidate dataset is packaged as proposed and switched off; licence (decision D7,
+2026-10-12): LICENSE is the verbatim GNU GPL v3 text, NOTICE.md names the copyright holder and GPL-3.0-or-later and
+licenses the DOAJ-derived datasets separately (CC BY-SA 4.0) with their attribution, every source file carries its SPDX
+line, and results show the attribution.
 
 Usage: python3 tools/verify-package.py dist/doajPreAssessment-<release>.tar.gz [--json out.json]
 Exit code 0 only when every check passes.
@@ -40,7 +42,9 @@ FONT_LICENCE = "classes/reports/fonts/LICENSE-DejaVu.txt"
 GPL3_SHA256 = "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"  # FSF text of GPL v3, 29 June 2007
 COPYRIGHT = "Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>"
 DATASET = "classes/rules/data/DoajPaCandidateDataset.inc.php"
-RELEASE_PHRASE = "Operational release candidate 1; candidate DOAJ criteria are PENDING APPROVAL"
+APPROVED = "classes/rules/data/DoajPaApprovedDataset.inc.php"
+SYNTHETIC = b"SYNTHETIC-TEST-NOT-AN-APPROVAL"
+RELEASE_PHRASE = "Operational release candidate 2: approved criteria only; the candidate profile is disabled"
 results = []
 
 
@@ -118,14 +122,13 @@ notice = " ".join(files.get("NOTICE.md", b"").decode().split())
 check("D07", "Licence (D7): LICENSE is the verbatim GNU GPL v3 text; NOTICE.md: copyright holder, GPL-3.0-or-later, separate CC BY-SA 4.0 licence and attribution of the DOAJ-derived dataset; no other licence file",
       licence == ["LICENSE"] and hashlib.sha256(files.get("LICENSE", b"")).hexdigest() == GPL3_SHA256
       and all(t in notice for t in ("Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>", "either version 3 of the License, or (at your option) any later version", "GPL-3.0-or-later",
-                                    "classes/rules/data/DoajPaCandidateDataset.inc.php", "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/",
+                                    "classes/rules/data/DoajPaCandidateDataset.inc.php", APPROVED, "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/",
                                     "COPE, DOAJ, OASPA, WAME", "https://creativecommons.org/licenses/by/4.0/", "Changes made", "No endorsement")),
       {"licenceFiles": licence, "licenceSha256": hashlib.sha256(files.get("LICENSE", b"")).hexdigest()[:16]})
 SOURCE_EXT = (".php", ".tpl", ".xml", ".po", ".css")
-unlabelled = sorted(n for n, b in files.items() if n.endswith(SOURCE_EXT) and n != DATASET
+unlabelled = sorted(n for n, b in files.items() if n.endswith(SOURCE_EXT) and n not in (DATASET, APPROVED)
                     and not (COPYRIGHT.encode() in b and b"SPDX-License-Identifier: GPL-3.0-or-later" in b))
-ds = files.get(DATASET, b"")
-ds_ok = b"SPDX-License-Identifier: CC-BY-SA-4.0" in ds and b"GPL" not in ds and b"Full attribution: NOTICE.md" in ds
+ds_ok = all(b"SPDX-License-Identifier: CC-BY-SA-4.0" in ds and b"GPL" not in ds and b"Full attribution: NOTICE.md" in ds for ds in (files.get(DATASET, b""), files.get(APPROVED, b"")))
 fonts_found = {n: hashlib.sha256(b).hexdigest() for n, b in files.items() if re.search(r"\.(ttf|otf|woff2?)$", n, re.I)}
 font_lic = " ".join(files.get(FONT_LICENCE, b"").decode(errors="replace").split())
 check("D09", "Third-party assets: exactly the DejaVu Sans regular and bold fonts (pinned SHA-256, unmodified) with their licence (Bitstream Vera and Arev, verbatim); attributed in NOTICE.md",
@@ -205,17 +208,31 @@ check("R03", f"Release notes say '{RELEASE_PHRASE}' and list the blocked feature
 schema = files.get("classes/persistence/DoajPaSchema.inc.php", b"")
 registry = files.get("classes/framework/DoajPaRuleRegistry.inc.php", b"")
 dataset = files.get("classes/rules/data/DoajPaCandidateDataset.inc.php", b"")
-check("C01", "No approved DOAJ rule set or dataset: APPROVED_RULEBOOKS and APPROVED_DATASETS are empty; the live registry returns no rules",
-      b"const APPROVED_RULEBOOKS = array();" in schema and b"const APPROVED_DATASETS = array();" in schema
-      and re.search(rb"function liveRules\(\)\s*\{\s*return array\(\);\s*\}", registry) is not None)
-check("C02", "The candidate dataset is packaged as PROPOSED (no approver), with the candidate rule-set label that is never approved",
+approved = files.get(APPROVED, b"")
+av = re.search(rb"const VERSION = '([0-9]+\.[0-9]+\.[0-9]+)';", approved)
+by = re.search(rb"const APPROVED_BY = '([^']+)';", approved)
+check("C01", "Approved rule set (activation): APPROVED_DATASETS and APPROVED_RULEBOOKS name exactly the packaged approved dataset, generated by "
+      "tools/apply-approval.py, status approved, with approver, date and approval hash; the live registry loads it only when it is named",
+      av is not None and by is not None and b"const STATUS = 'approved';" in approved and b"GENERATED by tools/apply-approval.py" in approved
+      and re.search(rb"const APPROVED_AT_UTC = '\d{4}-\d\d-\d\d';", approved) is not None and re.search(rb"const APPROVAL_SHA256 = '[0-9a-f]{64}';", approved) is not None
+      and b"const APPROVED_DATASETS = array('" + av.group(1) + b"');" in schema
+      and b"const APPROVED_RULEBOOKS = array('doajpa-criteria-" + av.group(1) + b"');" in schema
+      and re.search(rb"function liveRules\(\)\s*\{\s*if \(!DoajPaSchema::APPROVED_DATASETS\) return array\(\);", registry) is not None,
+      {"approvedVersion": av.group(1).decode() if av else None, "approvedBy": by.group(1).decode() if by else None})
+check("C02", "The candidate dataset is packaged as PROPOSED (no approver) and never approved; the candidate profile is switched off in this build (D-03-6)",
       b"const STATUS = 'proposed';" in dataset and b"'approvedBy' => null" in dataset and b"Status PROPOSED (PENDING APPROVAL" in dataset
-      and b"const CANDIDATE_RULEBOOK = 'candidate-doajpa-criteria-0.1.0-draft';" in schema)
-check("C03", "Candidate results are labelled: the templates and locale carry the PENDING APPROVAL and not-a-DOAJ-result texts",
-      b"Candidate criteria - PENDING APPROVAL." in files.get("locale/en_US/locale.po", b"") and b"candidate.label" in files.get("templates/partials/notResult.tpl", b""))
-check("C04", "DOAJ text shown in candidate results carries its attribution (licences, authors, wording unchanged, no endorsement)",
+      and b"const CANDIDATE_RULEBOOK = 'candidate-doajpa-criteria-0.1.0-draft';" in schema and b"const CANDIDATE_PROFILE_ENABLED = false;" in schema
+      and b"'0.1.0-draft'" not in re.search(rb"const APPROVED_DATASETS = array\([^)]*\);", schema).group(0))
+check("C03", "Results are labelled: approved runs as a pre-assessment independent of DOAJ (not a DOAJ decision); stored candidate runs as PENDING APPROVAL and not a DOAJ result",
+      all(t in files.get("locale/en_US/locale.po", b"") for t in (b"Candidate criteria - PENDING APPROVAL.", b"Pre-assessment, not a DOAJ decision.", b"not affiliated with, reviewed or endorsed by DOAJ"))
+      and all(t in files.get("templates/partials/notResult.tpl", b"") for t in (b"candidate.label", b"approved.label"))
+      and b"approvedBuild.text" in files.get("templates/partials/nav.tpl", b""))
+check("C04", "DOAJ text shown in results carries its attribution (licences, authors, wording unchanged, no endorsement)",
       b"attribution.doaj" in files.get("templates/partials/notResult.tpl", b"")
       and all(t in files.get("locale/en_US/locale.po", b"") for t in (b"CC BY-SA 4.0", b"COPE, DOAJ, OASPA, WAME, CC BY 4.0", b"wording unchanged", b"not reviewed or endorsed")))
+
+synthetic = sorted(n for n, b in files.items() if SYNTHETIC in b)
+check("C05", "No synthetic test approval is packaged: the approval was made by the product owner, not by the activation test", not synthetic, synthetic)
 
 failed = [r["id"] for r in results if r["result"] != "PASS"]
 summary = {"archive": os.path.basename(path), "sha256": sha, "bytes": len(data), "entries": len(members), "files": len(files),

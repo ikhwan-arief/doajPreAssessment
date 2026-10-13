@@ -45,11 +45,7 @@ class DoajPaReportExportService {
 		$quotes = array();
 		foreach ($run['evidence'] as $e) $quotes[(int) $e['evidence_id']] = (string) $e['quote'];
 		$titles = array();
-		if ($run['rulebook_version'] === DoajPaSchema::CANDIDATE_RULEBOOK) {
-			require_once(dirname(__FILE__) . '/../rules/data/DoajPaCandidateDataset.inc.php');
-			$data = DoajPaCandidateDataset::data();
-			foreach ($data['fqMapping'] as $m) $titles[$m['fq']] = $m['title'];
-		}
+		foreach (DoajPaReadService::fqTitles($run['rulebook_version']) as $k => $t) $titles[$k] = $t;
 		$stored = array();
 		foreach ($run['formAnswers'] as $a) $stored[$a['question_key']] = $a;
 		$form = array();

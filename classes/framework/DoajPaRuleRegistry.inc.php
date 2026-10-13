@@ -5,8 +5,8 @@
  *
  * @class DoajPaRuleRegistry
  * @brief The rules an assessment evaluates.
- *  - liveRules(): rules from APPROVED DOAJ criteria datasets. None exist (Stage 01 F2/F3;
- *    DoajPaSchema::APPROVED_DATASETS is empty), so the default profile records "NOT IMPLEMENTED".
+ *  - liveRules(): rules from the APPROVED criteria dataset (DoajPaApprovedDataset), only when
+ *    DoajPaSchema::APPROVED_DATASETS names it; otherwise none, and the default profile records "NOT IMPLEMENTED".
  *  - candidateRules(): the PROPOSED dataset (Stage 03, PENDING APPROVAL D-03-1). Used only when a Journal Manager
  *    explicitly selects the candidate profile for one run; results are labelled as candidate, not approved.
  *  There is no setting, request parameter or file lookup that can add rules; test rules are passed only by CLI test
@@ -21,7 +21,9 @@ class DoajPaRuleRegistry {
 
 	/** @return DoajPaCriterionRule[] */
 	public static function liveRules() {
-		return array();
+		if (!DoajPaSchema::APPROVED_DATASETS) return array();
+		require_once(dirname(__FILE__) . '/../rules/DoajPaApprovedRule.inc.php');
+		return DoajPaApprovedRule::all();
 	}
 
 	/** @return DoajPaCriterionRule[] Candidate (proposed, not approved) criteria */

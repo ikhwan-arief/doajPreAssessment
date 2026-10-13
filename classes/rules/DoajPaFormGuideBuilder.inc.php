@@ -30,15 +30,23 @@ class DoajPaFormGuideBuilder {
 	private $o;
 	/** @var array mapping row by FQ */
 	private $map = array();
+	/** @var string label appended to every answer */
+	private $label;
+	/** @var string|null when set, questions without a mapping row are not answered and carry this text */
+	private $unmapped;
 
 	/**
 	 * @param $facts DoajPaFacts
 	 * @param $outcomes array criterion key => outcome (after DoajPaOutcomeGuard)
 	 * @param $mapping array fqMapping rows of the dataset
+	 * @param $label string label appended to every answer (candidate: PENDING)
+	 * @param $unmapped string|null for an approved mapping: text of the questions it does not map (never answered)
 	 */
-	public function __construct($facts, $outcomes, $mapping) {
+	public function __construct($facts, $outcomes, $mapping, $label = self::PENDING, $unmapped = null) {
 		$this->f = $facts;
 		$this->o = $outcomes;
+		$this->label = $label;
+		$this->unmapped = $unmapped;
 		foreach ($mapping as $m) $this->map[$m['fq']] = $m;
 	}
 
@@ -47,10 +55,14 @@ class DoajPaFormGuideBuilder {
 		$out = array();
 		for ($i = 1; $i <= 20; $i++) {
 			$fq = sprintf('FQ-%02d', $i);
+			$m = isset($this->map[$fq]) ? $this->map[$fq] : null;
+			if (!$m && $this->unmapped !== null) {
+				$out[] = array('questionKey' => $fq, 'answerStatus' => 'not_yet_assessed', 'answerText' => null, 'evidenceId' => null, 'uncertainty' => $this->unmapped);
+				continue;
+			}
 			$method = 'fq' . sprintf('%02d', $i);
 			$a = $this->$method();
-			$m = isset($this->map[$fq]) ? $this->map[$fq] : null;
-			$unc = trim(($a['uncertainty'] !== '' ? $a['uncertainty'] . ' ' : '') . ($m ? 'Mapping: ' . $m['title'] . '. ' : '') . self::PENDING);
+			$unc = trim(($a['uncertainty'] !== '' ? $a['uncertainty'] . ' ' : '') . ($m ? 'Mapping: ' . $m['title'] . '. ' : '') . $this->label);
 			$out[] = array('questionKey' => $fq, 'answerStatus' => $a['status'], 'answerText' => $a['text'], 'evidenceId' => $a['evidenceId'], 'uncertainty' => $unc);
 		}
 		return $out;
@@ -63,7 +75,7 @@ class DoajPaFormGuideBuilder {
 	/** @return string The ADR-013 label when the governing outcome rests on language-neutral facts */
 	private function neutralNote($key) {
 		return isset($this->o[$key]['basis']) && $this->o[$key]['basis'] === 'neutral'
-			? 'Based on language-neutral facts (names, dates, ISSNs or counts) read from a page with too little text for a language verdict (ADR-013, PENDING APPROVAL); check the page.' : '';
+			? 'Based on language-neutral facts (names, dates, ISSNs or counts) read from a page with too little text for a language verdict (ADR-013); check the page.' : '';
 	}
 
 	private function status($key) {
