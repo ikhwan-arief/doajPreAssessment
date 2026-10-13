@@ -239,10 +239,15 @@ redirects outside the journal), or its sealed history. Never edit plugin tables 
 
 ### Upgrade leaves an inconsistent state
 1. **Symptom:** after an upgrade the plugin answers 503, Settings shows schema problems, or OJS lists an unexpected
-   version.
-2. **Cause:** the upgrade was interrupted, or older files were restored over a newer database.
+   version. Or, right after the upgrade, a page fails once with HTTP 500 and the PHP error log shows "Undefined
+   constant DoajPaSchema::…" or a similar missing class or constant.
+2. **Cause:**
+   - The upgrade was interrupted, or older files were restored over a newer database.
+   - For the HTTP 500 right after an upgrade: PHP OPcache was still serving some old plugin files for a few seconds.
 3. **Diagnose:** check the installed files against `MANIFEST.sha256`, and the version under **Installed Plugins**.
 4. **Fix:**
+   - For the transient HTTP 500, reload PHP (`apache2ctl -k graceful` or restart PHP-FPM), or wait a few seconds and
+     reload the page.
    - Run `php tools/upgrade.php upgrade`.
    - Or upload the intended archive again.
    - Or perform a complete rollback.

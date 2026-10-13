@@ -18,7 +18,12 @@ Tested on OJS 3.3.0-23 with PHP 7.3 and 8.2:
 2. Go to **Settings → Website → Plugins → Installed Plugins**. Find **DOAJ Pre-Assessment** and choose **Upgrade**.
 3. Select the newer archive and confirm. OJS replaces the plugin files and runs the plugin's database migration. The
    migration only adds what is missing and never removes data.
-4. **Check:**
+4. **Let PHP reload the new files.** With PHP OPcache enabled, the server can serve old and new plugin files together
+   for a few seconds after the files are replaced (`opcache.revalidate_freq`; 2 s by default). A request in that window
+   may fail once with HTTP 500 and a PHP error such as "Undefined constant DoajPaSchema::…". Before using the plugin,
+   either reload PHP (for example `apache2ctl -k graceful`, or restart PHP-FPM) or wait a few seconds. The same applies
+   after a rollback. In testing (PHP 8.2 stack) this affected one page view, which changed no data, and it cleared by itself. Avoid upgrading while an assessment is running.
+5. **Check:**
    - **Installed Plugins** shows the new version (for example `0.10.0.0`);
    - plugin **Settings** shows the schema as **Complete** and the approved rule set;
    - earlier completed runs still show **Snapshot verified**.
