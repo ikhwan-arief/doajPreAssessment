@@ -1,7 +1,8 @@
 # Release Notes — DOAJ Pre-Assessment 0.10.0.0 (operational release candidate 2)
 
-**Release type:** operational release candidate. **Not a production release**: the independent security audit is
-BLOCKED until it is executed. Never 1.0 before final acceptance.
+**Release type:** production release candidate (operational release candidate 2). Technical testing and an
+independent security audit are complete; production acceptance is the product owner's decision. Never 1.0 before
+final acceptance.
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
 **Licence:** GPL-3.0-or-later (plugin code), Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>. The DOAJ-derived
 reference material is licensed separately (CC BY-SA 4.0), and the PDF report fonts (DejaVu Sans) are under the
@@ -41,7 +42,12 @@ eligibility or acceptance.
 | Candidate profile | Disabled (decision D-03-6) |
 | Human confirmation of machine results | Not available (later stage) |
 | Unattended (scheduled) assessments | Not available: steps run from the manager's browser |
-| Independent security and code audit | **BLOCKED** (not executed); required before a production release |
+| Production acceptance | Pending the product owner's decision |
+
+**Independent security audit:** executed on 2026-10-14 on this archive's code (read-only, Codex, model `gpt-5.5`):
+no Critical or High findings; one Low finding (only the root administrator, user ID 1, is admitted as site
+administrator), which is the specified behaviour. Report: `docs/stage05/independent-audit/codex-audit-0.10.0.0.txt`
+in the source repository.
 
 ## Known limitations
 

@@ -201,8 +201,8 @@ check("R01", "README: the English-only warning (verbatim), install/upgrade/rollb
       WARNING in readme and all(h in readme for h in ("## Installation", "### Upgrade", "### Rollback", "### Uninstall", "OJS 3.3.0-23")))
 check("R02", "README: pdftotext is an optional external prerequisite, NOT bundled, with its unavailable behaviour",
       "pdftotext" in readme and "not included in the plugin" in readme and "pdf_extractor_unavailable" in readme)
-check("R03", f"Release notes say '{RELEASE_PHRASE}' and list the blocked features for {rel}",
-      RELEASE_PHRASE in notes and rel in notes and "## Not available in this release" in notes and "BLOCKED" in notes)
+check("R03", f"Release notes say '{RELEASE_PHRASE}', list what is not available in {rel} and state the independent security audit status",
+      RELEASE_PHRASE in notes and rel in notes and "## Not available in this release" in notes and "Independent security audit" in notes)
 
 # ---------------------------------------------------------------- candidate criteria (Stage 03)
 schema = files.get("classes/persistence/DoajPaSchema.inc.php", b"")
