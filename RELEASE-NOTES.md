@@ -31,6 +31,18 @@ eligibility or acceptance.
 - Engine wording: decisions D-03-4, D-03-5 and D-03-9 are cited without "PENDING APPROVAL" (engine `doajpa-checks/2`);
   the checks themselves are unchanged.
 
+## Corrected build (2026-10-14)
+
+- **Interface wording now matches this release:**
+  - the plugin-list description: evidence-based pre-assessment, 24 approved criteria, not a complete DOAJ eligibility
+    check, independent of DOAJ;
+  - Settings: no configurable settings;
+  - the DOAJ Form Guide notice before the first completed assessment;
+  - the run page of runs made without approved criteria.
+- **User-Agent:** the crawler's User-Agent is `DOAJPreAssessment/0.10 (OJS plugin; journal self-assessment)`.
+- **Upgrade note:** with PHP OPcache, reload PHP right after an upgrade or rollback (`apache2ctl -k graceful`, or
+  restart PHP-FPM). See the administrator guide.
+
 ## Not available in this release
 
 | Feature | Status |

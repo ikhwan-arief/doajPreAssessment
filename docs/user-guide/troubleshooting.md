@@ -243,16 +243,28 @@ redirects outside the journal), or its sealed history. Never edit plugin tables 
    constant DoajPaSchema::…" or a similar missing class or constant.
 2. **Cause:**
    - The upgrade was interrupted, or older files were restored over a newer database.
-   - For the HTTP 500 right after an upgrade: PHP OPcache was still serving some old plugin files for a few seconds.
-3. **Diagnose:** check the installed files against `MANIFEST.sha256`, and the version under **Installed Plugins**.
+   - For an HTTP 500 right after an upgrade, the likely cause is PHP OPcache serving some old plugin files for a few
+     seconds. An HTTP 500 is **not** harmless by default: it is only this transient case when **all** of the following
+     hold:
+     - the errors are "Undefined constant", "Call to undefined method" or "Class … not found" in files under
+       `plugins/generic/doajPreAssessment/`;
+     - they occurred only in the first seconds after the files were replaced;
+     - they stop after PHP is reloaded.
+3. **Diagnose:**
+   - Check the installed files against `MANIFEST.sha256`, and the version under **Installed Plugins**.
+   - For an HTTP 500, read the PHP error log entries of that time.
 4. **Fix:**
-   - For the transient HTTP 500, reload PHP (`apache2ctl -k graceful` or restart PHP-FPM), or wait a few seconds and
-     reload the page.
+   - For the transient OPcache case:
+     1. Reload PHP (`apache2ctl -k graceful` for Apache with mod_php, or restart PHP-FPM).
+     2. Open **Settings** and confirm the schema is **Complete**.
+     3. Confirm that completed runs show **Snapshot verified**.
+   - If any HTTP 500 continues after the reload, or the error is of another kind, treat it as a defect: stop using the
+     plugin, keep the log, and escalate.
    - Run `php tools/upgrade.php upgrade`.
    - Or upload the intended archive again.
    - Or perform a complete rollback.
    - Do not mix files of one version with the database of another.
-5. **Escalate:** if neither resolves it.
+5. **Escalate:** if the HTTP 500 continues after a PHP reload, or if neither of the other fixes resolves it.
 
 ### Rollback is required
 1. **Symptom:** the new version must be withdrawn.

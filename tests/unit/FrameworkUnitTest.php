@@ -120,3 +120,22 @@ doajpa_test('EvaluationContext: fingerprint changes with content, gaps and langu
 	doajpa_same(null, $base->fingerprint(array('k', 1), array('editorial_team')), 'no inputs: never reused');
 	doajpa_same(array(1 => array('quote' => 'q', 'verifiedEnglish' => true, 'neutral' => false)), $base->guardView(), 'guard view (neutral: ADR-013 eligibility, false without an English site)');
 });
+doajpa_test('S5-L01 Operational wording: plugin description, Settings and the Form Guide notice describe the approved release; no development-build wording is reachable in the approved state', function () {
+	$po = file_get_contents(__DIR__ . '/../../locale/en_US/locale.po');
+	preg_match_all('/msgid "plugins\.generic\.doajPreAssessment\.([^"]+)"\nmsgstr "((?:[^"\\\\]|\\\\.)*)"/', $po, $m);
+	$s = array_combine($m[1], $m[2]);
+	doajpa_assert(strpos($s['description'], 'Evidence-based DOAJ pre-assessment') === 0 && strpos($s['description'], '24 approved criteria') !== false
+		&& strpos($s['description'], 'not a complete DOAJ eligibility check') !== false && strpos($s['description'], 'Independent of DOAJ') !== false, 'description');
+	doajpa_assert(strpos($s['description'], 'ENGLISH-ONLY JOURNAL CONTENT') !== false && strpos($s['description'], 'not to DOAJ eligibility') !== false, 'English-only warning kept');
+	doajpa_same('No configurable settings are available in this release. Access and assessment behaviour are fixed by the plugin.', $s['settings.noEditable'], 'settings');
+	doajpa_assert(strpos($s['formGuide.noApprovedRun'], '{$questions}') !== false && strpos($s['formGuide.noApprovedRun'], 'not installed') === false, 'Form Guide notice');
+	doajpa_assert(strpos($s['run.criteriaNotImplemented'], 'in this run') !== false, 'old runs: no claim about this version');
+	// keys rendered by templates when an approved rule set is installed, plus the description and the crawler User-Agent
+	$approvedState = array('description', 'settings.noEditable', 'formGuide.noApprovedRun', 'formGuide.noApprovedRunLabel', 'approvedBuild.text', 'approved.text',
+		'overview.statusApproved', 'newAssessment.approvedScope', 'formGuide.approved', 'settings.approvedRuleSet', 'criteria.approvedInstalled', 'run.approvedRules');
+	foreach ($approvedState as $k) doajpa_assert(!preg_match('/development build|internal.testing|not yet implemented|PENDING APPROVAL/i', $s[$k]), $k . ': no obsolete wording');
+	require_once __DIR__ . '/../../classes/crawler/DoajPaHttpFetcher.inc.php';
+	doajpa_assert(strpos(DoajPaHttpFetcher::USER_AGENT, 'DOAJPreAssessment/') === 0 && stripos(DoajPaHttpFetcher::USER_AGENT, 'development') === false, 'User-Agent');
+	$tpl = file_get_contents(__DIR__ . '/../../templates/formGuide.tpl');
+	doajpa_assert(strpos($tpl, '{elseif $doajPaApprovedRulebook}') < strpos($tpl, 'unavailable.formGuide') && strpos($tpl, 'questions=$doajPaApprovedQuestions|escape') !== false, 'Form Guide: approved state before the not-installed notice, escaped');
+});

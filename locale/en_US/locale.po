@@ -18,7 +18,7 @@ msgid "plugins.generic.doajPreAssessment.displayName"
 msgstr "DOAJ Pre-Assessment"
 
 msgid "plugins.generic.doajPreAssessment.description"
-msgstr "Independent, backend-only self-assessment of a journal's public website before an initial DOAJ application. Not an official DOAJ evaluation; it does not predict or guarantee acceptance. Development build: assessment rules are not yet implemented. ENGLISH-ONLY JOURNAL CONTENT: this plugin evaluates only publicly accessible English-language journal websites, uses deterministic rules (no Artificial Intelligence or automatic translation), and this limitation applies to the plugin, not to DOAJ eligibility."
+msgstr "Evidence-based DOAJ pre-assessment for OJS journals: evaluates the journal's public website against 24 approved criteria (not a complete DOAJ eligibility check). Independent of DOAJ: not an official DOAJ evaluation; it does not predict or guarantee acceptance. ENGLISH-ONLY JOURNAL CONTENT: this plugin evaluates only publicly accessible English-language journal websites, uses deterministic rules (no Artificial Intelligence or automatic translation), and this limitation applies to the plugin, not to DOAJ eligibility."
 
 msgid "plugins.generic.doajPreAssessment.action.open"
 msgstr "Open DOAJ Pre-Assessment"
@@ -558,7 +558,7 @@ msgid "plugins.generic.doajPreAssessment.settings.event"
 msgstr "Event"
 
 msgid "plugins.generic.doajPreAssessment.settings.noEditable"
-msgstr "None in this development build."
+msgstr "No configurable settings are available in this release. Access and assessment behaviour are fixed by the plugin."
 
 msgid "plugins.generic.doajPreAssessment.settings.noRuleSets"
 msgstr "None. No approved DOAJ rule set is installed in this build."
@@ -762,7 +762,7 @@ msgid "plugins.generic.doajPreAssessment.run.assessment"
 msgstr "Assessment framework"
 
 msgid "plugins.generic.doajPreAssessment.run.criteriaNotImplemented"
-msgstr "No approved DOAJ criteria exist in this version. No criterion was evaluated, and this run says nothing about DOAJ eligibility."
+msgstr "No approved DOAJ criteria were applied in this run. No criterion was evaluated, and this run says nothing about DOAJ eligibility."
 
 msgid "plugins.generic.doajPreAssessment.run.testRulesLabel"
 msgstr "Test fixture rules."
@@ -952,3 +952,9 @@ msgstr "The assessment evaluates the approved criteria, and answers the DOAJ For
 
 msgid "plugins.generic.doajPreAssessment.formGuide.approved"
 msgstr "These answers come from the latest completed run and the approved FQ mapping. A supported answer quotes verified English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. Questions whose mapping was not approved are not answered. Confirm every answer before use in a DOAJ application."
+
+msgid "plugins.generic.doajPreAssessment.formGuide.noApprovedRunLabel"
+msgstr "No completed assessment yet."
+
+msgid "plugins.generic.doajPreAssessment.formGuide.noApprovedRun"
+msgstr "Complete an assessment to view evidence-supported Form Guide assistance. This release covers {$questions} only; the other questions are not assessed."

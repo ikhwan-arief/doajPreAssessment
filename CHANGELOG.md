@@ -15,6 +15,16 @@ Operational release candidate 2: approved criteria only; the candidate profile i
 - "Pre-assessment, not a DOAJ decision" and "Independent of DOAJ" notices on every page, run and report of the
   approved rule set.
 
+### Fixed (corrected build, 2026-10-14)
+
+- Interface wording describes the approved release:
+  - the plugin-list description;
+  - Settings: "No configurable settings are available in this release.";
+  - the DOAJ Form Guide notice before the first completed assessment, which names the covered questions;
+  - the run page of runs made without approved criteria.
+- The crawler's User-Agent no longer says "development build".
+- No change to authorization, evaluation, persistence, crawling, export or security logic.
+
 ### Changed
 
 - Candidate profile switched off (`DoajPaSchema::CANDIDATE_PROFILE_ENABLED = false`): refused on start and on

@@ -180,7 +180,9 @@ FQ-01 to FQ-20 from the latest completed run:
 - the website-supported answer, with its source page;
 - the uncertainty.
 
-Only FQ-07, FQ-08, FQ-15 and FQ-17 can be answered (see section 2).
+Only FQ-07, FQ-08, FQ-15 and FQ-17 can be answered (see section 2). Before the first completed assessment, the page
+shows "No completed assessment yet. Complete an assessment to view evidence-supported Form Guide assistance. This
+release covers FQ-07, FQ-08, FQ-15, FQ-17 only; the other questions are not assessed."
 
 ### Before You Apply
 
@@ -256,6 +258,8 @@ Read-only status:
 - the plugin version;
 - the database schema level (**Complete** or the problems found);
 - the approved rule set;
+- "Editable settings": "No configurable settings are available in this release. Access and assessment behaviour are
+  fixed by the plugin.";
 - the English-only confirmations of this journal, with their statement fingerprint;
 - the **Audit log**: the latest 100 events, which cannot be edited.
 
@@ -318,11 +322,17 @@ Non-English, mixed or undetermined pages are never used as English evidence, and
   workflow data.
 - **Advisory only:** every result is advisory. A human must verify results before a DOAJ application.
 
-### Known wording issues in 0.10.0.0
+### Interface wording (corrected build)
 
-Three texts in the interface are outdated. They do not affect function:
-- **Plugin-list description:** it says "Development build: assessment rules are not yet implemented". The 24
-  approved criteria are implemented and active.
-- **Settings:** "Editable settings" says "None in this development build". There are no editable settings.
-- **DOAJ Form Guide, before the first completed run:** it says the approved criteria are not installed. They are. The
-  answers appear after the first completed run.
+Earlier builds of 0.10.0.0 (tags `v0.10.0.0-rc2` and `v0.10.0.0-rc2.1`) showed three outdated texts. They are corrected
+in the current build (tag `v0.10.0.0-rc3`):
+
+| Where | Text now shown |
+|---|---|
+| Plugin list (description) | "Evidence-based DOAJ pre-assessment for OJS journals: evaluates the journal's public website against 24 approved criteria (not a complete DOAJ eligibility check). Independent of DOAJ: …", followed by the English-only warning |
+| Settings → Editable settings | "No configurable settings are available in this release. Access and assessment behaviour are fixed by the plugin." |
+| DOAJ Form Guide before the first completed assessment | "No completed assessment yet. Complete an assessment to view evidence-supported Form Guide assistance. This release covers FQ-07, FQ-08, FQ-15, FQ-17 only; the other questions are not assessed." |
+
+On a run made before the approved criteria were installed (version 0.9 or earlier), the run page says "No approved DOAJ
+criteria were applied in this run." The crawler identifies itself to journal websites as
+`DOAJPreAssessment/0.10 (OJS plugin; journal self-assessment)`.

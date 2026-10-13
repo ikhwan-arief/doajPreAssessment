@@ -23,6 +23,8 @@
 		{elseif $g.run && $g.run.rulebookApproved}
 			{include file=$doajPaNotResult rulebook=$g.run.rulebook_version}
 			<p class="doajPa-notice doajPa-notice--info" role="note">{translate key="plugins.generic.doajPreAssessment.formGuide.approved"}</p>
+		{elseif $doajPaApprovedRulebook}
+		<p class="doajPa-notice doajPa-notice--info" role="status"><strong>{translate key="plugins.generic.doajPreAssessment.formGuide.noApprovedRunLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.formGuide.noApprovedRun" questions=$doajPaApprovedQuestions|escape}</p>
 		{else}
 		<p class="doajPa-notice doajPa-notice--info" role="status"><strong>{translate key="plugins.generic.doajPreAssessment.unavailable.label"}</strong> {translate key="plugins.generic.doajPreAssessment.unavailable.formGuide"}</p>
 		{/if}

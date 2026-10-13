@@ -113,6 +113,9 @@ finding: only a new assessment can.
 
 **All other questions** show "Not yet assessed" because their mapping is not approved in this version.
 
+Before your first completed assessment, the page says "No completed assessment yet" and lists the four covered
+questions.
+
 Confirm every answer yourself before using it in a DOAJ application.
 
 ## 9. Generate reports

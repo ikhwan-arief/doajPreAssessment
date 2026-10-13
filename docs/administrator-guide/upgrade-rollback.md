@@ -18,11 +18,21 @@ Tested on OJS 3.3.0-23 with PHP 7.3 and 8.2:
 2. Go to **Settings → Website → Plugins → Installed Plugins**. Find **DOAJ Pre-Assessment** and choose **Upgrade**.
 3. Select the newer archive and confirm. OJS replaces the plugin files and runs the plugin's database migration. The
    migration only adds what is missing and never removes data.
-4. **Let PHP reload the new files.** With PHP OPcache enabled, the server can serve old and new plugin files together
-   for a few seconds after the files are replaced (`opcache.revalidate_freq`; 2 s by default). A request in that window
-   may fail once with HTTP 500 and a PHP error such as "Undefined constant DoajPaSchema::…". Before using the plugin,
-   either reload PHP (for example `apache2ctl -k graceful`, or restart PHP-FPM) or wait a few seconds. The same applies
-   after a rollback. In testing (PHP 8.2 stack) this affected one page view, which changed no data, and it cleared by itself. Avoid upgrading while an assessment is running.
+4. **Reload PHP before using the plugin.** With PHP OPcache enabled, the server can serve old and new plugin files
+   together for a few seconds after OJS replaces them (`opcache.revalidate_freq`; 2 s by default). A request in that
+   window can fail with HTTP 500 and a PHP error such as "Undefined constant DoajPaSchema::…".
+   - **Do this:** reload PHP right after the upgrade, before anyone uses the plugin: `apache2ctl -k graceful` for
+     Apache with mod_php, or restart PHP-FPM. Do the same after a rollback.
+   - **Test results (OJS 3.3.0-23):**
+     - on PHP 8.2 with OPcache, the errors occurred only inside the revalidation interval and then stopped;
+     - after a PHP reload, the first requests succeeded without errors;
+     - history and schema were unchanged;
+     - on PHP 7.3 without OPcache, no error occurred.
+
+     These tests are `package_0208` checks U00 and B00, recorded in `docs/documentation-verification.md`.
+   - **If it persists:** an HTTP 500 that continues after a reload is a defect. Stop and escalate (see
+     [Troubleshooting](../user-guide/troubleshooting.md#upgrade-leaves-an-inconsistent-state)).
+   - **Timing:** avoid upgrading while an assessment is running.
 5. **Check:**
    - **Installed Plugins** shows the new version (for example `0.10.0.0`);
    - plugin **Settings** shows the schema as **Complete** and the approved rule set;

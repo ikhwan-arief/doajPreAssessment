@@ -208,6 +208,7 @@ class DoajPreAssessmentHandler extends Handler {
 		return $this->_render($request, 'formGuide.tpl', 'formGuide', array(
 			'doajPaFormGuide' => DoajPaReadService::formGuide(self::_contextId($request)),
 			'doajPaFormGuideNote' => DoajPaAssessmentOrchestrator::FQ_NOT_YET_ASSESSED,
+			'doajPaApprovedQuestions' => implode(', ', array_keys(DoajPaReadService::fqTitles(DoajPaAssessmentOrchestrator::liveRulebook()))),
 			'doajPaCandidateRulebook' => DoajPaAssessmentOrchestrator::CANDIDATE_RULEBOOK,
 		));
 	}
