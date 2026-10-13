@@ -19,8 +19,9 @@
  * An unexpected failure moves the run to "interrupted" (audited); resume() continues it without duplicate
  * resource records (the crawler skips URLs already stored and reports them as coverage gaps).
  *
- * Live runs use DoajPaRuleRegistry::liveRules() only, which must come from an approved dataset (none exists, so
- * the default "approved" profile evaluates no criterion). Stage 03 adds one explicit, per-run "candidate" profile:
+ * Live runs use DoajPaRuleRegistry::liveRules() only, which must come from an approved dataset; the default
+ * "approved" profile runs with the approved rule set (liveRulebook()), or evaluates no criterion when none is
+ * approved. The candidate profile is off unless DoajPaSchema::CANDIDATE_PROFILE_ENABLED. Stage 03 adds one explicit, per-run "candidate" profile:
  * a Journal Manager may choose to evaluate the PROPOSED criteria dataset (PENDING APPROVAL, decision D-03-1) for
  * internal testing. Such runs carry CANDIDATE_RULEBOOK (never an approved rulebook), their results and FQ answers
  * are labelled as candidate, and the report states "Not a DOAJ assessment result". The test entry points (startForTests, advanceForTests) work only on the command line, only for runs created
@@ -71,6 +72,8 @@ class DoajPaAssessmentOrchestrator {
 	const FQ_NOT_YET_ASSESSED = 'Not yet assessed. No approved DOAJ rule maps this question in this plugin version, so no answer is given or inferred.';
 	const DISCLAIMER = 'Not a DOAJ assessment result. No approved DOAJ rule set was applied; this run records website coverage and evidence only.';
 	const CANDIDATE_DISCLAIMER = 'Not a DOAJ assessment result. Candidate criteria (dataset 0.1.0-draft, PENDING APPROVAL) were applied for internal testing only; they are not approved DOAJ rules, and no result is a compliance claim.';
+	const APPROVED_DISCLAIMER = 'Pre-assessment with the criteria approved by the product owner of this plugin. It is independent of DOAJ: the criteria are not DOAJ rules, DOAJ has not reviewed or endorsed this plugin, and no result is a DOAJ decision, a compliance claim or a prediction of an application outcome. A human must verify every result.';
+	const FQ_NOT_APPROVED = 'Not yet assessed. The mapping of this question was not approved, so no answer is given or inferred.';
 	/** Stage 03 modules evaluated by the candidate profile (PENDING APPROVAL). */
 	const CANDIDATE_MODULES = array('endogeny', 'publication_history_dates', 'licensing_consistency', 'indexer_claims', 'doaj_criteria', 'form_guide');
 
@@ -103,7 +106,19 @@ class DoajPaAssessmentOrchestrator {
 	 */
 	public static function start($contextId, $homepage, $actor, $acknowledgement, $profile = self::PROFILE_APPROVED) {
 		if ($profile !== self::PROFILE_APPROVED && $profile !== self::PROFILE_CANDIDATE) throw new DoajPaValidationException('Unknown assessment profile.');
-		return self::startRun($contextId, $homepage, $actor, $acknowledgement, $profile === self::PROFILE_CANDIDATE ? self::CANDIDATE_RULEBOOK : self::LIVE_RULEBOOK, array());
+		if ($profile === self::PROFILE_CANDIDATE && !DoajPaSchema::CANDIDATE_PROFILE_ENABLED) throw new DoajPaValidationException('The candidate profile is not available in this version.');
+		return self::startRun($contextId, $homepage, $actor, $acknowledgement, $profile === self::PROFILE_CANDIDATE ? self::CANDIDATE_RULEBOOK : self::liveRulebook(), array());
+	}
+
+	/** @return string Rule set label of new default-profile runs: the approved rule set, or LIVE_RULEBOOK when none is approved */
+	public static function liveRulebook() {
+		$approved = DoajPaSchema::APPROVED_RULEBOOKS;
+		return $approved ? end($approved) : self::LIVE_RULEBOOK;
+	}
+
+	/** @return boolean Whether a run evaluates approved criteria */
+	public static function isApproved($rulebook) {
+		return in_array($rulebook, DoajPaSchema::APPROVED_RULEBOOKS, true);
 	}
 
 	/** @return boolean Whether a run evaluates the proposed (unapproved) candidate criteria */
@@ -121,7 +136,10 @@ class DoajPaAssessmentOrchestrator {
 		if (!in_array($run->rulebook_version, array_merge(array(self::LIVE_RULEBOOK, self::CANDIDATE_RULEBOOK), DoajPaSchema::APPROVED_RULEBOOKS), true)) {
 			throw new DoajPaStateException('This run was not created by the live assessment and cannot be continued here.');
 		}
-		$rules = self::isCandidate($run->rulebook_version) ? self::candidateRules() : self::liveRules();
+		if (self::isCandidate($run->rulebook_version) && !DoajPaSchema::CANDIDATE_PROFILE_ENABLED) {
+			throw new DoajPaStateException('The candidate profile is not available in this version; cancel this run.');
+		}
+		$rules = self::isCandidate($run->rulebook_version) ? self::candidateRules() : (self::isApproved($run->rulebook_version) ? self::liveRules() : array());
 		return self::advanceRun($contextId, $run, $actor, $rules, array(), array());
 	}
 
@@ -372,21 +390,25 @@ class DoajPaAssessmentOrchestrator {
 			if ($wasReused) $reused++;
 			$statusCounts[$outcome['status']] = isset($statusCounts[$outcome['status']]) ? $statusCounts[$outcome['status']] + 1 : 1;
 			$record = array('rule' => $rule, 'outcome' => $outcome);
-			if (self::isCandidate($run->rulebook_version)) $record['cited'] = self::cited($outcome, $evidence);
+			if (self::isCandidate($run->rulebook_version) || self::isApproved($run->rulebook_version)) $record['cited'] = self::cited($outcome, $evidence);
 			$records[] = $record;
 			$evaluation['rules'][$rule->key()] = array('version' => $rule->version(), 'fingerprint' => $fingerprint, 'reused' => $wasReused,
 				'outcome' => self::portable($outcome, $evidence));
 		}
-		// form guide: FQ-01..FQ-20 from the guarded outcomes and the run's facts (candidate profile only)
+		// form guide: FQ-01..FQ-20 from the guarded outcomes and the run's facts (candidate profile, or the approved
+		// mapping of an approved run: questions whose mapping was not approved stay "not yet assessed")
 		$candidate = self::isCandidate($run->rulebook_version);
+		$approvedRun = self::isApproved($run->rulebook_version) && $rules;
 		$formAnswers = array();
-		if ($candidate) {
+		if ($candidate || $approvedRun) {
 			require_once(dirname(__FILE__) . '/../rules/DoajPaCandidateRule.inc.php');
 			require_once(dirname(__FILE__) . '/../rules/DoajPaFormGuideBuilder.inc.php');
 			$guarded = array();
 			foreach ($records as $record) $guarded[$record['rule']->key()] = $record['outcome'];
-			$data = DoajPaCandidateDataset::data();
-			$builder = new DoajPaFormGuideBuilder(DoajPaFacts::of($context), $guarded, $data['fqMapping']);
+			if ($approvedRun) require_once(dirname(__FILE__) . '/../rules/data/DoajPaApprovedDataset.inc.php');
+			$data = $approvedRun ? DoajPaApprovedDataset::data() : DoajPaCandidateDataset::data();
+			$builder = $approvedRun ? new DoajPaFormGuideBuilder(DoajPaFacts::of($context), $guarded, $data['fqMapping'], DoajPaApprovedDataset::FQ_LABEL, self::FQ_NOT_APPROVED)
+				: new DoajPaFormGuideBuilder(DoajPaFacts::of($context), $guarded, $data['fqMapping']);
 			$formAnswers = $builder->build();
 			$evaluation['formGuide'] = $formAnswers;
 		} else {
@@ -407,16 +429,20 @@ class DoajPaAssessmentOrchestrator {
 			'pipelineVersion' => self::PIPELINE_VERSION, 'pipeline' => self::PIPELINE,
 			'criteria' => !$rules ? 'not_implemented' : ($rulebookApproved ? 'approved_rules' : ($candidate ? 'candidate_rules_pending_approval' : 'test_fixture_rules')),
 			'rulesEvaluated' => count($rules), 'rulesReused' => $reused, 'rulesDowngraded' => $downgraded, 'statusCounts' => $statusCounts,
-			'notImplemented' => $candidate ? array() : array_keys(self::FUTURE_MODULES),
+			'notImplemented' => $candidate || $approvedRun ? array() : array_keys(self::FUTURE_MODULES),
 			'candidateModules' => $candidate ? self::CANDIDATE_MODULES : array(),
 			'candidateDataset' => $candidate ? array('version' => DoajPaCandidateDataset::VERSION, 'status' => DoajPaCandidateDataset::STATUS,
 				'sourceSha256' => DoajPaCandidateDataset::SOURCE_SHA256, 'engine' => DoajPaCandidateRule::ENGINE_VERSION, 'approval' => 'PENDING APPROVAL (D-03-1)') : null,
+			'approvedDataset' => $approvedRun ? array('version' => DoajPaApprovedDataset::VERSION, 'status' => DoajPaApprovedDataset::STATUS,
+				'sourceSha256' => DoajPaApprovedDataset::SOURCE_SHA256, 'approvalSha256' => DoajPaApprovedDataset::APPROVAL_SHA256, 'engine' => DoajPaCandidateRule::ENGINE_VERSION,
+				'criteria' => count($rules), 'fq' => count($data['fqMapping']),
+				'approval' => 'approved by ' . DoajPaApprovedDataset::APPROVED_BY . ' on ' . DoajPaApprovedDataset::APPROVED_AT_UTC . ' (product owner of this plugin, not DOAJ)') : null,
 			'formGuide' => $candidate ? array('questions' => 20, 'answerStatus' => 'candidate_pending_approval', 'counts' => $answerCounts)
-				: array('questions' => 20, 'answerStatus' => 'not_yet_assessed'),
+				: ($approvedRun ? array('questions' => 20, 'answerStatus' => 'approved_mapping', 'counts' => $answerCounts) : array('questions' => 20, 'answerStatus' => 'not_yet_assessed')),
 			'evidence' => $counts + array('manifestVerified' => $manifestVerified),
 			'diff' => $diff, 'evaluationSha256' => hash('sha256', $evaluationJson),
 			'report' => array('rulebookVersion' => $run->rulebook_version, 'rulebookApproved' => $rulebookApproved, 'notADoajResult' => !$rulebookApproved,
-				'candidate' => $candidate, 'disclaimer' => $candidate ? self::CANDIDATE_DISCLAIMER : self::DISCLAIMER, 'extractionVersion' => $run->extraction_version,
+				'candidate' => $candidate, 'disclaimer' => $candidate ? self::CANDIDATE_DISCLAIMER : ($approvedRun ? self::APPROVED_DISCLAIMER : self::DISCLAIMER), 'extractionVersion' => $run->extraction_version,
 				'pdfTool' => isset($coverage['pdfTool']) ? $coverage['pdfTool'] : null, 'evaluatedAtUtc' => DoajPaDb::now()),
 		);
 		$lock = (int) $run->lock_version;

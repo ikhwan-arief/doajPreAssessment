@@ -20,6 +20,9 @@
 		{if $g.run && $g.run.rulebook_version == $doajPaCandidateRulebook}
 			{include file=$doajPaNotResult rulebook=$g.run.rulebook_version}
 			<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.candidate.label"}</strong> {translate key="plugins.generic.doajPreAssessment.formGuide.candidate"}</p>
+		{elseif $g.run && $g.run.rulebookApproved}
+			{include file=$doajPaNotResult rulebook=$g.run.rulebook_version}
+			<p class="doajPa-notice doajPa-notice--info" role="note">{translate key="plugins.generic.doajPreAssessment.formGuide.approved"}</p>
 		{else}
 		<p class="doajPa-notice doajPa-notice--info" role="status"><strong>{translate key="plugins.generic.doajPreAssessment.unavailable.label"}</strong> {translate key="plugins.generic.doajPreAssessment.unavailable.formGuide"}</p>
 		{/if}

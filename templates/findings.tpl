@@ -15,7 +15,7 @@
 	{include file=$doajPaNav}
 	<div class="app__contentPanel doajPa">
 		<h2 id="doajPaCriteria">{translate key="plugins.generic.doajPreAssessment.criteria.title"}</h2>
-		<p class="doajPa-notice doajPa-notice--info">{translate key="plugins.generic.doajPreAssessment.criteria.notAssessed"}</p>
+		<p class="doajPa-notice doajPa-notice--info">{if $doajPaApprovedRulebook}{translate key="plugins.generic.doajPreAssessment.criteria.approvedInstalled"}{else}{translate key="plugins.generic.doajPreAssessment.criteria.notAssessed"}{/if}</p>
 		{if $doajPaDefinitions}
 			<div class="doajPa-tableWrap">
 			<table class="doajPa-table" aria-labelledby="doajPaCriteria">

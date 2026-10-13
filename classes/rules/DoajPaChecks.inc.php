@@ -296,7 +296,7 @@ class DoajPaChecks {
 		$titles = $f->siteTitles();
 		$note = $facts ? ' Website ISSN(s): ' . implode(', ', array_unique(array_map(function ($x) { return $x['issn']; }, $facts))) . '.' : '';
 		$note .= $titles ? ' Website title: ' . $titles[0]['title'] . '.' : '';
-		return $h->unverifiable($what . ' needs an external ISSN Portal lookup, which is not approved (decision D-03-4 PENDING APPROVAL); website evidence alone cannot verify it.' . $note);
+		return $h->unverifiable($what . ' needs an external ISSN Portal lookup, which this plugin does not perform (decision D-03-4); website evidence alone cannot verify it.' . $note);
 	}
 
 	//
@@ -988,7 +988,7 @@ class DoajPaChecks {
 	private static function c_guide_avoid_unreliable_indexes($h, $f) {
 		$claims = $f->indexingClaims();
 		$text = $claims ? count($claims) . ' indexing claim(s) found, listed as unverified (e.g. "' . $claims[0]['quote'] . '")' : 'No indexing claim was found';
-		return $h->unverifiable($text . '. No index is classified as unreliable: no approved, citable reference exists (decision D-03-5 PENDING APPROVAL).', array_slice($claims, 0, 3));
+		return $h->unverifiable($text . '. No index is classified as unreliable: this plugin uses no reference list of unreliable indexes (decision D-03-5).', array_slice($claims, 0, 3));
 	}
 
 	//
@@ -1007,7 +1007,7 @@ class DoajPaChecks {
 	}
 
 	private static function c_guide_persistent_links_resolve($h, $f) {
-		return $h->unverifiable('Resolving persistent identifiers needs outbound requests to resolvers (doi.org), which are not approved (decision D-03-4 PENDING APPROVAL).');
+		return $h->unverifiable('Resolving persistent identifiers needs outbound requests to resolvers (doi.org), which this plugin does not make (decision D-03-4).');
 	}
 
 	//
@@ -1073,7 +1073,7 @@ class DoajPaChecks {
 	private static function c_guide_flipped_history($h, $f) { return self::conditional($h, $f, 'flipped', 'a flipped journal', 'The post-flip publishing history (more than a year, or ten open access research articles) needs the flip date; human review.'); }
 	private static function c_guide_mirror_journal($h, $f) {
 		if (!$h->confirmed('mirror')) return $h->notApplicable('The journal is not stated to be a mirror journal.');
-		return $h->unverifiable('Mirror journal: comparing ISSNs with the subscription title needs an ISSN Portal lookup (decision D-03-4 PENDING APPROVAL).', $f->condition('mirror'));
+		return $h->unverifiable('Mirror journal: comparing ISSNs with the subscription title needs an ISSN Portal lookup, which this plugin does not perform (decision D-03-4).', $f->condition('mirror'));
 	}
 	private static function c_guide_s2o_disclosure($h, $f) {
 		if (!$h->confirmed('s2o')) return $h->notApplicable('The journal is not stated to use Subscribe to Open.');
@@ -1179,7 +1179,7 @@ class DoajPaCheckRun {
 			}
 			if ($neutralUrls) {
 				$basis = 'neutral';
-				$rationale .= ' [Language-neutral facts (ADR-013, PENDING APPROVAL): names, affiliations, dates, ISSNs or counts were read from '
+				$rationale .= ' [Language-neutral facts (ADR-013): names, affiliations, dates, ISSNs or counts were read from '
 					. count($neutralUrls) . ' page(s) with too little text for a language verdict, on a site whose policy pages are verified English: ' . implode(', ', array_slice(array_keys($neutralUrls), 0, 3)) . '.]';
 			}
 		}

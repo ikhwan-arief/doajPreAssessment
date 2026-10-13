@@ -2,7 +2,7 @@
 
 > **ENGLISH-ONLY JOURNAL CONTENT.** This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. Do not rely on its findings for policies written in other languages. If essential non-English content is encountered, the affected check will be marked Unsupported Language / Needs Verification. This limitation applies to the plugin, not to DOAJ eligibility.
 
-> **Release candidate 0.9.0.0: Operational release candidate 1; candidate DOAJ criteria are PENDING APPROVAL.** No DOAJ criterion is approved, so the default assessment profile evaluates no criterion. A Journal Manager may choose the candidate criteria for one run, and those results are labelled as candidate results. No result is a DOAJ assessment result. The release candidate is **not accepted for operational use** until criteria are approved and the independent security audit is completed. Licence: GPL-3.0-or-later (see License and Copyright). See `RELEASE-NOTES.md`.
+> **Release candidate 0.10.0.0: Operational release candidate 2: approved criteria only; the candidate profile is disabled.** Every assessment evaluates the criteria approved by the product owner of this plugin (not by DOAJ). The plugin is independent of DOAJ: no result is a DOAJ decision, a compliance claim or a prediction of an application outcome. The release candidate is **not accepted for production** until the independent security audit has been executed (it is BLOCKED). Licence: GPL-3.0-or-later (see License and Copyright). See `RELEASE-NOTES.md`.
 
 ## Project Overview
 
@@ -176,21 +176,21 @@ Do not claim installation compatibility until it has been verified on a running 
 
 ## Installation (OJS 3.3.0-23)
 
-Version `0.9.0.0` is the first operational release candidate. It is not accepted for operational use (see the release notes). It contains:
+Version `0.10.0.0` is the second operational release candidate. It is not a production release while the independent audit is BLOCKED (see the release notes). It contains:
 - the access guard and the English-only gates;
 - the database for assessment history, the backend views, the public website crawler and the assessment framework;
-- the Stage 03 deterministic evaluation engine with the **candidate** criteria dataset 0.1.0-draft (137 criteria, PENDING APPROVAL);
+- the Stage 03 deterministic evaluation engine with the **approved** criteria dataset 1.0.0: the criteria and FQ mappings the product owner approved, unchanged from the reviewed dataset 0.1.0-draft (the record: `docs/stage05/normative-approval-package/signed/`);
 - the Stage 04 Before You Apply list and the HTML, PDF and DOCX reports. The PDF embeds the DejaVu Sans fonts, so Unicode text is readable.
 
 A Journal Manager can start an assessment (with a fresh English-only confirmation for every run); the plugin reads
 the journal's public website in short steps and seals the run.
 
-- **Default ("Approved DOAJ criteria only"):** no DOAJ criteria are approved, so no criterion is evaluated, the DOAJ
-  Form Guide questions FQ-01 to FQ-20 are "Not yet assessed", and the run records evidence and coverage only.
-- **Candidate criteria (internal testing):** chosen per run, with an extra confirmation. Every criterion of the
-  proposed dataset is evaluated deterministically from the public pages read in that run, and FQ-01 to FQ-20 are
-  answered only from verified English evidence. Results and answers are labelled "Candidate criteria - PENDING
-  APPROVAL" and "Not a DOAJ assessment result". They are not approved DOAJ rules and not a compliance claim.
+- Every approved criterion is evaluated deterministically from the public pages read in that run. The DOAJ Form Guide
+  questions whose mapping was approved are answered only from verified English evidence; the others are "Not yet
+  assessed". Results are labelled "Pre-assessment, not a DOAJ decision": the criteria are not DOAJ rules, and a human
+  must verify every result before a DOAJ application.
+- The candidate profile (unapproved criteria, internal testing) is **disabled** in this release. Candidate runs stored
+  by earlier versions stay readable and keep their "Candidate criteria - PENDING APPROVAL" label.
 
 - **Before You Apply** lists the corrections of a completed run by website page, with the corrective actions recorded
   for each finding. **Reports** generates an HTML, PDF or DOCX report (A4) of a completed run. Reports are stored
@@ -202,7 +202,7 @@ the journal's public website in short steps and seals the run.
 1. **Install and activate:** upload the archive (Settings → Website → Plugins), then enable the plugin in each journal.
 2. **Acknowledge:** the first visit asks for the English-only confirmation.
 3. **Assess:**
-   - New Assessment: confirm English-only again, and choose the profile (approved criteria only; or candidate criteria, internal testing).
+   - New Assessment: confirm English-only again; the run applies the approved criteria.
    - The run page then advances the assessment in short steps. If a step fails, the run is marked "Interrupted" with the
      reason; once the cause is removed, choose **Resume** (or **Cancel**).
 4. **Inspect:** Evidence (pages read, quotes, coverage gaps), Criteria & Findings, the run page, and the DOAJ Form Guide.
@@ -221,14 +221,14 @@ are **not** supported and were not tested.
 
 ### Package
 
-`doajPreAssessment-0.9.0.0.tar.gz` contains one directory, `doajPreAssessment/`, with:
+`doajPreAssessment-0.10.0.0.tar.gz` contains one directory, `doajPreAssessment/`, with:
 - the plugin code, templates, stylesheet and English locale;
 - this README, the change log, the release notes, `LICENSE` and `NOTICE.md`;
 - the DejaVu Sans fonts for the PDF reports, with their licence (`classes/reports/fonts/`);
 - `MANIFEST.sha256` (the SHA-256 of every other file).
 
 It contains no test code, no development tools, no third-party code libraries and no executables. Check the archive
-against the published SHA-256 before installing (`shasum -a 256 doajPreAssessment-0.9.0.0.tar.gz`).
+against the published SHA-256 before installing (`shasum -a 256 doajPreAssessment-0.10.0.0.tar.gz`).
 Maintainers build it with `tools/build-package.sh` (reproducible: the same commit always gives the same archive).
 
 ### Install and activate
@@ -289,8 +289,7 @@ earlier runs still verify. Removing the data permanently is a database administr
 
 ### Running an assessment
 
-New Assessment → choose the criteria to apply (approved only, or the candidate criteria with their extra
-confirmation) → confirm the English-only statement → Start assessment. The run page then continues the run in
+New Assessment → confirm the English-only statement → Start assessment (the approved criteria are applied). The run page then continues the run in
 steps of about ten seconds of reading (each step is a separate, CSRF-protected request; the page submits the next
 step automatically while "Continue automatically" is ticked, or use "Continue assessment"). When reading is
 complete, the results, coverage and the 20 form-guide entries are stored and the run is sealed in one database
@@ -305,13 +304,13 @@ transaction. Only one run per journal can be active.
   language was not verified as English are listed under "Coverage and gaps" of the run. A page whose language
   the advisory check could not establish is never treated as verified English.
 - The language of a page is identified from its main content region (ADR-011), not from menus, sidebars or the
-  footer. Pages with too little text (for example a list of names) stay "undetermined"; a candidate result that
+  footer. Pages with too little text (for example a list of names) stay "undetermined"; a result that
   depends on such a page is "unverifiable", never a failure. The English-only confirmation never makes a page
   verified English.
 
-### Candidate results (internal testing)
+### Results
 
-Each candidate result shows the machine status (pass, fail, warning, contradiction, unverifiable, for DOAJ review,
+Each result shows the machine status (pass, fail, warning, contradiction, unverifiable, for DOAJ review,
 not applicable), the rationale with the verbatim quotes and page addresses it relies on, the interpretation limit
 and, for fail, warning and contradiction, a recommended correction citing the DOAJ clause. Deficiencies become
 findings with stable IDs that are tracked across runs. Recommendations (R) never fail, human-judgement criteria
@@ -355,7 +354,10 @@ Disabling, upgrading or deleting the plugin keeps all plugin data. The plugin ha
 - Stage 05: operational release candidate 0.9.0.0, with end-to-end acceptance on OJS 3.3.0-23 (PHP 7.3 and 8.2) and the
   normative approval package; see `docs/stage05/05-final-acceptance-report.md`. **RC NOT ACCEPTED**: no criterion is
   approved, and the independent audit is BLOCKED.
-- DOAJ assessment rules: none approved (candidate criteria for internal testing only)
+- Release-approval handoff: frozen RC `v0.9.0.0-rc1`, judgment register and activation checklist; see
+  `docs/stage05/approval-handoff/README.md`
+- Operational release candidate 0.10.0.0: the product-owner-approved criteria activated, candidate profile disabled
+- DOAJ assessment rules: the criteria approved by the product owner of this plugin (dataset 1.0.0); not DOAJ rules
 - Production readiness: Not established
 
 ## License and Copyright
@@ -365,13 +367,14 @@ Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>
 The plugin code is free software, licensed under the GNU General Public License, version 3 or (at your option) any
 later version (GPL-3.0-or-later). The full licence text is in `LICENSE`.
 
-The DOAJ-derived reference material (`classes/rules/data/DoajPaCandidateDataset.inc.php`) is licensed separately under
+The DOAJ-derived reference material (`classes/rules/data/DoajPaCandidateDataset.inc.php` and
+`classes/rules/data/DoajPaApprovedDataset.inc.php`) is licensed separately under
 CC BY-SA 4.0. It contains excerpts from DOAJ documents (CC BY-SA 4.0) and from the Principles of Transparency and Best
 Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME; CC BY 4.0). `NOTICE.md` gives the full attribution. The
 plugin is not reviewed or endorsed by DOAJ.
 
-The licence permits redistribution. This build is nevertheless an internal-testing build, not a production release:
-the candidate criteria are PENDING APPROVAL and the independent security audit is BLOCKED.
+The licence permits redistribution. This build is nevertheless a release candidate, not a production release: the
+independent security audit is BLOCKED.
 
 ## Disclaimer
 

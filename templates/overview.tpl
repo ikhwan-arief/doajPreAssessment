@@ -14,7 +14,7 @@
 	<h1 class="app__pageHeading">{translate key="plugins.generic.doajPreAssessment.nav.overview"}</h1>
 	{include file=$doajPaNav}
 	<div class="app__contentPanel doajPa">
-		<p><strong>{translate key="plugins.generic.doajPreAssessment.overview.statusLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.overview.status"}</p>
+		<p><strong>{translate key="plugins.generic.doajPreAssessment.overview.statusLabel"}</strong> {if $doajPaApprovedRulebook}{translate key="plugins.generic.doajPreAssessment.overview.statusApproved"} <code>{$doajPaApprovedRulebook|escape}</code>{else}{translate key="plugins.generic.doajPreAssessment.overview.status"}{/if}</p>
 		<p>{translate key="plugins.generic.doajPreAssessment.overview.disclaimer"}</p>
 		{assign var=d value=$doajPaDashboard}
 

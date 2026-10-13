@@ -20,7 +20,7 @@
 			<tbody>
 				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.overview.pluginVersion"}</th><td>{$doajPaPluginVersionFull|escape}</td></tr>
 				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.settings.schema"}</th><td>{$doajPaSchemaVersion|escape} {if !$doajPaSchemaProblems}<span class="doajPa-badge doajPa-badge--verified">{translate key="plugins.generic.doajPreAssessment.settings.schemaOk"}</span>{else}<span class="doajPa-badge doajPa-badge--failed">{translate key="plugins.generic.doajPreAssessment.settings.schemaProblems"}</span> {foreach from=$doajPaSchemaProblems item=p}{$p|escape}; {/foreach}{/if}</td></tr>
-				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.settings.ruleSets"}</th><td>{translate key="plugins.generic.doajPreAssessment.settings.noRuleSets"}</td></tr>
+				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.settings.ruleSets"}</th><td>{if $doajPaApprovedRulebook}<code>{$doajPaApprovedRulebook|escape}</code> {translate key="plugins.generic.doajPreAssessment.settings.approvedRuleSet"}{else}{translate key="plugins.generic.doajPreAssessment.settings.noRuleSets"}{/if}</td></tr>
 				<tr><th scope="row">{translate key="plugins.generic.doajPreAssessment.settings.editable"}</th><td>{translate key="plugins.generic.doajPreAssessment.settings.noEditable"}</td></tr>
 			</tbody>
 		</table>

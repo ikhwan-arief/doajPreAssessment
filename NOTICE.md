@@ -21,12 +21,14 @@ section 2 and the fonts in section 3.
 
 ## 2. DOAJ-derived reference material (licensed separately)
 
-The file `classes/rules/data/DoajPaCandidateDataset.inc.php` is **not** covered by section 1. It contains excerpts
-transcribed from the public DOAJ documents listed below. The plugin shows these excerpts in candidate results, in the
-DOAJ Form Guide and in corrective recommendations.
+The files `classes/rules/data/DoajPaCandidateDataset.inc.php` and `classes/rules/data/DoajPaApprovedDataset.inc.php`
+are **not** covered by section 1. They contain excerpts transcribed from the public DOAJ documents listed below (the
+approved dataset is a subset of the candidate dataset, unchanged). The plugin shows these excerpts in results, in the
+DOAJ Form Guide and in corrective recommendations. "Approved" means approved by the product owner of this plugin for
+its use; DOAJ has not reviewed or endorsed either file.
 
-That file is licensed under the **Creative Commons Attribution-ShareAlike 4.0 International licence (CC BY-SA 4.0)**,
-<https://creativecommons.org/licenses/by-sa/4.0/>. SPDX-License-Identifier: `CC-BY-SA-4.0`. It is a separate work,
+Each file is licensed under the **Creative Commons Attribution-ShareAlike 4.0 International licence (CC BY-SA 4.0)**,
+<https://creativecommons.org/licenses/by-sa/4.0/>. SPDX-License-Identifier: `CC-BY-SA-4.0`. Each is a separate work,
 distributed with the plugin code as an aggregate.
 
 | Source | Author / licensor | Version (captured) | Licence of the source |

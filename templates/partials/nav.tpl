@@ -14,4 +14,8 @@
 		{/foreach}
 	</ul>
 </nav>
+{if $doajPaApprovedRulebook}
+<p class="doajPa-notice doajPa-notice--info"><strong>{translate key="plugins.generic.doajPreAssessment.approvedBuild.label"}</strong> {translate key="plugins.generic.doajPreAssessment.approvedBuild.text"} ({$doajPaPluginVersion|escape})</p>
+{else}
 <p class="doajPa-notice doajPa-notice--info"><strong>{translate key="plugins.generic.doajPreAssessment.devBuild.label"}</strong> {translate key="plugins.generic.doajPreAssessment.devBuild.text"} ({$doajPaPluginVersion|escape})</p>
+{/if}

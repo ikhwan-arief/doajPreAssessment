@@ -106,6 +106,24 @@ doajpa_test('S4-M02 Report model without approved or candidate criteria: coverag
 	doajpa_same(20, substr_count($all, 'Not yet assessed'), 'FQ not yet assessed');
 });
 
+doajpa_test('S4-M03 Report model of an approved run (activation): independence and not-a-DOAJ-decision disclaimers, approval baseline, DOAJ attribution, no candidate wording', function () {
+	$run = s4_bad();
+	$run['rulebook_version'] = 'doajpa-criteria-9.9.9';
+	$run['rulebookApproved'] = true;
+	$run['coverageData']['assessment']['candidateDataset'] = null;
+	$run['coverageData']['assessment']['approvedDataset'] = array('version' => '9.9.9', 'status' => 'approved', 'engine' => 'doajpa-checks/2',
+		'approval' => 'approved by A. Owner on 2026-11-01 (product owner of this plugin, not DOAJ)');
+	$run['coverageData']['assessment']['report'] = array('candidate' => false, 'disclaimer' => DoajPaAssessmentOrchestrator::APPROVED_DISCLAIMER);
+	foreach ($run['formAnswers'] as &$a) $a['uncertainty'] = str_replace('PENDING APPROVAL', 'approved', (string) $a['uncertainty']);
+	unset($a);
+	$all = implode("\n", DoajPaReportModel::texts(s4_model($run)));
+	foreach (array(DoajPaReportModel::NOT_OFFICIAL, DoajPaAssessmentOrchestrator::APPROVED_DISCLAIMER, 'It is independent of DOAJ', 'not a DOAJ rule set',
+		'Criteria dataset 9.9.9 (APPROVED, approved by A. Owner on 2026-11-01 (product owner of this plugin, not DOAJ))', DoajPaReportModel::ATTRIBUTION, DoajPaReportModel::ENGLISH_ONLY) as $t) {
+		doajpa_assert(strpos($all, $t) !== false, 'contains: ' . substr($t, 0, 60));
+	}
+	doajpa_assert(strpos($all, 'PENDING APPROVAL') === false && strpos($all, 'Candidate criteria') === false, 'no candidate wording');
+});
+
 doajpa_test('S4-R01 HTML report: self-contained (no script, no external resource, restrictive CSP), A4 print layout, hostile text escaped, every model text present', function () {
 	$m = s4_model(s4_bad());
 	$h = DoajPaReportHtml::render($m);

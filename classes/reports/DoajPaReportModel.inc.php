@@ -27,7 +27,7 @@ class DoajPaReportModel {
 	const NOT_OFFICIAL = 'This is an internal quality-improvement report produced by the DOAJ Pre-Assessment plugin. It is not a DOAJ decision, not an application to DOAJ and not a prediction of the outcome of an application. Only DOAJ is authorized to make official decisions on journal applications.';
 	const ENGLISH_ONLY = 'ENGLISH-ONLY JOURNAL CONTENT. This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. This limitation applies to the plugin, not to DOAJ eligibility: DOAJ accepts qualifying journals published in any language.';
 	const METHOD = 'The plugin read the public pages of the journal website (HTML pages and public PDF files) in one bounded crawl, stored them as evidence and evaluated them with deterministic rules: curated English patterns, verbatim quotes, date and ISSN checks and cross-page comparisons. It does not read OJS private data, editorial workflows or submissions, and it makes no external registry lookups. A result is "unverifiable" when the relevant pages could not be read as verified English text or the crawl was incomplete; an unread page is never treated as a missing fact.';
-	const ATTRIBUTION = 'DOAJ text quoted in candidate results: excerpts, wording unchanged, from the DOAJ Guide to applying, Licensing & copyright and Application form (© DOAJ, CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/) and from the Principles of Transparency and Best Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME, CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). DOAJ has not reviewed or endorsed this plugin.';
+	const ATTRIBUTION = 'DOAJ text quoted in the results: excerpts, wording unchanged, from the DOAJ Guide to applying, Licensing & copyright and Application form (© DOAJ, CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/) and from the Principles of Transparency and Best Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME, CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). DOAJ has not reviewed or endorsed this plugin.';
 	const REFERENCES = array(
 		array('DOAJ Guide to applying (primary reference)', 'https://doaj.org/apply/guide/'),
 		array('Principles of Transparency and Best Practice in Scholarly Publishing', 'https://doaj.org/apply/transparency/'),
@@ -66,7 +66,8 @@ class DoajPaReportModel {
 		$sections[] = array('heading' => 'About this report', 'blocks' => $about);
 
 		// 2. Assessment run
-		$dataset = isset($coverage['assessment']['candidateDataset']) && is_array($coverage['assessment']['candidateDataset']) ? $coverage['assessment']['candidateDataset'] : null;
+		$dataset = isset($coverage['assessment']['candidateDataset']) && is_array($coverage['assessment']['candidateDataset']) ? $coverage['assessment']['candidateDataset']
+			: (isset($coverage['assessment']['approvedDataset']) && is_array($coverage['assessment']['approvedDataset']) ? $coverage['assessment']['approvedDataset'] : null);
 		$kv = array(
 			array('Journal', (string) $in['journal']['name']),
 			array('Journal website', (string) (isset($coverage['homepage']) ? $coverage['homepage'] : $in['journal']['url'])),
@@ -74,7 +75,7 @@ class DoajPaReportModel {
 			array('Started (UTC)', (string) $run['started_at_utc']),
 			array('Completed (UTC)', (string) $run['completed_at_utc']),
 			array('Executed by', (string) $run['executor_username']),
-			array('Rule set', $run['rulebook_version'] . ($approved ? ' (approved)' : ($candidate ? ' (candidate, PENDING APPROVAL)' : ' (no approved DOAJ rule set)'))),
+			array('Rule set', $run['rulebook_version'] . ($approved ? ' (approved by the product owner of this plugin; not a DOAJ rule set)' : ($candidate ? ' (candidate, PENDING APPROVAL)' : ' (no approved DOAJ rule set)'))),
 			array('Normative baseline', $dataset ? 'Criteria dataset ' . $dataset['version'] . ' (' . strtoupper((string) $dataset['status']) . ', ' . $dataset['approval'] . '); engine ' . $dataset['engine'] . '; DOAJ sources captured 2026-10-10'
 				: ($approved ? 'Approved criteria of rule set ' . $run['rulebook_version'] : 'None: no criteria were evaluated')),
 			array('Extraction version', (string) $run['extraction_version']),
@@ -246,14 +247,14 @@ class DoajPaReportModel {
 			'External registries (ISSN Portal, DOI resolution) were not consulted; registry criteria are unverifiable.',
 			'Human-judgement criteria are listed for DOAJ review with the extracted text; the plugin never decides them.',
 		);
-		if ($candidate) $limits[] = 'Candidate criteria are PENDING APPROVAL. Results marked "Language-neutral facts (ADR-013, PENDING APPROVAL)" rest on names, dates, ISSNs or counts read from short pages without a language verdict.';
+		if ($candidate || $approved) $limits[] = ($candidate ? 'Candidate criteria are PENDING APPROVAL. ' : '') . 'Results marked "Language-neutral facts (ADR-013)" rest on names, dates, ISSNs or counts read from short pages without a language verdict.';
 		$sections[] = array('heading' => 'Limitations', 'blocks' => array(array('type' => 'list', 'items' => $limits)));
 
 		// 11. References and attribution
 		$refs = array();
 		foreach (self::REFERENCES as $r) $refs[] = $r[0] . ': ' . $r[1];
 		$rb = array(array('type' => 'list', 'items' => $refs));
-		if ($candidate) $rb[] = array('type' => 'p', 'text' => self::ATTRIBUTION);
+		if ($candidate || $approved) $rb[] = array('type' => 'p', 'text' => self::ATTRIBUTION);
 		$sections[] = array('heading' => 'References', 'blocks' => $rb);
 
 		// 12. Disclaimer (repeated)

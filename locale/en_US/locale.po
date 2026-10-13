@@ -846,7 +846,7 @@ msgid "plugins.generic.doajPreAssessment.formGuide.candidate"
 msgstr "These answers come from the candidate profile of the latest completed run. The FQ mapping is pending approval (decision D-03-2). A supported answer quotes verified English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. FQ-08 (keywords) is never answered automatically."
 
 msgid "plugins.generic.doajPreAssessment.attribution.doaj"
-msgstr "DOAJ text quoted in candidate results: excerpts, wording unchanged, from the DOAJ Guide to applying, Licensing & copyright and Application form (© DOAJ, CC BY-SA 4.0) and from the Principles of Transparency and Best Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME, CC BY 4.0). DOAJ has not reviewed or endorsed this plugin. Full attribution: NOTICE.md in the plugin package."
+msgstr "DOAJ text quoted in the results: excerpts, wording unchanged, from the DOAJ Guide to applying, Licensing & copyright and Application form (© DOAJ, CC BY-SA 4.0) and from the Principles of Transparency and Best Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME, CC BY 4.0). DOAJ has not reviewed or endorsed this plugin. Full attribution: NOTICE.md in the plugin package."
 
 msgid "plugins.generic.doajPreAssessment.bya.noRun"
 msgstr "No completed assessment run yet. Run an assessment first; the corrections of the latest completed run are listed here."
@@ -922,3 +922,33 @@ msgstr "DOCX (Word, A4)"
 
 msgid "plugins.generic.doajPreAssessment.reports.quota"
 msgstr "This run already has the maximum number of generated reports (30). Download an existing report of this run."
+
+msgid "plugins.generic.doajPreAssessment.overview.statusApproved"
+msgstr "Operational release. By default an assessment evaluates the criteria approved by the product owner of this plugin (not by DOAJ); the candidate profile is not available. Approved rule set:"
+
+msgid "plugins.generic.doajPreAssessment.approvedBuild.label"
+msgstr "Independent of DOAJ."
+
+msgid "plugins.generic.doajPreAssessment.approvedBuild.text"
+msgstr "This plugin evaluates criteria approved by its product owner. It is not affiliated with, reviewed or endorsed by DOAJ, and nothing shown here is a DOAJ decision or predicts the outcome of an application."
+
+msgid "plugins.generic.doajPreAssessment.approved.label"
+msgstr "Pre-assessment, not a DOAJ decision."
+
+msgid "plugins.generic.doajPreAssessment.approved.text"
+msgstr "This run applied the criteria approved by the product owner of this plugin. They are not DOAJ rules; DOAJ has not reviewed or endorsed this plugin; a human must verify every result before any DOAJ application."
+
+msgid "plugins.generic.doajPreAssessment.run.approvedRules"
+msgstr "This run applied the approved criteria. Each result quotes the public text it relies on or states its basis; a pass is never a DOAJ approval, and unreadable or non-English pages make a result unverifiable, never a failure. Dataset:"
+
+msgid "plugins.generic.doajPreAssessment.criteria.approvedInstalled"
+msgstr "The criteria below come from the approved dataset (approved by the product owner of this plugin, not by DOAJ), or, for older runs, from candidate, development or test datasets as marked."
+
+msgid "plugins.generic.doajPreAssessment.settings.approvedRuleSet"
+msgstr "(approved by the product owner of this plugin; not a DOAJ rule set)"
+
+msgid "plugins.generic.doajPreAssessment.newAssessment.approvedScope"
+msgstr "The assessment evaluates the approved criteria, and answers the DOAJ Form Guide questions whose mapping was approved; the others are recorded as not yet assessed. Approved rule set:"
+
+msgid "plugins.generic.doajPreAssessment.formGuide.approved"
+msgstr "These answers come from the latest completed run and the approved FQ mapping. A supported answer quotes verified English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. Questions whose mapping was not approved are not answered. Confirm every answer before use in a DOAJ application."

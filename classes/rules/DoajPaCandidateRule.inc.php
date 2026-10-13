@@ -22,7 +22,7 @@ class DoajPaCandidateRule implements DoajPaCriterionRule {
 
 	const VERSION = 1;
 	/** Changes when a handler or fact extractor changes behaviour (part of the reuse fingerprint). */
-	const ENGINE_VERSION = 'doajpa-checks/1';
+	const ENGINE_VERSION = 'doajpa-checks/2';
 
 	/** @var array */
 	private $_spec;

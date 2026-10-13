@@ -25,13 +25,32 @@ class DoajPaReadService {
 	const AUDIT_LIMIT = 100;
 
 	/**
-	 * Whether a run's rule set is an approved DOAJ rule set. Stage 02 has none, so every run is a
-	 * development or test run and must never be presented as a DOAJ assessment result.
+	 * Whether a run's rule set is an approved rule set (criteria approved by the product owner of this plugin).
+	 * Runs of any other rule set are development, test or candidate runs and are labelled "not a DOAJ assessment result".
 	 * @param $rulebookVersion string
 	 * @return boolean
 	 */
 	public static function isApprovedRulebook($rulebookVersion) {
 		return in_array((string) $rulebookVersion, DoajPaSchema::APPROVED_RULEBOOKS, true);
+	}
+
+	/**
+	 * Question titles come from the mapping a run used: the proposed mapping for candidate runs (D-03-2 pending), the
+	 * approved mapping for approved runs; none otherwise.
+	 * @return array FQ => title
+	 */
+	public static function fqTitles($rulebookVersion) {
+		$data = null;
+		if ($rulebookVersion === DoajPaSchema::CANDIDATE_RULEBOOK) {
+			require_once(dirname(__FILE__) . '/../rules/data/DoajPaCandidateDataset.inc.php');
+			$data = DoajPaCandidateDataset::data();
+		} elseif (self::isApprovedRulebook($rulebookVersion)) {
+			require_once(dirname(__FILE__) . '/../rules/data/DoajPaApprovedDataset.inc.php');
+			$data = DoajPaApprovedDataset::data();
+		}
+		$titles = array();
+		if ($data) foreach ($data['fqMapping'] as $m) $titles[$m['fq']] = $m['title'];
+		return $titles;
 	}
 
 	/** @return array Dashboard figures, all from stored records */
@@ -143,13 +162,7 @@ class DoajPaReadService {
 			foreach (DoajPaDb::table(DoajPaSchema::T_FORM_ANSWER)->where('context_id', '=', $ctx)->where('run_id', '=', (int) $latest->run_id)
 				->orderBy('answer_id')->get()->all() as $a) $stored[$a->question_key] = (array) $a;
 		}
-		// Question titles come from the proposed mapping only for runs that used it (candidate profile, D-03-2 pending).
-		$titles = array();
-		if ($latest && $latest->rulebook_version === DoajPaSchema::CANDIDATE_RULEBOOK) {
-			require_once(dirname(__FILE__) . '/../rules/data/DoajPaCandidateDataset.inc.php');
-			$data = DoajPaCandidateDataset::data();
-			foreach ($data['fqMapping'] as $m) $titles[$m['fq']] = $m['title'];
-		}
+		$titles = $latest ? self::fqTitles($latest->rulebook_version) : array();
 		$sources = array();
 		$ids = array_values(array_filter(array_map(function ($a) { return $a['evidence_id']; }, $stored)));
 		if ($ids) {

@@ -32,8 +32,12 @@
 		<section aria-labelledby="doajPaScopeHeading">
 			<h2 id="doajPaScopeHeading">{translate key="plugins.generic.doajPreAssessment.newAssessment.scopeHeading"}</h2>
 			<p>{translate key="plugins.generic.doajPreAssessment.newAssessment.scope"}</p>
+			{if $doajPaApprovedRulebook}
+			<p>{translate key="plugins.generic.doajPreAssessment.newAssessment.approvedScope"} <code>{$doajPaApprovedRulebook|escape}</code></p>
+			{else}
 			<p><strong>{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</strong> {translate key="plugins.generic.doajPreAssessment.newAssessment.notImplemented"}</p>
 			<ul>{foreach from=$doajPaFutureModules key=k item=title}<li><span class="doajPa-badge doajPa-badge--not_implemented">{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</span> {$title|escape}</li>{/foreach}</ul>
+			{/if}
 			<p>{translate key="plugins.generic.doajPreAssessment.newAssessment.pdf"}
 			{if $doajPaPdfAvailable}<code>{$doajPaPdfTool|escape}</code>{else}<strong>{translate key="plugins.generic.doajPreAssessment.newAssessment.pdfUnavailable"}</strong>{/if}</p>
 		</section>
@@ -47,6 +51,9 @@
 			{csrf}
 			<input type="hidden" name="warningSha256" value="{$doajPaWarningSha256|escape}" />
 			<p id="doajPaRunHelp">{translate key="plugins.generic.doajPreAssessment.newAssessment.perRun"}</p>
+			{if !$doajPaCandidateEnabled}
+			<input type="hidden" name="profile" value="approved" />
+			{else}
 			<fieldset>
 				<legend>{translate key="plugins.generic.doajPreAssessment.newAssessment.profile"}</legend>
 				<p><input type="radio" id="doajPaProfileApproved" name="profile" value="approved" checked{if $doajPaBlocked} disabled{/if} />
@@ -57,6 +64,7 @@
 				<p><input type="checkbox" id="doajPaConfirmCandidate" name="confirmCandidate" value="1"{if $doajPaBlocked} disabled{/if} />
 				<label for="doajPaConfirmCandidate">{translate key="plugins.generic.doajPreAssessment.newAssessment.confirmCandidate"}</label></p>
 			</fieldset>
+			{/if}
 			<p>
 				<input type="checkbox" id="doajPaRunAck" name="confirmEnglishOnly" value="1" required{if $doajPaBlocked} disabled{/if} />
 				<label for="doajPaRunAck">{$doajPaCheckboxText|escape}</label>
