@@ -1,8 +1,13 @@
 # Release Notes — DOAJ Pre-Assessment 1.0.0.0 (production release)
 
 **Release type:** production release. **Product-owner acceptance:** 2026-10-14, by Ikhwan Arief (Product Owner), of
-the tested release candidate `v0.10.0.0-rc3`. Version 1.0.0.0 is that build with only the version label and the
-User-Agent version changed. Technical testing and an independent security audit are complete.
+the tested release candidate `v0.10.0.0-rc3`. Version 1.0.0.0 is that accepted build. It differs only in:
+- release metadata and documentation: `version.xml`, `README.md`, `RELEASE-NOTES.md`, `CHANGELOG.md` and
+  `MANIFEST.sha256`;
+- the version in the crawler's User-Agent string.
+
+The assessment, security and data logic are unchanged. Technical testing and an independent security audit are
+complete.
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
 **Licence:** GPL-3.0-or-later (plugin code), Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>. The DOAJ-derived
 reference material is licensed separately (CC BY-SA 4.0), and the PDF report fonts (DejaVu Sans) are under the
