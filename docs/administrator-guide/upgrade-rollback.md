@@ -18,18 +18,19 @@ Tested on OJS 3.3.0-23 with PHP 7.3 and 8.2:
 2. Go to **Settings → Website → Plugins → Installed Plugins**. Find **DOAJ Pre-Assessment** and choose **Upgrade**.
 3. Select the newer archive and confirm. OJS replaces the plugin files and runs the plugin's database migration. The
    migration only adds what is missing and never removes data.
-4. **Reload PHP before using the plugin.** With PHP OPcache enabled, the server can serve old and new plugin files
-   together for a few seconds after OJS replaces them (`opcache.revalidate_freq`; 2 s by default). A request in that
-   window can fail with HTTP 500 and a PHP error such as "Undefined constant DoajPaSchema::…".
-   - **Do this:** reload PHP right after the upgrade, before anyone uses the plugin: `apache2ctl -k graceful` for
-     Apache with mod_php, or restart PHP-FPM. Do the same after a rollback.
-   - **Test results (OJS 3.3.0-23):**
-     - on PHP 8.2 with OPcache, the errors occurred only inside the revalidation interval and then stopped;
-     - after a PHP reload, the first requests succeeded without errors;
-     - history and schema were unchanged;
-     - on PHP 7.3 without OPcache, no error occurred.
-
-     These tests are `package_0208` checks U00 and B00, recorded in `docs/documentation-verification.md`.
+4. **Reload PHP before using the plugin.** While OJS removes and copies the plugin files, plugin pages requested at
+   that moment fail briefly: with HTTP 404, or with HTTP 500 and "Unable to read template" or "stat failed" for plugin
+   files. With PHP OPcache, old and new code can also be mixed for up to `opcache.revalidate_freq` seconds (2 s by
+   default). That gives HTTP 500 with "Undefined constant DoajPaSchema::…" or a similar missing class or method.
+   - **Do this:** upgrade or roll back when nobody is using the plugin. Then reload PHP before anyone uses it:
+     `apache2ctl -k graceful` for Apache with mod_php, or restart PHP-FPM.
+   - **Measured on OJS 3.3.0-23** (`tests/integration/opcache_window_0601.py`, 20 file replacements per PHP version
+     under continuous load; `package_0208` checks U00 and B00):
+     - every error ended before the file copy finished (at most 0.38 s after it started);
+     - PHP 8.2 with OPcache: in 20 of 20 trials. PHP 7.3 without OPcache: in 6 of 20;
+     - the mixed-code kind was seen twice in real upgrades on PHP 8.2 and never lasted beyond the revalidation interval;
+     - after a PHP reload, the first requests succeeded with no error;
+     - the plugin tables were byte-identical before and after.
    - **If it persists:** an HTTP 500 that continues after a reload is a defect. Stop and escalate (see
      [Troubleshooting](../user-guide/troubleshooting.md#upgrade-leaves-an-inconsistent-state)).
    - **Timing:** avoid upgrading while an assessment is running.

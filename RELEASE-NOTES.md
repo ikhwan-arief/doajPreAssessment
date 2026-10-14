@@ -40,8 +40,10 @@ eligibility or acceptance.
   - the DOAJ Form Guide notice before the first completed assessment;
   - the run page of runs made without approved criteria.
 - **User-Agent:** the crawler's User-Agent is `DOAJPreAssessment/0.10 (OJS plugin; journal self-assessment)`.
-- **Upgrade note:** with PHP OPcache, reload PHP right after an upgrade or rollback (`apache2ctl -k graceful`, or
-  restart PHP-FPM). See the administrator guide.
+- **Upgrade note:** plugin pages requested while OJS replaces the plugin files fail briefly (HTTP 404 or 500). With
+  PHP OPcache, old code can be served for up to a few seconds longer. Upgrade or roll back when nobody is using the
+  plugin, then reload PHP (`apache2ctl -k graceful`, or restart PHP-FPM). The database is not affected. See the
+  administrator guide.
 
 ## Not available in this release
 

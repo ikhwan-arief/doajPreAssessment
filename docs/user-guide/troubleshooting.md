@@ -243,12 +243,15 @@ redirects outside the journal), or its sealed history. Never edit plugin tables 
    constant DoajPaSchema::…" or a similar missing class or constant.
 2. **Cause:**
    - The upgrade was interrupted, or older files were restored over a newer database.
-   - For an HTTP 500 right after an upgrade, the likely cause is PHP OPcache serving some old plugin files for a few
-     seconds. An HTTP 500 is **not** harmless by default: it is only this transient case when **all** of the following
-     hold:
-     - the errors are "Undefined constant", "Call to undefined method" or "Class … not found" in files under
-       `plugins/generic/doajPreAssessment/`;
-     - they occurred only in the first seconds after the files were replaced;
+   - For an HTTP 404 or 500 during or right after an upgrade or rollback, the likely cause is that the page was
+     requested while OJS was replacing the plugin files. With PHP OPcache, old code can also be served for up to a few
+     seconds.
+
+     An HTTP 500 is **not** harmless by default. It is only this transient case when **all** of the following hold:
+     - the errors are "Unable to read template", "Unable to load template", "stat failed", "Undefined constant",
+       "Call to undefined method" or "Class … not found";
+     - they concern files under `plugins/generic/doajPreAssessment/`;
+     - they occurred only while the files were being replaced, or within a few seconds after;
      - they stop after PHP is reloaded.
 3. **Diagnose:**
    - Check the installed files against `MANIFEST.sha256`, and the version under **Installed Plugins**.
