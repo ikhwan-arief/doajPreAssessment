@@ -3,7 +3,7 @@
 All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
 They are not production releases; any approved criteria are approved by the product owner of this plugin, not by DOAJ.
 
-## [0.10.0.0] - 2026-10-13 (operational release candidate 2; approved criteria only; independent audit BLOCKED)
+## [0.10.0.0] - 2026-10-14 (production release candidate; approved criteria only; independent security audit completed; awaiting product-owner acceptance)
 
 Operational release candidate 2: approved criteria only; the candidate profile is disabled. See `RELEASE-NOTES.md`.
 
