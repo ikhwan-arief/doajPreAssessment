@@ -78,7 +78,7 @@ report is generated from it.
 
 ## Independent review
 
-The release archive 0.10.0.0 was audited independently, read-only, by OpenAI Codex (model `gpt-5.5`) on 2026-10-14.
+The code of version 0.10.0.0 was audited independently, read-only, by OpenAI Codex (model `gpt-5.5`) on 2026-10-14, and every later change up to version 1.0.0.0 was reviewed the same way (`docs/stage05/independent-audit/`).
 The auditor reported no Critical or High findings. One Low finding concerned the root-only site-administrator access;
 it is intended behaviour and is documented above. The report is in the source repository:
 `docs/stage05/independent-audit/codex-audit-0.10.0.0.txt`.

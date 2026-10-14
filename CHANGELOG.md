@@ -1,7 +1,18 @@
 # Changelog
 
-All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds.
-They are not production releases; any approved criteria are approved by the product owner of this plugin, not by DOAJ.
+All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are development builds and release
+candidates; 1.0.0.0 is the first production release. Approved criteria are approved by the product owner of this
+plugin, not by DOAJ.
+
+## [1.0.0.0] - 2026-10-14 (production release; accepted by the product owner)
+
+Production release 1.0.0.0: approved criteria only; the candidate profile is disabled. See `RELEASE-NOTES.md`.
+
+### Changed
+
+- Version 1.0.0.0, as the release policy requires after product-owner acceptance (2026-10-14) of release candidate
+  `v0.10.0.0-rc3`. Release notes, README and the crawler's User-Agent version follow.
+- No change to criteria, FQ mappings, evaluation, authorization, persistence, crawling, export or security logic.
 
 ## [0.10.0.0] - 2026-10-14 (production release candidate; approved criteria only; independent security audit completed; awaiting product-owner acceptance)
 

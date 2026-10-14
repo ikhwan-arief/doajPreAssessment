@@ -1,14 +1,14 @@
-# Release Notes — DOAJ Pre-Assessment 0.10.0.0 (operational release candidate 2)
+# Release Notes — DOAJ Pre-Assessment 1.0.0.0 (production release)
 
-**Release type:** production release candidate (operational release candidate 2). Technical testing and an
-independent security audit are complete; production acceptance is the product owner's decision. Never 1.0 before
-final acceptance.
+**Release type:** production release. **Product-owner acceptance:** 2026-10-14, by Ikhwan Arief (Product Owner), of
+the tested release candidate `v0.10.0.0-rc3`. Version 1.0.0.0 is that build with only the version label and the
+User-Agent version changed. Technical testing and an independent security audit are complete.
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
 **Licence:** GPL-3.0-or-later (plugin code), Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>. The DOAJ-derived
 reference material is licensed separately (CC BY-SA 4.0), and the PDF report fonts (DejaVu Sans) are under the
 Bitstream Vera/Arev licence. Attribution is in `NOTICE.md`.
 
-**Operational release candidate 2: approved criteria only; the candidate profile is disabled.** Every assessment
+**Production release 1.0.0.0: approved criteria only; the candidate profile is disabled.** Every assessment
 evaluates the criteria approved by the product owner of this plugin. The plugin is independent of DOAJ: DOAJ has not
 reviewed or endorsed it, the criteria are not DOAJ rules, and no result states, predicts or guarantees DOAJ
 eligibility or acceptance.
@@ -17,7 +17,7 @@ eligibility or acceptance.
 > with deterministic rules and without Artificial Intelligence or automatic translation. A confirmation is required
 > before first use in each journal and again before every assessment.
 
-## What this release candidate contains
+## What this release contains
 
 - Everything in 0.9.0.0 (tag `v0.9.0.0-rc1`, archive SHA-256 `a69f1b91a1c25a1eb99328302e8c9c4a050ff399bc87b4ff2c1c9646e1920c7a`).
 - **Approved criteria dataset 1.0.0**, written by `tools/apply-approval.py` from the signed approval record
@@ -31,7 +31,7 @@ eligibility or acceptance.
 - Engine wording: decisions D-03-4, D-03-5 and D-03-9 are cited without "PENDING APPROVAL" (engine `doajpa-checks/2`);
   the checks themselves are unchanged.
 
-## Corrected build (2026-10-14)
+## Since release candidate 0.10.0.0-rc2
 
 - **Interface wording now matches this release:**
   - the plugin-list description: evidence-based pre-assessment, 24 approved criteria, not a complete DOAJ eligibility
@@ -39,7 +39,7 @@ eligibility or acceptance.
   - Settings: no configurable settings;
   - the DOAJ Form Guide notice before the first completed assessment;
   - the run page of runs made without approved criteria.
-- **User-Agent:** the crawler's User-Agent is `DOAJPreAssessment/0.10 (OJS plugin; journal self-assessment)`.
+- **User-Agent:** the crawler's User-Agent is `DOAJPreAssessment/1.0 (OJS plugin; journal self-assessment)`.
 - **Upgrade note:** plugin pages requested while OJS replaces the plugin files fail briefly (HTTP 404 or 500). With
   PHP OPcache, old code can be served for up to a few seconds longer. Upgrade or roll back when nobody is using the
   plugin, then reload PHP (`apache2ctl -k graceful`, or restart PHP-FPM). The database is not affected. See the
@@ -56,12 +56,15 @@ eligibility or acceptance.
 | Candidate profile | Disabled (decision D-03-6) |
 | Human confirmation of machine results | Not available (later stage) |
 | Unattended (scheduled) assessments | Not available: steps run from the manager's browser |
-| Production acceptance | Pending the product owner's decision |
 
-**Independent security audit:** executed on 2026-10-14 on this archive's code (read-only, Codex, model `gpt-5.5`):
-no Critical or High findings; one Low finding (only the root administrator, user ID 1, is admitted as site
-administrator), which is the specified behaviour. Report: `docs/stage05/independent-audit/codex-audit-0.10.0.0.txt`
-in the source repository.
+**Independent security audit:**
+- **Audit:** executed on 2026-10-14 (read-only, Codex, model `gpt-5.5`) on the 0.10.0.0 code.
+- **Coverage:** every later change up to 1.0.0.0 was reviewed the same way.
+- **Results:** no Critical or High findings. One Low finding (only the root administrator, user ID 1, is admitted as
+  site administrator) is the specified behaviour.
+- **Reports:** `docs/stage05/independent-audit/` in the source repository.
+
+**Not included in this release:** deployment and publication. Both need the product owner's separate authorization.
 
 ## Known limitations
 
@@ -83,6 +86,6 @@ in the source repository.
 
 ## Data
 
-Disabling, upgrading or deleting the plugin keeps all its data. There is no automatic purge. Upgrading from 0.9.0.0
-needs no schema change; earlier runs keep their rule set label and stay sealed. See README "Installation (OJS
+Disabling, upgrading or deleting the plugin keeps all its data. There is no automatic purge. Upgrading from 0.9.0.0 or
+0.10.0.0 needs no schema change; earlier runs keep their rule set label and stay sealed. See README "Installation (OJS
 3.3.0-23)" for upgrade, rollback, uninstall and recovery.

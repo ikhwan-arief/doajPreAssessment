@@ -1,4 +1,4 @@
-# User Manual — DOAJ Pre-Assessment 0.10.0.0
+# User Manual — DOAJ Pre-Assessment 1.0.0.0
 
 This manual describes every user-facing function of the released build. For a first walkthrough see
 [Quick start](quick-start.md). For status meanings see [Understanding results](understanding-results.md).
@@ -18,7 +18,7 @@ Pre-Assessment for this journal."* (HTTP 403), and authenticated denials are wri
 
 The "Responsible person or team" field of a corrective action is free text. Naming someone there gives them no access.
 
-## 2. Scope of version 0.10.0.0
+## 2. Scope of version 1.0.0.0
 
 ### The 24 active criteria
 
@@ -324,8 +324,8 @@ Non-English, mixed or undetermined pages are never used as English evidence, and
 
 ### Interface wording (corrected build)
 
-Earlier builds of 0.10.0.0 (tags `v0.10.0.0-rc2` and `v0.10.0.0-rc2.1`) showed three outdated texts. They are corrected
-in the current build (tag `v0.10.0.0-rc3`):
+Pre-release builds of 0.10.0.0 (tags `v0.10.0.0-rc2` and `v0.10.0.0-rc2.1`) showed three outdated texts. They were
+corrected in `v0.10.0.0-rc3`; version 1.0.0.0 shows:
 
 | Where | Text now shown |
 |---|---|
@@ -335,4 +335,4 @@ in the current build (tag `v0.10.0.0-rc3`):
 
 On a run made before the approved criteria were installed (version 0.9 or earlier), the run page says "No approved DOAJ
 criteria were applied in this run." The crawler identifies itself to journal websites as
-`DOAJPreAssessment/0.10 (OJS plugin; journal self-assessment)`.
+`DOAJPreAssessment/1.0 (OJS plugin; journal self-assessment)`.

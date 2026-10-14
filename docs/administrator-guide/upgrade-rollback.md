@@ -1,7 +1,7 @@
 # Upgrade and Rollback
 
 Tested on OJS 3.3.0-23 with PHP 7.3 and 8.2:
-- upgrading 0.9.0.0 to 0.10.0.0 keeps the history row for row, and every sealed run still verifies;
+- upgrading 0.9.0.0 or 0.10.0.0 to 1.0.0.0 keeps the history row for row, and every sealed run still verifies;
 - rollback by restoring the backups works.
 
 ## Before upgrading
@@ -36,11 +36,11 @@ Tested on OJS 3.3.0-23 with PHP 7.3 and 8.2:
      [Troubleshooting](../user-guide/troubleshooting.md#upgrade-leaves-an-inconsistent-state)).
    - **Timing:** avoid upgrading while an assessment is running.
 5. **Check:**
-   - **Installed Plugins** shows the new version (for example `0.10.0.0`);
+   - **Installed Plugins** shows the new version (for example `1.0.0.0`);
    - plugin **Settings** shows the schema as **Complete** and the approved rule set;
    - earlier completed runs still show **Snapshot verified**.
 
-**What changes in 0.10.0.0:**
+**When upgrading from 0.9.0.0:**
 - runs made before the upgrade keep their original rule set and labels;
 - a candidate-profile run left active by 0.9.0.0 can only be cancelled.
 

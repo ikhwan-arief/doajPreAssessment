@@ -9,7 +9,7 @@ No. It is independent of DOAJ and not reviewed or endorsed by it. It quotes DOAJ
 CC BY-SA 4.0 licence.
 
 **Why are only 24 criteria active?**
-Version 0.10.0.0 activates the first wave of criteria approved by the plugin's product owner. The other 113 criteria
+Version 1.0.0.0 activates the first wave of criteria approved by the plugin's product owner. The other 113 criteria
 and 16 Form Guide questions are deferred: some need amendments, an external registry, or an approved reference. They
 are not assessed.
 
@@ -43,7 +43,7 @@ can also use it. Other roles cannot.
 Yes. Enable it per journal. Each journal's runs, findings, actions and reports are isolated from the others.
 
 **Why are some PDF publication dates missing?**
-Article-level publication-date criteria are not active in 0.10.0.0. PDF text is read only when `pdftotext` is
+Article-level publication-date criteria are not active in 1.0.0.0. PDF text is read only when `pdftotext` is
 installed and the PDF contains extractable text. Activity is judged from the dated issues and articles that were read.
 
 **Are assessments stored permanently?**

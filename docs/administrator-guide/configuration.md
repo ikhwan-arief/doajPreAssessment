@@ -1,6 +1,6 @@
 # Configuration
 
-For **OJS site administrators**. Version 0.10.0.0 has **no plugin settings**. Its behaviour depends on the OJS and PHP
+For **OJS site administrators**. Version 1.0.0.0 has **no plugin settings**. Its behaviour depends on the OJS and PHP
 configuration below. The approved criteria, the crawl limits and the access rules are fixed in the release and cannot
 be changed at run time.
 

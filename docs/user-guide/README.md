@@ -1,6 +1,6 @@
 # DOAJ Pre-Assessment for OJS 3.3 — User Guide
 
-DOAJ Pre-Assessment (`doajPreAssessment`, version **0.10.0.0**) is a generic plugin for **OJS 3.3.0-23**. It reads
+DOAJ Pre-Assessment (`doajPreAssessment`, version **1.0.0.0**) is a generic plugin for **OJS 3.3.0-23**. It reads
 a journal's public website, checks it against a set of criteria approved for this plugin, and helps the journal fix
 what it finds before applying to the Directory of Open Access Journals (DOAJ).
 
@@ -12,7 +12,7 @@ what it finds before applying to the Directory of Open Access Journals (DOAJ).
 > pre-assessment, never a DOAJ decision, and they do not predict or guarantee the outcome of an application. Only
 > DOAJ decides on applications.
 
-## What version 0.10.0.0 assesses
+## What version 1.0.0.0 assesses
 
 - **24 criteria** approved by the plugin's product owner. They are listed in
   [user-manual.md](user-manual.md#the-24-active-criteria).
@@ -42,7 +42,7 @@ version. A good result in this plugin is therefore **not** a complete check of D
 ## Where these manuals are
 
 They are in the source repository under `docs/user-guide/` and `docs/administrator-guide/`. The installation archive
-`doajPreAssessment-0.10.0.0.tar.gz` contains only the plugin, with its `README.md`, `RELEASE-NOTES.md`,
+`doajPreAssessment-1.0.0.0.tar.gz` contains only the plugin, with its `README.md`, `RELEASE-NOTES.md`,
 `CHANGELOG.md`, `LICENSE` and `NOTICE.md`. It does not contain these manuals.
 
 ## Licence

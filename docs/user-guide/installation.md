@@ -1,6 +1,6 @@
 # Installation Guide
 
-For the **OJS site administrator**. Applies to version 0.10.0.0 on **OJS 3.3.0-23**.
+For the **OJS site administrator**. Applies to version 1.0.0.0 on **OJS 3.3.0-23**.
 
 ## 1. Requirements
 
@@ -30,11 +30,11 @@ For the **OJS site administrator**. Applies to version 0.10.0.0 on **OJS 3.3.0-2
 
 ## 2. Verify the package
 
-Download `doajPreAssessment-0.10.0.0.tar.gz` and its published SHA-256 checksum, then compare them:
+Download `doajPreAssessment-1.0.0.0.tar.gz` and its published SHA-256 checksum, then compare them:
 
 ```sh
-shasum -a 256 doajPreAssessment-0.10.0.0.tar.gz        # macOS
-sha256sum doajPreAssessment-0.10.0.0.tar.gz            # Linux
+shasum -a 256 doajPreAssessment-1.0.0.0.tar.gz        # macOS
+sha256sum doajPreAssessment-1.0.0.0.tar.gz            # Linux
 ```
 
 Install only if the value matches the published checksum exactly.
@@ -55,7 +55,7 @@ Back up the OJS database and the OJS files before installing or upgrading any pl
 
 1. Sign in as the **site administrator**.
 2. Open a journal's settings: **Settings → Website → Plugins**.
-3. Choose **Upload A New Plugin**, select `doajPreAssessment-0.10.0.0.tar.gz`, and save.
+3. Choose **Upload A New Plugin**, select `doajPreAssessment-1.0.0.0.tar.gz`, and save.
 4. OJS copies the plugin to `plugins/generic/doajPreAssessment/` and creates the plugin's database tables.
 
 The plugin's description in the plugin list shows the English-only warning before you enable it.
@@ -92,7 +92,7 @@ and the time. Every assessment later asks for its own confirmation.
 
 1. **Overview:** it shows
    - the status "Operational release…" with the approved rule set `doajpa-criteria-1.0.0`;
-   - the plugin version `0.10.0.0`;
+   - the plugin version `1.0.0.0`;
    - the OJS and PHP versions.
 2. **Settings:**
    - "Database schema level" shows **Complete**;

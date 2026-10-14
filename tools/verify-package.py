@@ -44,7 +44,7 @@ COPYRIGHT = "Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>"
 DATASET = "classes/rules/data/DoajPaCandidateDataset.inc.php"
 APPROVED = "classes/rules/data/DoajPaApprovedDataset.inc.php"
 SYNTHETIC = b"SYNTHETIC-TEST-NOT-AN-APPROVAL"
-RELEASE_PHRASE = "Operational release candidate 2: approved criteria only; the candidate profile is disabled"
+RELEASE_PHRASE = "Production release 1.0.0.0: approved criteria only; the candidate profile is disabled"
 results = []
 
 
@@ -148,8 +148,10 @@ rel = meta.get("release", "")
 check("M01", "version.xml: application doajPreAssessment, type plugins.generic, class DoajPreAssessmentPlugin, lazy-load 1",
       meta.get("application") == TOP and meta.get("type") == "plugins.generic" and meta.get("class") == "DoajPreAssessmentPlugin"
       and meta.get("lazy-load") == "1" and re.fullmatch(r"\d{4}-\d\d-\d\d", meta.get("date", "")), meta)
-check("M02", "Release matches the archive name and is a pre-release (major version 0, never 1.0 before Stage 03-05 acceptance)",
-      m is not None and rel == ".".join(m.groups()) and rel.split(".")[0] == "0", rel)
+notes_m02 = " ".join(files.get("RELEASE-NOTES.md", b"").decode(errors="replace").split())
+check("M02", "Release matches the archive name; a release of major version 1 or later states the product-owner acceptance in its release notes "
+      "(release policy: never 1.0 before final acceptance)",
+      m is not None and rel == ".".join(m.groups()) and (rel.split(".")[0] == "0" or re.search(r"Product-owner acceptance:\*{0,2} \d{4}-\d\d-\d\d", notes_m02) is not None), rel)
 idx = files.get("index.php", b"")
 cls = files.get("DoajPreAssessmentPlugin.inc.php", b"")
 check("M03", "Registration: index.php returns the plugin; the class extends GenericPlugin and loads the migration",

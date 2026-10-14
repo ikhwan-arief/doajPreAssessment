@@ -182,7 +182,7 @@ redirects outside the journal), or its sealed history. Never edit plugin tables 
    - Issue and article dates come from the issue and article pages that were read.
    - The archive or issue pages were not reachable.
    - The crawl stopped at a limit.
-   - Article-level publication-date criteria are not active in version 0.10.0.0.
+   - Article-level publication-date criteria are not active in version 1.0.0.0.
 3. **Diagnose:** check that the **Archives** page and the latest issues are public and listed as read.
 4. **Fix:** make the archive and the issue pages public and readable, then run again.
 5. **Escalate:** if dated issues are public and read but still not recognised.
