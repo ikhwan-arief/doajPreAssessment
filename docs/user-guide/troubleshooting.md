@@ -248,8 +248,8 @@ redirects outside the journal), or its sealed history. Never edit plugin tables 
      seconds.
 
      An HTTP 500 is **not** harmless by default. It is only this transient case when **all** of the following hold:
-     - the errors are "Unable to read template", "Unable to load template", "stat failed", "Undefined constant",
-       "Call to undefined method" or "Class … not found";
+     - the errors are "Unable to read template", "Unable to load template", "Unknown resource type", "stat failed",
+       "Undefined constant", "Call to undefined method" or "Class … not found";
      - they concern files under `plugins/generic/doajPreAssessment/`;
      - they occurred only while the files were being replaced, or within a few seconds after;
      - they stop after PHP is reloaded.

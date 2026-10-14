@@ -26,9 +26,10 @@ Tested on OJS 3.3.0-23 with PHP 7.3 and 8.2:
      `apache2ctl -k graceful` for Apache with mod_php, or restart PHP-FPM.
    - **Measured on OJS 3.3.0-23** (`tests/integration/opcache_window_0601.py`, 20 file replacements per PHP version
      under continuous load; `package_0208` checks U00 and B00):
-     - every error ended before the file copy finished (at most 0.38 s after it started);
-     - PHP 8.2 with OPcache: in 20 of 20 trials. PHP 7.3 without OPcache: in 6 of 20;
-     - the mixed-code kind was seen twice in real upgrades on PHP 8.2 and never lasted beyond the revalidation interval;
+     - every error ended within 0.6 s of the start of the copy, during the copy or within the OPcache interval after it;
+     - errors occurred in every trial on PHP 8.2 with OPcache, and in 6–9 of 20 trials on PHP 7.3 without OPcache;
+     - the error kinds were missing templates or files, and the plugin's template resource not yet registered. The
+       mixed-code kind was seen twice in real upgrades on PHP 8.2 and never lasted beyond the revalidation interval;
      - after a PHP reload, the first requests succeeded with no error;
      - the plugin tables were byte-identical before and after.
    - **If it persists:** an HTTP 500 that continues after a reload is a defect. Stop and escalate (see
