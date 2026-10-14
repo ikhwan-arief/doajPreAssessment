@@ -181,7 +181,7 @@ FQ-01 to FQ-20 from the latest completed run:
 - the uncertainty.
 
 Only FQ-07, FQ-08, FQ-15 and FQ-17 can be answered (see section 2). Before the first completed assessment, the page
-shows "No completed assessment yet. Complete an assessment to view evidence-supported Form Guide assistance. This
+shows "No completed assessment with the approved criteria yet. Complete an assessment to view evidence-supported Form Guide assistance. This
 release covers FQ-07, FQ-08, FQ-15, FQ-17 only; the other questions are not assessed."
 
 ### Before You Apply
@@ -331,7 +331,7 @@ in the current build (tag `v0.10.0.0-rc3`):
 |---|---|
 | Plugin list (description) | "Evidence-based DOAJ pre-assessment for OJS journals: evaluates the journal's public website against 24 approved criteria (not a complete DOAJ eligibility check). Independent of DOAJ: …", followed by the English-only warning |
 | Settings → Editable settings | "No configurable settings are available in this release. Access and assessment behaviour are fixed by the plugin." |
-| DOAJ Form Guide before the first completed assessment | "No completed assessment yet. Complete an assessment to view evidence-supported Form Guide assistance. This release covers FQ-07, FQ-08, FQ-15, FQ-17 only; the other questions are not assessed." |
+| DOAJ Form Guide before the first completed assessment | "No completed assessment with the approved criteria yet. Complete an assessment to view evidence-supported Form Guide assistance. This release covers FQ-07, FQ-08, FQ-15, FQ-17 only; the other questions are not assessed." |
 
 On a run made before the approved criteria were installed (version 0.9 or earlier), the run page says "No approved DOAJ
 criteria were applied in this run." The crawler identifies itself to journal websites as

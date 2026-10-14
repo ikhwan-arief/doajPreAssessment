@@ -130,6 +130,7 @@ doajpa_test('S5-L01 Operational wording: plugin description, Settings and the Fo
 	doajpa_same('No configurable settings are available in this release. Access and assessment behaviour are fixed by the plugin.', $s['settings.noEditable'], 'settings');
 	doajpa_assert(strpos($s['formGuide.noApprovedRun'], '{$questions}') !== false && strpos($s['formGuide.noApprovedRun'], 'not installed') === false, 'Form Guide notice');
 	doajpa_assert(strpos($s['run.criteriaNotImplemented'], 'in this run') !== false, 'old runs: no claim about this version');
+	doajpa_same('No completed assessment with the approved criteria yet.', $s['formGuide.noApprovedRunLabel'], 'Form Guide label: approved criteria installed, no approved run yet');
 	// keys rendered by templates when an approved rule set is installed, plus the description and the crawler User-Agent
 	$approvedState = array('description', 'settings.noEditable', 'formGuide.noApprovedRun', 'formGuide.noApprovedRunLabel', 'approvedBuild.text', 'approved.text',
 		'overview.statusApproved', 'newAssessment.approvedScope', 'formGuide.approved', 'settings.approvedRuleSet', 'criteria.approvedInstalled', 'run.approvedRules');

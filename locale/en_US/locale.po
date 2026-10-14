@@ -954,7 +954,7 @@ msgid "plugins.generic.doajPreAssessment.formGuide.approved"
 msgstr "These answers come from the latest completed run and the approved FQ mapping. A supported answer quotes verified English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. Questions whose mapping was not approved are not answered. Confirm every answer before use in a DOAJ application."
 
 msgid "plugins.generic.doajPreAssessment.formGuide.noApprovedRunLabel"
-msgstr "No completed assessment yet."
+msgstr "No completed assessment with the approved criteria yet."
 
 msgid "plugins.generic.doajPreAssessment.formGuide.noApprovedRun"
 msgstr "Complete an assessment to view evidence-supported Form Guide assistance. This release covers {$questions} only; the other questions are not assessed."
