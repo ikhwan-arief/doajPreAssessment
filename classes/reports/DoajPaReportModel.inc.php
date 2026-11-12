@@ -25,6 +25,7 @@ class DoajPaReportModel {
 
 	const VERSION = 'report-model-1';
 	const NOT_OFFICIAL = 'This is an internal quality-improvement report produced by the DOAJ Pre-Assessment plugin. It is not a DOAJ decision, not an application to DOAJ and not a prediction of the outcome of an application. Only DOAJ is authorized to make official decisions on journal applications.';
+	const PRE_PRODUCTION = 'PRE-PRODUCTION MODE. This run read the journal website on a private or loopback network address, as enabled by the server administrator, before the website is published on its production server. The results describe that non-public copy of the website, not the public journal website. Run the assessment again on the public website after installation.';
 	const ENGLISH_ONLY = 'ENGLISH-ONLY JOURNAL CONTENT. This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. This limitation applies to the plugin, not to DOAJ eligibility: DOAJ accepts qualifying journals published in any language.';
 	const METHOD = 'The plugin read the public pages of the journal website (HTML pages and public PDF files) in one bounded crawl, stored them as evidence and evaluated them with deterministic rules: curated English patterns, verbatim quotes, date and ISSN checks and cross-page comparisons. It does not read OJS private data, editorial workflows or submissions, and it makes no external registry lookups. A result is "unverifiable" when the relevant pages could not be read as verified English text or the crawl was incomplete; an unread page is never treated as a missing fact.';
 	const ATTRIBUTION = 'DOAJ text quoted in the results: excerpts, wording unchanged, from the DOAJ Guide to applying, Licensing & copyright and Application form (© DOAJ, CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/) and from the Principles of Transparency and Best Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME, CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). DOAJ has not reviewed or endorsed this plugin.';
@@ -62,6 +63,7 @@ class DoajPaReportModel {
 		if (isset($report['disclaimer']) && is_string($report['disclaimer']) && $report['disclaimer'] !== '') $about[] = array('type' => 'notice', 'text' => $report['disclaimer']);
 		elseif (!$approved) $about[] = array('type' => 'notice', 'text' => 'Not a DOAJ assessment result. No approved DOAJ rule set was applied.');
 		if ($candidate) $about[] = array('type' => 'notice', 'text' => 'Candidate criteria - PENDING APPROVAL. The criteria applied in this run are a proposed dataset for internal testing. They are not approved DOAJ rules and are not presented as an approved DOAJ assessment.');
+		if (!empty($coverage['preProductionMode'])) $about[] = array('type' => 'notice', 'text' => self::PRE_PRODUCTION);
 		$about[] = array('type' => 'p', 'text' => self::ENGLISH_ONLY);
 		$sections[] = array('heading' => 'About this report', 'blocks' => $about);
 

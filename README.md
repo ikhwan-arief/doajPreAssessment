@@ -2,8 +2,9 @@
 
 > **ENGLISH-ONLY JOURNAL CONTENT.** This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. Do not rely on its findings for policies written in other languages. If essential non-English content is encountered, the affected check will be marked Unsupported Language / Needs Verification. This limitation applies to the plugin, not to DOAJ eligibility.
 
-> **Version 1.0.0.0 — production release.** Approved criteria only; the candidate profile is disabled. Accepted by
-> the product owner on 2026-10-14 after technical testing and an independent security audit. The plugin is **independent of DOAJ**: no result is a DOAJ decision, a
+> **Version 1.1.0.0 — production release.** Approved criteria only; the candidate profile is disabled. Adds an
+> administrator-only pre-production mode for journal websites on a private or loopback address. Accepted by the
+> product owner on 2026-11-13. The plugin is **independent of DOAJ**: no result is a DOAJ decision, a
 > compliance claim or a prediction of an application outcome. See `RELEASE-NOTES.md`.
 
 ## Overview
@@ -19,7 +20,7 @@ gaps before applying to the Directory of Open Access Journals (DOAJ).
 - sealed assessment history, with comparisons between runs;
 - HTML, PDF and DOCX reports.
 
-**Scope of 1.0.0.0:** **24 criteria** and the DOAJ Form Guide questions **FQ-07, FQ-08, FQ-15 and FQ-17**. The other
+**Scope of 1.1.0.0:** **24 criteria** and the DOAJ Form Guide questions **FQ-07, FQ-08, FQ-15 and FQ-17**. The other
 113 criteria and 16 questions are not assessed, so a result is never a complete DOAJ eligibility check.
 
 ## Documentation
@@ -55,6 +56,22 @@ The manuals are in the source repository; they are not included in the installat
 plugin. Without it, PDF files are listed but their text is not read; each PDF is recorded as a coverage gap with the
 reason `pdf_extractor_unavailable`.
 
+## Pre-production mode
+
+The website reader normally refuses private and loopback addresses. To check a website before it is installed on its
+public production server (for example `https://localhost:8445/index.php/jaes`), the server administrator can add to
+`config.inc.php`:
+
+```ini
+[doajPreAssessment]
+preproduction_private_targets = On
+preproduction_connect_to = "localhost:8445=127.0.0.1:443"   ; optional host:port=ip:port
+preproduction_insecure_tls = On                              ; optional, self-signed certificates
+```
+
+Only the journal's own host and port are covered; every run that uses the mode is flagged, audited and labelled
+PRE-PRODUCTION MODE in its reports. Details: `docs/administrator-guide/configuration.md`. Switch it off in production.
+
 ## Access
 
 Only two kinds of user can use the plugin:
@@ -69,7 +86,7 @@ All other users are denied, including other site administrators, editors and any
 1. **Verify the archive** against the published SHA-256:
 
    ```sh
-   shasum -a 256 doajPreAssessment-1.0.0.0.tar.gz
+   shasum -a 256 doajPreAssessment-1.1.0.0.tar.gz
    ```
 
    It contains one directory, `doajPreAssessment/`, with `MANIFEST.sha256` listing every file's SHA-256.

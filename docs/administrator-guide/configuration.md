@@ -1,6 +1,6 @@
 # Configuration
 
-For **OJS site administrators**. Version 1.0.0.0 has **no plugin settings**. Its behaviour depends on the OJS and PHP
+For **OJS site administrators**. Version 1.1.0.0 has **no plugin settings in the OJS interface**; the only plugin option is the administrator-only pre-production mode in `config.inc.php` (below). Its behaviour depends on the OJS and PHP
 configuration below. The approved criteria, the crawl limits and the access rules are fixed in the release and cannot
 be changed at run time.
 
@@ -17,7 +17,7 @@ be changed at run time.
 - OJS 3.4 or 3.5;
 - `disable_path_info = On`;
 - an OJS HTTP proxy;
-- a journal served only on a private or intranet address.
+- a journal served only on a private or intranet address, except in the pre-production mode below.
 
 ## OJS configuration (`config.inc.php`)
 
@@ -28,15 +28,49 @@ be changed at run time.
 | `[proxy] http_proxy`, `https_proxy` | Not set | With a proxy, the reader refuses to run, because it cannot verify the real destination address through a proxy |
 | `[files] files_dir` | Set, outside the web root, writable by the web server | The plugin stores private working files and reports under `{files_dir}/doajPreAssessment/` |
 
-If your installation requires a proxy, or serves the journal only on a private address, the plugin cannot assess it.
-Do not modify the plugin to work around this.
+If your installation requires a proxy, the plugin cannot assess it. A journal served only on a private address can be
+assessed only with the pre-production mode. Do not modify the plugin to work around these rules.
+
+## Pre-production mode (private or loopback journal address)
+
+Use this mode to check a journal website **before** it is installed on its public production server, for example a
+staging copy reachable only at `https://localhost:8445` or on an intranet address. By default the website reader
+rejects every private and loopback address (protection against server-side request forgery). Only the server
+administrator can relax this, in `config.inc.php`; there is no setting in the OJS interface.
+
+```ini
+[doajPreAssessment]
+; Allow the reader to read THIS journal's own website on a loopback/private address
+preproduction_private_targets = On
+; Optional: connect host:port of the journal URL to another ip:port. Use it when OJS generates its URLs with a port
+; that does not exist inside the server or container (here: the Docker host port 8445 maps to port 443 inside).
+preproduction_connect_to = "localhost:8445=127.0.0.1:443"
+; Optional: accept a self-signed or otherwise unverifiable TLS certificate for this journal origin only
+preproduction_insecure_tls = On
+```
+
+Rules:
+- Only the scheme, host and port of the journal homepage (from `base_url`) are covered. Any other host, port or
+  redirect target stays under the normal public-only rule.
+- Allowed address classes: loopback, private (RFC 1918), IPv6 unique local and CGNAT. Link-local (cloud metadata),
+  multicast, reserved and documentation addresses are never allowed.
+- `preproduction_connect_to` accepts exactly one `host:port=ip:port` entry, for the journal's own host and port, and
+  the target must be an allowed address. Any malformed value disables the whole mode.
+- The URL and the `Host` header are not changed; only the network connection goes to the mapped address.
+- Every run that used the mode is flagged (`dev_exception_used`), its coverage records `preProductionMode`, each
+  destination is written once per run to the audit log (`preproduction_private_destination_allowed`), and the run
+  page and every report show a **PRE-PRODUCTION MODE** notice. Results describe the non-public copy, not the public
+  website: assess again after the website goes live.
+- Switch the mode **off** on public production servers.
+
 
 ## PHP configuration
 
 - **Time limit:** each assessment step requests up to 120 seconds with `set_time_limit`. A host that forbids raising
   the limit, or sets a stricter limit, may interrupt slow steps. Interrupted runs can be resumed.
 - **Outbound HTTP/HTTPS** from the web server to the journal's public host must be allowed.
-- **TLS:** HTTPS certificates are always verified, so the server's CA store must be current.
+- **TLS:** HTTPS certificates are always verified (except for the journal origin when the pre-production mode sets
+  `preproduction_insecure_tls`), so the server's CA store must be current.
 
 ## Authorization model
 

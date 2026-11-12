@@ -491,6 +491,9 @@ msgstr "Compare with run"
 msgid "plugins.generic.doajPreAssessment.run.devException"
 msgstr "This run used a development-only network exception and is not a valid assessment."
 
+msgid "plugins.generic.doajPreAssessment.run.preProduction"
+msgstr "Pre-production mode: this run read the journal website on a private or loopback address, as enabled by the server administrator. The results describe that non-public copy of the website, not the public journal website; run the assessment again after the website is live."
+
 msgid "plugins.generic.doajPreAssessment.run.evidenceLink"
 msgstr "Show the pages read and the evidence of this run"
 

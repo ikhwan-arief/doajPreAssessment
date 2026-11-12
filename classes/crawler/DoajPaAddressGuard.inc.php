@@ -13,6 +13,9 @@
  * "I-UNDERSTAND-THIS-IS-A-TEST-STACK" AND the file tests/support/DoajPaDevPrivateAllowance.inc.php exists
  * (it is never packaged) AND DOAJ_PA_DEV_ALLOW_HOSTS lists the exact host:port=ip triple.
  *
+ * Pre-production mode (since 1.1.0.0): an optional DoajPaPreProductionPolicy, enabled by the administrator in
+ * config.inc.php, allows the journal's own origin on a loopback/private address (see that class).
+ *
  * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -20,6 +23,7 @@
 
 require_once(dirname(__FILE__) . '/DoajPaIpPolicy.inc.php');
 require_once(dirname(__FILE__) . '/DoajPaUrlTools.inc.php');
+require_once(dirname(__FILE__) . '/DoajPaPreProductionPolicy.inc.php');
 
 /** Resolves a hostname to all of its A and AAAA addresses. */
 class DoajPaDnsResolver {
@@ -43,20 +47,36 @@ class DoajPaAddressGuard {
 	private $_resolver;
 	/** @var object|null allows($host, $port, $ip) */
 	private $_devAllowance;
+	/** @var DoajPaPreProductionPolicy|null */
+	private $_preProduction;
 
-	public function __construct($resolver, $devAllowance = null) {
+	public function __construct($resolver, $devAllowance = null, $preProduction = null) {
 		$this->_resolver = $resolver;
 		$this->_devAllowance = $devAllowance;
+		$this->_preProduction = $preProduction;
 	}
 
 	/**
 	 * @param $host string As returned by DoajPaUrlTools::parse()
 	 * @param $hostType string hostname|ipv4|ipv6
 	 * @param $port int
-	 * @return array ['ok' => bool, 'ip' => string|null, 'reason' => string|null, 'devException' => bool]
+	 * @return array ['ok' => bool, 'ip' => string|null, 'reason' => string|null, 'devException' => bool,
+	 *  'preProduction' => bool, 'connectPort' => int|null, 'insecureTls' => bool]
 	 */
 	public function check($host, $hostType, $port) {
+		$base = array('preProduction' => false, 'connectPort' => null, 'insecureTls' => false);
 		$ips = $hostType === 'hostname' ? $this->_resolver->resolve($host) : array($host);
+		if ($this->_preProduction !== null && $this->_preProduction->covers($host, $port)) {
+			$decision = $this->_preProduction->decide($ips);
+			if ($decision !== null) {
+				return array('ok' => true, 'ip' => $decision['ip'], 'reason' => $decision['reason'], 'devException' => true,
+					'preProduction' => true, 'connectPort' => $decision['connectPort'], 'insecureTls' => $this->_preProduction->insecureTls());
+			}
+		}
+		return array_merge($this->checkPublic($host, $ips, $port), $base);
+	}
+
+	private function checkPublic($host, $ips, $port) {
 		if (!$ips) return array('ok' => false, 'ip' => null, 'reason' => 'dns_no_address', 'devException' => false);
 		$blocked = array();
 		foreach ($ips as $ip) {

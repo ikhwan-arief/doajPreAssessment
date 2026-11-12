@@ -1,3 +1,31 @@
+# Release Notes — DOAJ Pre-Assessment 1.1.0.0 (production release)
+
+**Release type:** production release. **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner), of
+the pre-production mode and the revision of ADR-005 R1.1 (private and loopback destinations).
+**Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
+
+**Production release 1.1.0.0: approved criteria only; the candidate profile is disabled.** The criteria, FQ mappings,
+evaluation, authorization, persistence and export are unchanged from 1.0.0.0.
+
+## New in 1.1.0.0: pre-production mode
+
+- The server administrator can let the website reader read the journal's **own** website on a loopback or private
+  address, to check a site before it is installed on its production server. It is enabled only in `config.inc.php`
+  (`[doajPreAssessment] preproduction_private_targets = On`), never in the OJS interface.
+- Optional `preproduction_connect_to = "host:port=ip:port"` connects the journal URL to another address and port
+  (for example a Docker host port that does not exist inside the container); the URL and `Host` header are unchanged.
+- Optional `preproduction_insecure_tls = On` accepts an unverifiable certificate for the journal origin only.
+- Only the journal origin is covered; link-local/metadata, multicast, reserved and documentation addresses are never
+  allowed; any malformed value disables the mode.
+- Runs that use it are flagged, audited (`preproduction_private_destination_allowed`, once per destination and run)
+  and show a PRE-PRODUCTION MODE notice on the run page and in every report.
+- The crawler's User-Agent is `DOAJPreAssessment/1.1 (OJS plugin; journal self-assessment)`.
+- No database schema change. Upgrade from 1.0.0.0 by uploading the new archive.
+- Independent security audit: the audit of 0.10.0.0 (see below) does not cover the pre-production mode; it was
+  reviewed and tested by the developer only.
+
+---
+
 # Release Notes — DOAJ Pre-Assessment 1.0.0.0 (production release)
 
 **Release type:** production release. **Product-owner acceptance:** 2026-10-14, by Ikhwan Arief (Product Owner), of

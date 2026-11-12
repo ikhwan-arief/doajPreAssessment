@@ -10,7 +10,8 @@
  *    scope and the address guard, then fetched; loops and more than MAX_REDIRECTS hops are refused.
  *  - The connection is pinned to the vetted IP (CURLOPT_RESOLVE) and the IP actually used is verified.
  *  - Only http/https protocols; no proxy (CURLOPT_PROXY '' and CURLOPT_NOPROXY '*'); no cookie engine;
- *    no Authorization or Cookie header is ever sent; TLS certificates are verified.
+ *    no Authorization or Cookie header is ever sent; TLS certificates are verified (except for the journal's own
+ *    origin when the administrator enabled pre-production mode with insecure_tls).
  *  - The body is capped after decompression (the write callback aborts beyond the cap), so compressed
  *    "bombs" cannot exhaust memory. Connect and total timeouts apply.
  *
@@ -25,7 +26,7 @@ require_once(dirname(__FILE__) . '/DoajPaAddressGuard.inc.php');
 class DoajPaHttpFetcher {
 
 	const MAX_REDIRECTS = 5;
-	const USER_AGENT = 'DOAJPreAssessment/1.0 (OJS plugin; journal self-assessment)';
+	const USER_AGENT = 'DOAJPreAssessment/1.1 (OJS plugin; journal self-assessment)';
 
 	/** @var DoajPaAddressGuard */
 	private $_guard;
@@ -45,12 +46,12 @@ class DoajPaHttpFetcher {
 	 * @param $url string
 	 * @param $maxBytes int
 	 * @return array requestedUrl, finalUrl, status (int|null), mediaType, charset, body, bytes, sha256, error (null|code),
-	 *  errorDetail, hops (list), devException (bool), devHosts (list), primaryIp, fetchedAtUtc
+	 *  errorDetail, hops (list), devException (bool), preProduction (bool), devHosts (list), primaryIp, fetchedAtUtc
 	 */
 	public function fetch($url, $maxBytes) {
 		$result = array('requestedUrl' => $url, 'finalUrl' => null, 'status' => null, 'mediaType' => null, 'charset' => null,
 			'body' => '', 'bytes' => 0, 'sha256' => null, 'error' => null, 'errorDetail' => null, 'hops' => array(),
-			'devException' => false, 'devHosts' => array(), 'primaryIp' => null, 'fetchedAtUtc' => gmdate('Y-m-d H:i:s'));
+			'devException' => false, 'preProduction' => false, 'devHosts' => array(), 'primaryIp' => null, 'fetchedAtUtc' => gmdate('Y-m-d H:i:s'));
 		$visited = array();
 		$current = $url;
 		for ($hop = 0; $hop <= self::MAX_REDIRECTS; $hop++) {
@@ -68,10 +69,12 @@ class DoajPaHttpFetcher {
 			if (!$address['ok']) return $this->fail($result, $hop === 0 ? 'blocked_destination' : 'redirect_blocked_destination', $address['reason']);
 			if ($address['devException']) {
 				$result['devException'] = true;
-				$result['devHosts'][] = $parsed['host'] . ':' . $parsed['port'] . '=' . $address['ip'];
+				if ($address['preProduction']) $result['preProduction'] = true;
+				$result['devHosts'][] = $parsed['host'] . ':' . $parsed['port'] . '=' . $address['ip']
+					. ($address['connectPort'] !== null ? ':' . $address['connectPort'] : '') . ($address['insecureTls'] ? ' (tls unverified)' : '');
 			}
 
-			$response = $this->request($parsed, $address['ip'], $maxBytes);
+			$response = $this->request($parsed, $address['ip'], $maxBytes, $address['connectPort'], $address['insecureTls']);
 			$result['hops'][] = array('url' => $parsed['url'], 'status' => $response['status'], 'ip' => $address['ip']);
 			$result['fetchedAtUtc'] = gmdate('Y-m-d H:i:s');
 			if ($response['error'] !== null) {
@@ -107,10 +110,10 @@ class DoajPaHttpFetcher {
 	}
 
 	/**
-	 * One HTTP GET without redirects, pinned to $ip.
+	 * One HTTP GET without redirects, pinned to $ip (and to $connectPort, when the pre-production mode maps the port).
 	 * @return array status, location, mediaType, charset, body, primaryIp, error, errorDetail
 	 */
-	private function request($parsed, $ip, $maxBytes) {
+	private function request($parsed, $ip, $maxBytes, $connectPort = null, $insecureTls = false) {
 		$body = '';
 		$truncated = false;
 		$headers = array();
@@ -119,7 +122,6 @@ class DoajPaHttpFetcher {
 		$pinIp = strpos($ip, ':') !== false ? '[' . $ip . ']' : $ip;
 		curl_setopt_array($ch, array(
 			CURLOPT_URL => $parsed['url'],
-			CURLOPT_RESOLVE => array($pinHost . ':' . $parsed['port'] . ':' . $pinIp),
 			CURLOPT_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
 			CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
 			CURLOPT_FOLLOWLOCATION => false,
@@ -127,8 +129,8 @@ class DoajPaHttpFetcher {
 			CURLOPT_NOPROXY => '*',
 			CURLOPT_CONNECTTIMEOUT => $this->_connectTimeout,
 			CURLOPT_TIMEOUT => $this->_totalTimeout,
-			CURLOPT_SSL_VERIFYPEER => true,
-			CURLOPT_SSL_VERIFYHOST => 2,
+			CURLOPT_SSL_VERIFYPEER => !$insecureTls,
+			CURLOPT_SSL_VERIFYHOST => $insecureTls ? 0 : 2,
 			CURLOPT_ENCODING => '',
 			CURLOPT_USERAGENT => self::USER_AGENT,
 			CURLOPT_HTTPHEADER => array('Accept: text/html,application/xhtml+xml,application/pdf;q=0.9,*/*;q=0.1', 'Accept-Language: en'),
@@ -145,6 +147,8 @@ class DoajPaHttpFetcher {
 				return strlen($data);
 			},
 		));
+		if ($connectPort !== null) curl_setopt($ch, CURLOPT_CONNECT_TO, array($pinHost . ':' . $parsed['port'] . ':' . $pinIp . ':' . (int) $connectPort));
+		else curl_setopt($ch, CURLOPT_RESOLVE, array($pinHost . ':' . $parsed['port'] . ':' . $pinIp));
 		curl_exec($ch);
 		$errno = curl_errno($ch);
 		$error = curl_error($ch);

@@ -4,6 +4,20 @@ All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are de
 candidates; 1.0.0.0 is the first production release. Approved criteria are approved by the product owner of this
 plugin, not by DOAJ.
 
+## [1.1.0.0] - 2026-11-13 (production release; accepted by the product owner)
+
+### Added
+
+- Pre-production mode (ADR-005 R1.1 revision, product-owner decision 2026-11-13): administrator-only `config.inc.php`
+  options `preproduction_private_targets`, `preproduction_connect_to` and `preproduction_insecure_tls` let the
+  crawler read the journal's own origin on a loopback/private address (`DoajPaPreProductionPolicy`). Runs are flagged,
+  audited (`preproduction_private_destination_allowed`) and labelled PRE-PRODUCTION MODE on the run page and reports.
+- Unit tests `tests/unit/PreProductionPolicyTest.php`.
+
+### Changed
+
+- User-Agent `DOAJPreAssessment/1.1`. No change to criteria, FQ mappings, evaluation, authorization, schema or export.
+
 ## [1.0.0.0] - 2026-10-14 (production release; accepted by the product owner)
 
 Production release 1.0.0.0: approved criteria only; the candidate profile is disabled. See `RELEASE-NOTES.md`.

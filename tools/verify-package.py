@@ -44,7 +44,7 @@ COPYRIGHT = "Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>"
 DATASET = "classes/rules/data/DoajPaCandidateDataset.inc.php"
 APPROVED = "classes/rules/data/DoajPaApprovedDataset.inc.php"
 SYNTHETIC = b"SYNTHETIC-TEST-NOT-AN-APPROVAL"
-RELEASE_PHRASE = "Production release 1.0.0.0: approved criteria only; the candidate profile is disabled"
+RELEASE_PHRASE = "Production release 1.1.0.0: approved criteria only; the candidate profile is disabled"
 results = []
 
 

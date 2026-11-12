@@ -32,6 +32,7 @@ require_once(dirname(__FILE__) . '/DoajPaAuditService.inc.php');
 require_once(dirname(__FILE__) . '/../crawler/DoajPaCrawlScope.inc.php');
 require_once(dirname(__FILE__) . '/../crawler/DoajPaRobots.inc.php');
 require_once(dirname(__FILE__) . '/../crawler/DoajPaHttpFetcher.inc.php');
+require_once(dirname(__FILE__) . '/../crawler/DoajPaPreProductionPolicy.inc.php');
 require_once(dirname(__FILE__) . '/../crawler/DoajPaPageClassifier.inc.php');
 require_once(dirname(__FILE__) . '/../extract/DoajPaHtmlExtractor.inc.php');
 require_once(dirname(__FILE__) . '/../extract/DoajPaPdfExtractor.inc.php');
@@ -99,7 +100,7 @@ class DoajPaCrawlService {
 		} else {
 			$state['robots'] = array('status' => $robots['error'] !== null ? 'unavailable:' . $robots['error'] : 'none_http_' . $robots['status'], 'rules' => array());
 		}
-		if ($robots['devException']) self::recordDevException($contextId, $runId, $actor, $robots['devHosts'], $state);
+		if ($robots['devException']) self::recordDevException($contextId, $runId, $actor, $robots['devHosts'], $state, $robots['preProduction']);
 		self::enqueue($state, $scope, $state['homepage'], 0, 'start', 'nav', 'Journal homepage');
 		if ($retired !== null) $state['notes'][] = 'stale_private_state_retired: ' . $retired;
 		self::saveState($dir, $state);
@@ -193,7 +194,7 @@ class DoajPaCrawlService {
 		if ($type === 'issue') $state['counts']['issues']++;
 		if ($type === 'article') $state['counts']['articles']++;
 		if ($isFile) $state['counts']['files']++;
-		if ($res['devException']) self::recordDevException($contextId, $runId, $actor, $res['devHosts'], $state);
+		if ($res['devException']) self::recordDevException($contextId, $runId, $actor, $res['devHosts'], $state, $res['preProduction']);
 
 		$acq = 'inaccessible'; $reason = null; $kind = null; $text = ''; $title = null; $extractNote = null; $language = null; $links = array();
 		$mainText = ''; $mainRegion = null; $structured = array();
@@ -350,12 +351,19 @@ class DoajPaCrawlService {
 		$counts[$key] = isset($counts[$key]) ? $counts[$key] + 1 : 1;
 	}
 
-	private static function recordDevException($contextId, $runId, $actor, $hosts, &$state) {
+	private static function recordDevException($contextId, $runId, $actor, $hosts, &$state, $preProduction = false) {
 		if (!$state['devException']) {
 			DoajPaAssessmentRunService::markDevExceptionUsed($contextId, $runId);
 			$state['devException'] = true;
 		}
-		foreach ($hosts as $h) DoajPaAuditService::record($contextId, 'dev_private_destination_allowed', $actor, $runId, 'run', $runId, array('destination' => $h));
+		if ($preProduction) $state['preProduction'] = true;
+		$event = $preProduction ? 'preproduction_private_destination_allowed' : 'dev_private_destination_allowed';
+		foreach (array_unique($hosts) as $h) {
+			$key = $event . '|' . $h;
+			if ($preProduction && isset($state['auditedDestinations'][$key])) continue; // once per destination and run
+			$state['auditedDestinations'][$key] = true;
+			DoajPaAuditService::record($contextId, $event, $actor, $runId, 'run', $runId, array('destination' => $h));
+		}
 	}
 
 	private static function finish($contextId, $runId, $actor, &$state, $dir) {
@@ -371,7 +379,8 @@ class DoajPaCrawlService {
 		self::atomicWrite($dir . '/manifest.json', $json);
 		$coverage = array('manifestSha256' => hash('sha256', $json), 'homepage' => $state['homepage'], 'limits' => $state['limits'],
 			'limitsHit' => $manifest['limitsHit'], 'robots' => $state['robots']['status'], 'pdfTool' => $state['pdfTool'], 'extractor' => $state['extractor'],
-			'devExceptionUsed' => $state['devException'], 'counts' => $state['counts'], 'statusCounts' => $state['statusCounts'],
+			'devExceptionUsed' => $state['devException'], 'preProductionMode' => !empty($state['preProduction']),
+			'counts' => $state['counts'], 'statusCounts' => $state['statusCounts'],
 			'typeCounts' => $state['typeCounts'], 'skippedCounts' => $state['skippedCounts'], 'languageCounts' => self::languageCounts($state['resources']),
 			'crawlSeconds' => isset($state['elapsed']) ? round($state['elapsed'], 1) : null, 'startedAtUtc' => $state['startedAtUtc'],
 			'finishedAtUtc' => $state['finishedAtUtc']);
@@ -443,7 +452,8 @@ class DoajPaCrawlService {
 	private static function fetcher($scope, $limits, $options) {
 		$resolver = isset($options['resolver']) ? $options['resolver'] : new DoajPaDnsResolver();
 		$pluginPath = isset($options['pluginPath']) ? $options['pluginPath'] : dirname(__FILE__, 3);
-		$guard = new DoajPaAddressGuard($resolver, DoajPaAddressGuard::loadDevAllowance($pluginPath));
+		$preProduction = array_key_exists('preProduction', $options) ? $options['preProduction'] : DoajPaPreProductionPolicy::fromConfig($scope->target());
+		$guard = new DoajPaAddressGuard($resolver, DoajPaAddressGuard::loadDevAllowance($pluginPath), $preProduction);
 		return new DoajPaHttpFetcher($guard, array($scope, 'reason'), $limits['connectTimeout'], $limits['requestTimeout']);
 	}
 

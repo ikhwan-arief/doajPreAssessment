@@ -16,7 +16,7 @@
 	{include file=$doajPaNav}
 	<div class="app__contentPanel doajPa">
 		{include file=$doajPaNotResult rulebook=$r.rulebook_version}
-		{if $r.dev_exception_used}<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{translate key="plugins.generic.doajPreAssessment.run.devException"}</strong></p>{/if}
+		{if $r.dev_exception_used}<p class="doajPa-notice doajPa-notice--warning" role="note"><strong>{if $r.coverageData && $r.coverageData.preProductionMode}{translate key="plugins.generic.doajPreAssessment.run.preProduction"}{else}{translate key="plugins.generic.doajPreAssessment.run.devException"}{/if}</strong></p>{/if}
 		{if $r.status != 'completed'}<p class="doajPa-notice doajPa-notice--info">{translate key="plugins.generic.doajPreAssessment.run.notCompleted"}</p>{/if}
 		{if $doajPaError}<p class="doajPa-notice doajPa-notice--error" role="alert"><strong>{translate key="plugins.generic.doajPreAssessment.run.errorLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.run.error.`$doajPaError`"}</p>{/if}
 		{if $doajPaStepNotice}<p class="doajPa-notice doajPa-notice--info" role="status">{translate key="plugins.generic.doajPreAssessment.run.step.`$doajPaStepNotice`"}</p>{/if}
