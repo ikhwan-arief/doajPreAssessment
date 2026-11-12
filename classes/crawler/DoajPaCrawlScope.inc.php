@@ -23,6 +23,7 @@ class DoajPaCrawlScope {
 		'$$$call$$$', '%24%24%24call%24%24%24', 'dashboard', 'manageissues', 'stats', 'notification', 'payment', 'payments',
 		'doajpreassessment', 'help', 'tools', 'editor', 'sectioneditor', 'author', 'copyeditor', 'layouteditor', 'proofreader',
 		'subscriptionmanager', 'search', 'oai', 'gateway', 'sitemap', 'feed', 'catalog', 'management.php',
+		'citationstylelanguage', // citation-format exports (APA, RIS, BibTeX...) of each article: no assessable content (1.2.0.0)
 	);
 
 	/** @var array */

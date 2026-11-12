@@ -1,10 +1,45 @@
+# Release Notes — DOAJ Pre-Assessment 1.2.0.0 (production release)
+
+**Release type:** production release. **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner), of
+the user-friendliness changes listed below (decisions of 2026-11-13).
+**Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
+
+**Production release 1.2.0.0: approved criteria only; the candidate profile is disabled.** The approved criteria and
+the question mapping are unchanged; stored (sealed) runs are not modified.
+
+## New in 1.2.0.0
+
+- **Plain language everywhere.** Pages and HTML/PDF/DOCX reports show criterion names instead of codes
+  (`guide.disclosure-oa-policy` becomes "Navigation and mandatory disclosures: Open access policy"), DOAJ form
+  questions instead of FQ-01..FQ-20, sentences instead of reason codes (`language_undetermined`,
+  `pdf_extractor_unavailable`, ...), and no internal decision references (ADR-011, D-03-4). Finding and action
+  numbers (F-1, A-1) are no longer shown. The stored records keep their codes.
+- **Built-in PDF reader.** When `pdftotext` is not installed, PDF text is read by a reader written in plain PHP in the
+  plugin (text-based PDFs; scanned PDFs still have no text). `pdftotext` is still used when present.
+- **Delete assessment history.** Assessment History has a Delete button per run (newest first, because a later run
+  builds on the earlier one) and "Delete all assessment history" (type DELETE to confirm). Results, evidence, findings
+  seen only in the deleted runs, their corrective actions, report files and crawl files are removed. Nothing is ever
+  deleted automatically; the audit log keeps a `run_deleted` record.
+- **Automatic corrective actions.** A completed assessment creates one "Planned" corrective action for every open
+  finding without an action, with the recommended correction, the page and the suggested priority. Actions you
+  cancel are not recreated.
+- **Audit log hidden** from the Settings page (still recorded).
+- **Editorial Team page reading:** profile-link labels ([Scopus], [CV], ...), group headings, country lines and
+  sidebar blocks no longer make a clean board list "unreadable".
+- **Citation-format pages** (APA, IEEE, RIS, BibTeX exports of each article) are no longer crawled.
+- Engine `doajpa-checks/3`, PDF extraction `doajpa-pdf/2`, User-Agent `DOAJPreAssessment/1.2`. No schema change.
+- Independent security audit: the audit of 0.10.0.0 does not cover the changes of 1.1 and 1.2; they were reviewed and
+  tested by the developer only.
+
+---
+
 # Release Notes — DOAJ Pre-Assessment 1.1.0.0 (production release)
 
 **Release type:** production release. **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner), of
 the pre-production mode and the revision of ADR-005 R1.1 (private and loopback destinations).
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
 
-**Production release 1.1.0.0: approved criteria only; the candidate profile is disabled.** The criteria, FQ mappings,
+**Release 1.1.0.0: approved criteria only; the candidate profile is disabled.** The criteria, FQ mappings,
 evaluation, authorization, persistence and export are unchanged from 1.0.0.0.
 
 ## New in 1.1.0.0: pre-production mode

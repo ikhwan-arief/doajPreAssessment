@@ -7,6 +7,8 @@
  * @brief Corrective action register (Stage 01 F6, F7). Owners are free text and grant no access (F9).
  *  Completing an action never changes a finding: only new public evidence can resolve a finding (F6).
  *  Every change is audited; concurrent edits are detected with lock_version.
+ *  Since 1.2.0.0 (product-owner decision 2026-11-13) a completed run creates one "Planned" action for every open
+ *  finding that has no action yet, prefilled with the run's recommended correction, page and suggested priority.
  *
  * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
@@ -45,6 +47,35 @@ class DoajPaCorrectiveActionService {
 				array('findingId' => $findingId, 'status' => $row['status']));
 			return $id;
 		});
+	}
+
+	/**
+	 * Create the missing actions for the findings of a completed run (1.2.0.0). Findings that already have an action
+	 * (in any status) are left alone, so an action the journal cancelled is not recreated.
+	 * @return int number of actions created
+	 */
+	public static function autoCreateForRun($contextId, $runId, $actor) {
+		if (!is_array($actor) || $actor['type'] !== 'user') return 0;
+		require_once(dirname(__FILE__) . '/DoajPaReadService.inc.php');
+		require_once(dirname(__FILE__) . '/../reports/DoajPaActionPlan.inc.php');
+		$run = DoajPaReadService::run($contextId, $runId);
+		if ($run['status'] !== 'completed') return 0;
+		$plan = DoajPaActionPlan::build($run, DoajPaReadService::actions($contextId));
+		$created = 0; $done = array();
+		foreach ($plan['groups'] as $g) foreach ($g['tasks'] as $t) {
+			$page = $g['page'];
+			if ( empty($t['findingId']) || $t['actions'] || isset($done[$t['findingId']])) continue;
+			if (!in_array($t['lifecycle'], array('open', 'still_open', 'reopened'), true)) continue;
+			$done[$t['findingId']] = true;
+			$text = $t['recommendation'] !== null ? $t['recommendation'] : $t['rationale'];
+			$data = array('findingId' => $t['findingId'], 'runId' => $runId, 'recommendation' => mb_substr($text, 0, 60000, 'UTF-8'),
+				'priority' => $t['suggestedPriority'], 'status' => 'planned');
+			$url = isset($t['target']) && is_string($t['target']) && preg_match('#^https?://\S+$#i', $t['target']) ? $t['target'] : (is_string($page) && preg_match('#^https?://\S+$#i', $page) ? $page : null);
+			if ($url !== null && strlen($url) <= 2048) $data['targetUrl'] = $url;
+			self::create($contextId, $actor, $data);
+			$created++;
+		}
+		return $created;
 	}
 
 	/**

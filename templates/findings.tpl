@@ -28,9 +28,9 @@
 				<tbody>
 				{foreach from=$doajPaDefinitions item=def}
 					<tr>
-						<th scope="row"><code>{$def.criterion_key|escape}</code> v{$def.criterion_version|escape}: {$def.title|escape}</th>
+						<th scope="row">{$def.title|escape}</th>
 						<td>{if isset($doajPaLabels.level[$def.level])}{$doajPaLabels.level[$def.level]|escape}{else}{$def.level|escape}{/if}</td>
-						<td><code>{$def.dataset_version|escape}</code> {if $def.datasetApproved}<span class="doajPa-badge doajPa-badge--verified">{translate key="plugins.generic.doajPreAssessment.common.approved"}</span>{else}<span class="doajPa-badge doajPa-badge--failed">{translate key="plugins.generic.doajPreAssessment.common.notApproved"}</span>{/if}</td>
+						<td>{$def.dataset_version|escape} {if $def.datasetApproved}<span class="doajPa-badge doajPa-badge--verified">{translate key="plugins.generic.doajPreAssessment.common.approved"}</span>{else}<span class="doajPa-badge doajPa-badge--failed">{translate key="plugins.generic.doajPreAssessment.common.notApproved"}</span>{/if}</td>
 						<td><a href="{$def.doaj_reference_url|escape}" target="_blank" rel="noopener noreferrer">{$def.doaj_reference_url|escape}</a></td>
 					</tr>
 				{/foreach}
@@ -55,8 +55,8 @@
 				<tbody>
 				{foreach from=$doajPaFindings item=f}
 					<tr>
-						<th scope="row"><a href="{url page=$doajPaPage op="finding" path=$f.finding_id}">F-{$f.finding_id|escape}</a></th>
-						<td><code>{$f.criterion_key|escape}</code> ({$f.subtype|escape})</td>
+						<th scope="row"><a href="{url page=$doajPaPage op="finding" path=$f.finding_id}">{translate key="plugins.generic.doajPreAssessment.common.view"}</a></th>
+						<td>{$f.criterion_key|doajpa_criterion|escape}<br><span class="doajPa-meta">{$f.subtype|doajpa_code|escape}</span></td>
 						<td>{include file=$doajPaLink url=$f.target isLink=$f.targetIsLink}</td>
 						<td>{include file=$doajPaBadge group="lifecycle" code=$f.original_status}</td>
 						<td>{include file=$doajPaBadge group="lifecycle" code=$f.lastObservedStatus}{if $f.lastObservedRunNumber} <a href="{url page=$doajPaPage op="run" path=$f.lastObservedRunId}">{translate key="plugins.generic.doajPreAssessment.common.runNumber"} {$f.lastObservedRunNumber|escape}</a>{/if}</td>

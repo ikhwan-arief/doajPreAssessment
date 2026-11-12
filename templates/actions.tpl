@@ -14,7 +14,7 @@
 	<h1 class="app__pageHeading">{translate key="plugins.generic.doajPreAssessment.nav.actions"}</h1>
 	{include file=$doajPaNav}
 	<div class="app__contentPanel doajPa">
-		{if $doajPaSaved}<p class="doajPa-notice doajPa-notice--success" role="status">{translate key="plugins.generic.doajPreAssessment.actions.saved"} A-{$doajPaSaved|escape}</p>{/if}
+		{if $doajPaSaved}<p class="doajPa-notice doajPa-notice--success" role="status">{translate key="plugins.generic.doajPreAssessment.actions.saved"}</p>{/if}
 		<p class="doajPa-notice doajPa-notice--info">{translate key="plugins.generic.doajPreAssessment.actions.notEvidence"}</p>
 
 		<div class="doajPa-tableWrap">
@@ -33,8 +33,8 @@
 			<tbody>
 			{foreach from=$doajPaActions item=a}
 				<tr>
-					<th scope="row"><a href="{url page=$doajPaPage op="actionEdit" path=$a.action_id}">A-{$a.action_id|escape}</a></th>
-					<td>{if $a.finding_id}<a href="{url page=$doajPaPage op="finding" path=$a.finding_id}">F-{$a.finding_id|escape}</a>{else}{translate key="plugins.generic.doajPreAssessment.common.none"}{/if}</td>
+					<th scope="row"><a href="{url page=$doajPaPage op="actionEdit" path=$a.action_id}">{translate key="plugins.generic.doajPreAssessment.actions.edit"}</a></th>
+					<td>{if $a.finding_id}<a href="{url page=$doajPaPage op="finding" path=$a.finding_id}">{if $a.criterion_key}{$a.criterion_key|doajpa_criterion|escape}{else}{translate key="plugins.generic.doajPreAssessment.common.viewFinding"}{/if}</a>{else}{translate key="plugins.generic.doajPreAssessment.common.none"}{/if}</td>
 					<td>{$a.recommendation|truncate:160|escape}</td>
 					<td>{if $a.target_url}{include file=$doajPaLink url=$a.target_url isLink=$a.targetUrlIsLink}{/if}</td>
 					<td>{$a.owner_text|escape}</td>
@@ -57,7 +57,7 @@
 				<label for="doajPaFinding">{translate key="plugins.generic.doajPreAssessment.common.finding"}</label>
 				<select id="doajPaFinding" name="findingId">
 					<option value="">{translate key="plugins.generic.doajPreAssessment.actions.noFinding"}</option>
-					{foreach from=$doajPaFindingChoices item=fc}<option value="{$fc.finding_id|escape}"{if $doajPaForm.findingId == $fc.finding_id} selected{/if}>F-{$fc.finding_id|escape} {$fc.criterion_key|escape} ({$fc.subtype|escape}) {$fc.target|truncate:80|escape}</option>{/foreach}
+					{foreach from=$doajPaFindingChoices item=fc}<option value="{$fc.finding_id|escape}"{if $doajPaForm.findingId == $fc.finding_id} selected{/if}>{$fc.criterion_key|doajpa_criterion|truncate:110|escape} ({$fc.subtype|doajpa_code|escape}){if $fc.target_type != 'journal'} {$fc.target|truncate:60|escape}{/if}</option>{/foreach}
 				</select>
 			</div>
 			{include file=$doajPaActionFields v=$doajPaForm editing=false}

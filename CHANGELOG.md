@@ -4,6 +4,25 @@ All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are de
 candidates; 1.0.0.0 is the first production release. Approved criteria are approved by the product owner of this
 plugin, not by DOAJ.
 
+## [1.2.0.0] - 2026-11-13 (production release; accepted by the product owner)
+
+### Added
+
+- Plain-language display (`DoajPaHumanText`): criterion names, DOAJ form questions and reason sentences on every page
+  and in HTML/PDF/DOCX reports; decision references and finding/action numbers are not shown. Stored records unchanged.
+- Built-in PHP PDF text reader (`DoajPaPdfTextReader`) used when `pdftotext` is absent.
+- Deleting assessment history per run and for the whole journal (`DoajPaHistoryDeletionService`, ops `runDelete`,
+  `historyDelete`, audit event `run_deleted`).
+- Automatic "Planned" corrective actions for open findings of a completed run.
+- Unit tests `tests/unit/Release120Test.php`.
+
+### Changed
+
+- Settings no longer shows the audit log or the acknowledgement text hash.
+- Editorial-team list reading ignores profile-link labels, group headings, country lines and text outside the list.
+- `citationstylelanguage` paths are excluded from the crawl.
+- Engine `doajpa-checks/3`, extraction `doajpa-pdf/2`, User-Agent `DOAJPreAssessment/1.2`.
+
 ## [1.1.0.0] - 2026-11-13 (production release; accepted by the product owner)
 
 ### Added

@@ -37,6 +37,7 @@ require_once(dirname(__FILE__) . '/../services/DoajPaAssessmentRunService.inc.ph
 require_once(dirname(__FILE__) . '/../services/DoajPaAuditService.inc.php');
 require_once(dirname(__FILE__) . '/../services/DoajPaCriteriaRegistry.inc.php');
 require_once(dirname(__FILE__) . '/../services/DoajPaCrawlService.inc.php');
+require_once(dirname(__FILE__) . '/../services/DoajPaCorrectiveActionService.inc.php');
 require_once(dirname(__FILE__) . '/DoajPaCriterionRule.inc.php');
 require_once(dirname(__FILE__) . '/DoajPaEvaluationContext.inc.php');
 require_once(dirname(__FILE__) . '/DoajPaOutcomeGuard.inc.php');
@@ -250,7 +251,14 @@ class DoajPaAssessmentOrchestrator {
 			try {
 				$current = DoajPaAssessmentRunService::getRun($contextId, $runId);
 				if ($current->status !== 'running') return array('phase' => $current->status);
-				return array('phase' => 'completed', 'result' => self::evaluate($contextId, $runId, $actor, $rules, $hooks));
+				$result = self::evaluate($contextId, $runId, $actor, $rules, $hooks);
+				try {
+					$result['actionsCreated'] = DoajPaCorrectiveActionService::autoCreateForRun($contextId, $runId, $actor);
+				} catch (\Throwable $e) {
+					// the sealed run stands; missing actions can still be added by hand
+					error_log('doajPreAssessment: automatic corrective actions failed (' . get_class($e) . ')');
+				}
+				return array('phase' => 'completed', 'result' => $result);
 			} finally {
 				flock($lock, LOCK_UN);
 				fclose($lock);

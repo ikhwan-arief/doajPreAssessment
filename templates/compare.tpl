@@ -30,7 +30,7 @@
 			<tbody>
 			{foreach from=$c.rows item=row}
 				<tr>
-					<th scope="row"><a href="{url page=$doajPaPage op="finding" path=$row.finding_id}">F-{$row.finding_id|escape}</a> <code>{$row.criterion_key|escape}</code></th>
+					<th scope="row"><a href="{url page=$doajPaPage op="finding" path=$row.finding_id}">{$row.criterion_key|doajpa_criterion|escape}</a></th>
 					<td>{include file=$doajPaLink url=$row.target isLink=$row.targetIsLink}</td>
 					<td>{include file=$doajPaBadge group="lifecycle" code=$row.fromStatus}{if $row.fromVersion} v{$row.fromVersion|escape}{/if}</td>
 					<td>{include file=$doajPaBadge group="lifecycle" code=$row.toStatus}{if $row.toVersion} v{$row.toVersion|escape}{/if}</td>

@@ -26,7 +26,7 @@
 				<div class="doajPa-field">
 					<label for="doajPaReportRun">{translate key="plugins.generic.doajPreAssessment.common.run"}</label>
 					<select id="doajPaReportRun" name="runId">
-						{foreach from=$doajPaCompletedRuns item=r}<option value="{$r.run_id|escape}">{translate key="plugins.generic.doajPreAssessment.common.runNumber"} {$r.run_number|escape} ({$r.completed_at_utc|escape} UTC, {$r.rulebook_version|escape})</option>{/foreach}
+						{foreach from=$doajPaCompletedRuns item=r}<option value="{$r.run_id|escape}">{translate key="plugins.generic.doajPreAssessment.common.runNumber"} {$r.run_number|escape} ({$r.completed_at_utc|escape} UTC)</option>{/foreach}
 					</select>
 				</div>
 				<fieldset class="doajPa-field">
@@ -53,7 +53,7 @@
 			</tr></thead>
 			<tbody>
 			{foreach from=$doajPaExports item=x}
-				<tr><th scope="row"><a href="{url page=$doajPaPage op="reportDownload" path=$x.export_id}">{$x.file_name|escape}</a><br><span class="doajPa-meta">SHA-256 {$x.file_sha256|truncate:16:"":true|escape}&hellip;, {$x.byte_length|escape} bytes</span></th><td>{$x.format|upper|escape}</td><td><a href="{url page=$doajPaPage op="run" path=$x.run_id}">{translate key="plugins.generic.doajPreAssessment.common.runNumber"} {$x.run_number|escape}</a></td><td><code>{$x.rulebook_version|escape}</code></td><td>{$x.created_at_utc|escape} UTC</td></tr>
+				<tr><th scope="row"><a href="{url page=$doajPaPage op="reportDownload" path=$x.export_id}">{$x.file_name|escape}</a><br><span class="doajPa-meta">{$x.byte_length|escape} bytes</span></th><td>{$x.format|upper|escape}</td><td><a href="{url page=$doajPaPage op="run" path=$x.run_id}">{translate key="plugins.generic.doajPreAssessment.common.runNumber"} {$x.run_number|escape}</a></td><td>{if $x.rulebook_version|substr:0:16 == 'doajpa-criteria-'}{translate key="plugins.generic.doajPreAssessment.history.approvedCriteria"} {$x.rulebook_version|substr:16|escape}{else}{$x.rulebook_version|escape}{/if}</td><td>{$x.created_at_utc|escape} UTC</td></tr>
 			{foreachelse}
 				<tr><td colspan="5">{translate key="plugins.generic.doajPreAssessment.reports.none"}</td></tr>
 			{/foreach}

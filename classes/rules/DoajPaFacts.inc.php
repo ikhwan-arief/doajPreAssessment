@@ -35,8 +35,15 @@ class DoajPaFacts {
 	/** @var array memoized facts (the context is immutable) */
 	private $memo = array();
 
-	const INSTITUTION = '/\b(univ\w*|institut\w*|college|school|faculty|department|dept\.?|hospital|cent(?:er|re)|academy|laborator\w*|ministry|foundation|agency|council|polytechnic|politeknik|universitas|universidad|universidade|universit\S*|research|inc\.?|ltd\.?|corporation|company|society|library|museum|clinic|sekolah|fakultas|kementerian)\b/i';
-	const ROLE = '/^(editors?[- ]in[- ]chief|chief editors?|editors?|managing editors?|associate editors?|section editors?|deputy editors?|guest editors?|executive editors?|editorial (?:board|team|advisory board|board members?)|advisory (?:board|committee)|international advisory board|scientific committee|reviewers?|peer reviewers?|board members?|members|copy ?editors?|layout editors?|proofreaders?|technical editors?)\b\s*:?/i';
+	const INSTITUTION = '/\b(univ\w*|institut\w*|college|school|faculty|department|dept\.?|hospital|cent(?:er|re)|academy|laborator\w*|ministry|foundation|agency|council|polytechnic|politeknik|universitas|universidad|universidade|universit\S*|research|inc\.?|ltd\.?|corporation|company|society|library|museum|clinic|sekolah|fakultas|kementerian|observator\w*|bureau|organi[sz]ation|association|commission|authority|directorate|station|survey|lab|labs|badan|lembaga|balai|pusat)\b/i';
+	const ROLE = '/^(editors?[- ]in[- ]chief|chief editors?|editors?|managing editors?|associate editors?|section editors?|deputy editors?|guest editors?|executive editors?|editorial (?:boards?|team|advisory boards?|board members?)|advisory (?:boards?|committee)|international advisory boards?|scientific committee|reviewers?|peer reviewers?|board members?|members|copy ?editors?|layout editors?|proofreaders?|technical editors?)\b\s*:?/i';
+
+	/** Profile-link labels shown next to names, e.g. "Dr. A. Name [Scopus] [CV]" (1.2.0.0) */
+	const LINK_LABELS = '/\s*\[(?:scopus|scholar|google scholar|orcid|cv|sinta|wos|web of science|publons|researchgate|resume|profile|email|e-mail|homepage|website|garuda|researcher ?id|h-index[^\]]*)\]/i';
+	/** Words that occur in website headings but not in personal names. */
+	const NOT_A_NAME = '/\b(?:information|area|frequency|access|office|journal|language|subject|published|publisher|contact|polic(?:y|ies)|issn|editorial|team|guidelines?|submissions?|focus|scope|about|current|archives?|announcements?|home|indexing|abstracting|template|authors?|reviewers?|ethics|statistics|visitors|keywords|tools|menu|review|process|fees?|charges?|copyright|licen[cs]e|privacy|statement|history|news|papers?|issue|issues|articles?|volume|search|login|register|download|quick|links?)\b/i';
+	/** Country names on their own line under an affiliation (lower-case). */
+	const COUNTRIES = array('afghanistan','albania','algeria','andorra','angola','argentina','armenia','australia','austria','azerbaijan','bahamas','bahrain','bangladesh','barbados','belarus','belgium','belize','benin','bhutan','bolivia','bosnia and herzegovina','botswana','brazil','brunei','brunei darussalam','bulgaria','burkina faso','burundi','cambodia','cameroon','canada','cape verde','chad','chile','china','colombia','comoros','congo','costa rica','croatia','cuba','cyprus','czech republic','czechia','denmark','djibouti','dominican republic','ecuador','egypt','el salvador','eritrea','estonia','eswatini','ethiopia','fiji','finland','france','gabon','gambia','georgia','germany','ghana','greece','guatemala','guinea','guyana','haiti','honduras','hong kong','hungary','iceland','india','indonesia','iran','iraq','ireland','israel','italy','ivory coast','jamaica','japan','jordan','kazakhstan','kenya','korea','south korea','north korea','republic of korea','kosovo','kuwait','kyrgyzstan','laos','latvia','lebanon','lesotho','liberia','libya','lithuania','luxembourg','macau','madagascar','malawi','malaysia','maldives','mali','malta','mauritania','mauritius','mexico','moldova','monaco','mongolia','montenegro','morocco','mozambique','myanmar','namibia','nepal','netherlands','the netherlands','new zealand','nicaragua','niger','nigeria','north macedonia','norway','oman','pakistan','palestine','panama','papua new guinea','paraguay','peru','philippines','poland','portugal','qatar','romania','russia','russian federation','rwanda','saudi arabia','senegal','serbia','sierra leone','singapore','slovakia','slovenia','somalia','south africa','south sudan','spain','sri lanka','sudan','suriname','sweden','switzerland','syria','taiwan','tajikistan','tanzania','thailand','timor-leste','togo','trinidad and tobago','tunisia','turkey','turkiye','türkiye','turkmenistan','uganda','ukraine','united arab emirates','uae','united kingdom','uk','united states','united states of america','usa','uruguay','uzbekistan','venezuela','vietnam','viet nam','yemen','zambia','zimbabwe');
 
 	/** @return DoajPaFacts */
 	public static function of($context) {
@@ -416,11 +423,23 @@ class DoajPaFacts {
 		$unparsed = 0; $lines = 0;
 		foreach ($pages as $e) {
 			$role = null;
-			$raw = array_values(array_filter(array_map('trim', explode("\n", $e['quote'])), function ($l) { return $l !== ''; }));
+			$raw = array_values(array_filter(array_map(function ($l) { return trim(preg_replace(self::LINK_LABELS, '', $l)); }, explode("\n", $e['quote'])), function ($l) { return $l !== ''; }));
 			$n = count($raw);
+			// The list runs from the first to the last "clear" entry of the page (a name with a title such as Dr or Prof,
+			// or with an affiliation). Unrecognised lines count only inside that range, and name-like lines outside it
+			// (page headings before the list, sidebar blocks after it) are ignored (1.2.0.0).
+			$pageUnparsed = array(); $entries = array(); $firstStrong = null; $lastStrong = null; $lastEntry = null;
 			for ($i = 0; $i < $n; $i++) {
 				$l = $raw[$i];
-				if ($i === 0 && preg_match('/^(editorial team|editorial board|reviewers?|peer reviewers?|editors?|board)$/i', $l)) continue;
+				if ($i === 0 && preg_match('/^(editorial team|editorial boards?|reviewers?|peer reviewers?|editors?|boards?)$/i', $l)) continue;
+				if (in_array(mb_strtolower(trim($l, " .,;"), 'UTF-8'), self::COUNTRIES, true)) {
+					// a country line under an affiliation belongs to the previous person
+					if ($entries && $lastEntry !== null && $lastEntry >= $i - 3) {
+						$k = count($entries) - 1;
+						$entries[$k]['person']['affiliation'] = $entries[$k]['person']['affiliation'] === null ? trim($l) : $entries[$k]['person']['affiliation'] . ', ' . trim($l);
+					}
+					continue;
+				}
 				if (preg_match(self::ROLE, $l, $rm)) {
 					$rest = trim(substr($l, strlen($rm[0])), " :-\t");
 					$role = trim($rm[1]);
@@ -428,19 +447,33 @@ class DoajPaFacts {
 					$l = $rest;
 				}
 				if (DoajPaText::words($l) > 30) continue; // prose, not a list entry
-				$lines++;
 				$person = self::parsePerson($l);
 				if ($person === null) {
-					if (!preg_match(self::INSTITUTION, $l)) $unparsed++;
+					if (!preg_match(self::INSTITUTION, $l)) $pageUnparsed[] = $i;
 					continue;
 				}
+				$start = $i;
 				if ($person['affiliation'] === null && $i + 1 < $n && preg_match(self::INSTITUTION, $raw[$i + 1]) && self::parsePerson($raw[$i + 1]) === null) {
 					$person['affiliation'] = $raw[$i + 1];
 					$i++;
 				}
-				$people[] = array('name' => $person['name'], 'affiliation' => $person['affiliation'], 'role' => $role, 'evidence' => $e,
-					'quote' => DoajPaText::snippet($l, 0));
+				$strong = $person['affiliation'] !== null || preg_match('/^(?:Dr|Prof|Professor|Assoc|Assist|Mr|Mrs|Ms|Ir|Drs|Hon)\.?\s/u', $person['name']) === 1;
+				if ($strong) { if ($firstStrong === null) $firstStrong = $start; $lastStrong = $i; }
+				$entries[] = array('person' => $person, 'role' => $role, 'quote' => DoajPaText::snippet($l, 0), 'start' => $start, 'end' => $i);
+				$lastEntry = $i;
 			}
+			if ($firstStrong !== null) {
+				// widen the range to weak entries that continue the list directly (at most one unrecognised line between)
+				$gap = function ($a, $b) use ($pageUnparsed) { $c = 0; foreach ($pageUnparsed as $u) if ($u > $a && $u < $b) $c++; return $c; };
+				foreach ($entries as $en) if ($en['start'] > $lastStrong && $gap($lastStrong, $en['start']) < 2) $lastStrong = $en['end'];
+				foreach (array_reverse($entries) as $en) if ($en['end'] < $firstStrong && $gap($en['end'], $firstStrong) < 2) $firstStrong = $en['start'];
+			}
+			foreach ($entries as $en) {
+				if ($firstStrong !== null && ($en['start'] < $firstStrong || $en['end'] > $lastStrong)) continue;
+				$lines++;
+				$people[] = array('name' => $en['person']['name'], 'affiliation' => $en['person']['affiliation'], 'role' => $en['role'], 'evidence' => $e, 'quote' => $en['quote']);
+			}
+			foreach ($pageUnparsed as $u) if ($firstStrong === null || ($u > $firstStrong && $u < $lastStrong)) { $unparsed++; $lines++; }
 		}
 		return $this->memo[$memoKey] = array('people' => $people, 'pages' => $pages, 'unparsed' => $unparsed, 'lines' => $lines);
 	}
@@ -454,6 +487,10 @@ class DoajPaFacts {
 		}
 		$tokens = preg_split('/\s+/', $name);
 		if (count($tokens) < 2 || count($tokens) > 7 || preg_match('/\d/', $name) || preg_match(self::INSTITUTION, $name)) return null;
+		if (preg_match(self::NOT_A_NAME, $name)) return null; // page and sidebar headings such as "Journal Information" (1.2.0.0)
+		// a personal name has no colon and no lower-case words other than name particles (van, de, bin, ...)
+		if (strpos($name, ':') !== false) return null;
+		foreach ($tokens as $tk) if (preg_match('/^\p{Ll}/u', $tk) && !preg_match('/^(?:van|von|de|der|den|del|della|di|da|dos|das|du|la|le|bin|binti|ibn|al|el|ten|ter|y|e|zu|af)$/u', $tk)) return null;
 		if (!preg_match('/^(?:(?:Dr|Prof|Professor|Assoc|Assist|Mr|Mrs|Ms|Ir|Drs|Hon)\.?\s+)*[\p{Lu}]/u', $name)) return null;
 		$caps = 0;
 		foreach ($tokens as $t) if (preg_match('/^[\p{Lu}]/u', $t)) $caps++;

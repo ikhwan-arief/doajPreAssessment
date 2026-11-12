@@ -50,14 +50,14 @@
 						<tbody>
 						{foreach from=$g.tasks item=t}
 							<tr>
-								<th scope="row"><code>{$t.criterionKey|escape}</code><br>{$t.title|escape}<br>{include file=$doajPaBadge group="level" code=$t.level}</th>
+								<th scope="row">{$t.title|escape}<br>{include file=$doajPaBadge group="level" code=$t.level}</th>
 								<td>{include file=$doajPaBadge group="criterion" code=$t.status}</td>
 								<td>{if $t.recommendation}{$t.recommendation|escape}{else}{$t.rationale|escape}{/if}
 									{if $t.clause}<blockquote class="doajPa-quote">DOAJ: &ldquo;{$t.clause|escape}&rdquo; (<a href="{$t.doajReferenceUrl|escape}" target="_blank" rel="noopener noreferrer">{$t.doajReferenceUrl|escape}</a>)</blockquote>{/if}</td>
-								<td>{if $t.findingId}<a href="{url page=$doajPaPage op="finding" path=$t.findingId}">F-{$t.findingId|escape}</a><br>{include file=$doajPaBadge group="lifecycle" code=$t.lifecycle}{else}{translate key="plugins.generic.doajPreAssessment.common.none"}{/if}</td>
+								<td>{if $t.findingId}<a href="{url page=$doajPaPage op="finding" path=$t.findingId}">{translate key="plugins.generic.doajPreAssessment.common.viewFinding"}</a><br>{include file=$doajPaBadge group="lifecycle" code=$t.lifecycle}{else}{translate key="plugins.generic.doajPreAssessment.common.none"}{/if}</td>
 								<td>
 									{foreach from=$t.actions item=a}
-										<p class="doajPa-actionRow"><a href="{url page=$doajPaPage op="actionEdit" path=$a.action_id}">A-{$a.action_id|escape}</a> {include file=$doajPaBadge group="action" code=$a.status} {include file=$doajPaBadge group="priority" code=$a.priority}<br>
+										<p class="doajPa-actionRow"><a href="{url page=$doajPaPage op="actionEdit" path=$a.action_id}">{translate key="plugins.generic.doajPreAssessment.actions.edit"}</a> {include file=$doajPaBadge group="action" code=$a.status} {include file=$doajPaBadge group="priority" code=$a.priority}<br>
 										{translate key="plugins.generic.doajPreAssessment.actions.owner"}: {if $a.owner_text}{$a.owner_text|escape}{else}&ndash;{/if}; {translate key="plugins.generic.doajPreAssessment.actions.dueDate"}: {if $a.due_date}{$a.due_date|escape}{else}&ndash;{/if}</p>
 									{/foreach}
 									{if $t.findingId}<a class="pkpButton" href="{url page=$doajPaPage op="actions" findingId=$t.findingId run=$doajPaRun.run_id}#doajPaNewAction">{translate key="plugins.generic.doajPreAssessment.bya.createAction"}</a>{/if}
@@ -76,7 +76,7 @@
 				{foreach from=$doajPaPlan.verify item=g}
 					<h3>{if $g.page}<span class="doajPa-url">{$g.page|escape}</span>{else}{translate key="plugins.generic.doajPreAssessment.bya.noPage"}{/if}</h3>
 					<ul class="doajPa-list">
-						{foreach from=$g.tasks item=t}<li><code>{$t.criterionKey|escape}</code> ({include file=$doajPaBadge group="level" code=$t.level}): {$t.rationale|truncate:400|escape}</li>{/foreach}
+						{foreach from=$g.tasks item=t}<li>{$t.title|escape} ({include file=$doajPaBadge group="level" code=$t.level}): {$t.rationale|truncate:400|escape}</li>{/foreach}
 					</ul>
 				{/foreach}
 			{/if}

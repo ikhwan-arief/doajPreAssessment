@@ -5,7 +5,8 @@
  *
  * @class DoajPaPdfExtractor
  * @brief PDF text with page markers through the external poppler "pdftotext" program (ADR-005 R1.5), run
- *  as a separate process with a timeout and an output cap. Nothing is bundled. Explicit outcomes (F4):
+ *  as a separate process with a timeout and an output cap. Nothing is bundled. When pdftotext is not installed,
+ *  the built-in PHP reader (DoajPaPdfTextReader, 1.2.0.0) is used instead. Explicit outcomes (F4):
  *  ok, unavailable (no pdftotext), encrypted, corrupt, no_text (scanned / image-only), timeout.
  *  Text order follows pdftotext's reading-order heuristics; multi-column layouts may interleave.
  *
@@ -14,9 +15,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+require_once(dirname(__FILE__) . '/DoajPaPdfTextReader.inc.php');
+
 class DoajPaPdfExtractor {
 
-	const VERSION = 'doajpa-pdf/1';
+	const VERSION = 'doajpa-pdf/2';
 	const CANDIDATES = array('/usr/bin/pdftotext', '/usr/local/bin/pdftotext');
 	const MAX_PAGES = 200;
 	const MAX_OUTPUT = 5242880;
@@ -28,10 +31,10 @@ class DoajPaPdfExtractor {
 		return null;
 	}
 
-	/** @return string e.g. "pdftotext 22.02.0", or "unavailable" */
+	/** @return string e.g. "pdftotext 22.02.0", or the built-in reader "php-reader/1" */
 	public static function toolVersion() {
 		$bin = self::binary();
-		if ($bin === null) return 'unavailable';
+		if ($bin === null) return DoajPaPdfTextReader::VERSION;
 		$r = self::run(escapeshellarg($bin) . ' -v', 5, 4096);
 		return preg_match('/pdftotext version ([0-9.]+)/', $r['stdout'] . $r['stderr'], $m) ? 'pdftotext ' . $m[1] : 'pdftotext unknown';
 	}
@@ -44,8 +47,12 @@ class DoajPaPdfExtractor {
 	public static function extract($bytes, $workDir) {
 		$out = array('status' => 'unavailable', 'reason' => null, 'text' => '', 'pages' => 0, 'version' => self::VERSION . ' (' . self::toolVersion() . ')');
 		$bin = self::binary();
-		if ($bin === null) { $out['reason'] = 'pdf_extractor_unavailable'; return $out; }
 		if (substr($bytes, 0, 5) !== '%PDF-') { $out['status'] = 'corrupt'; $out['reason'] = 'not_a_pdf'; return $out; }
+		if ($bin === null) {
+			$r = DoajPaPdfTextReader::read($bytes);
+			if ($r['status'] !== 'ok') { $out['status'] = $r['status']; $out['reason'] = $r['reason']; return $out; }
+			return self::finish($out, $r['pages']);
+		}
 		if (!is_dir($workDir) && !@mkdir($workDir, 0700, true)) { $out['status'] = 'unavailable'; $out['reason'] = 'work_dir_unavailable'; return $out; }
 		$file = tempnam($workDir, 'doajpa-pdf-');
 		file_put_contents($file, $bytes);
@@ -62,6 +69,11 @@ class DoajPaPdfExtractor {
 		}
 		$pages = explode("\f", $r['stdout']);
 		if (end($pages) === '') array_pop($pages);
+		return self::finish($out, $pages);
+	}
+
+	/** Page markers, text-layer check and the text cap, for either reader. */
+	private static function finish($out, $pages) {
 		$out['pages'] = count($pages);
 		$parts = array();
 		$letters = 0;

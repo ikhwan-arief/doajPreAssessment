@@ -65,23 +65,28 @@ doajpa_test('S4-M01 Report model: run record, normative baseline, required and r
 	$run = s4_bad();
 	$m = s4_model($run);
 	$all = implode("\n", DoajPaReportModel::texts($m));
-	foreach (array(DoajPaReportModel::NOT_OFFICIAL, DoajPaAssessmentOrchestrator::CANDIDATE_DISCLAIMER, 'Candidate criteria - PENDING APPROVAL', 'Criteria dataset 0.1.0-draft (PROPOSED, PENDING APPROVAL (D-03-1))',
-		DoajPaReportModel::ENGLISH_ONLY, DoajPaReportModel::ATTRIBUTION, 'https://doaj.org/apply/guide/', 'Sources not inspected') as $t) {
+	foreach (array(DoajPaReportModel::NOT_OFFICIAL, DoajPaAssessmentOrchestrator::CANDIDATE_DISCLAIMER, 'Candidate criteria - PENDING APPROVAL', 'Proposed criteria (not yet approved)',
+		DoajPaReportModel::ENGLISH_ONLY, DoajPaReportModel::ATTRIBUTION, 'https://doaj.org/apply/guide/', 'their text was not used as evidence') as $t) {
 		doajpa_assert(strpos($all, $t) !== false || stripos($all, $t) !== false, 'contains: ' . substr($t, 0, 60));
 	}
 	$headings = array_map(function ($s) { return $s['heading']; }, $m['sections']);
 	doajpa_same(array('About this report', 'Assessment run', 'Method and coverage', 'Results summary', 'Criterion results', 'Findings and history',
-		'Before You Apply: corrections by page', 'Corrective action register', 'DOAJ Form Guide (FQ-01 to FQ-20)', 'Limitations', 'References', 'Disclaimer'), $headings, 'sections');
+		'Before You Apply: corrections by page', 'Corrective action register', 'DOAJ application form guide', 'Limitations', 'References', 'Disclaimer'), $headings, 'sections');
+	// 1.2.0.0: no technical codes in the report (criterion keys, question keys, decision references, finding/action ids)
+	foreach (array('/\b(?:guide|transparency|copyright)\.[a-z-]+\b/', '/\bFQ-\d\d\b/', '/\bADR-\d{3}\b/', '/\bD-03-\d\b/', '/\b[FA]-\d+\b/', '/language_undetermined/') as $rx) {
+		doajpa_assert(!preg_match($rx, $all, $mm), 'no technical code ' . $rx . ': ' . ($mm ? $mm[0] : ''));
+	}
 	$summary = null;
 	foreach ($m['sections'] as $s) if ($s['heading'] === 'Results summary') foreach ($s['blocks'] as $b) if ($b['type'] === 'table') $summary = $b;
 	doajpa_same(array('Status', 'Must', 'Recommended', 'Conditional', 'Human judgement', 'Total'), $summary['head'], 'levels counted separately');
 	$total = 0;
 	foreach ($summary['rows'] as $r) $total += (int) end($r);
 	doajpa_same(137, $total, 'all criteria counted');
-	foreach ($run['results'] as $r) doajpa_assert(strpos($all, $r['rationale']) !== false, 'stored rationale unchanged: ' . $r['criterion_key']);
+	foreach ($run['results'] as $r) doajpa_assert(strpos($all, DoajPaHumanText::text($r['rationale'])) !== false, 'stored rationale shown (in plain language): ' . $r['criterion_key']);
 	// The plugin's own wording (everything that is not a stored rationale, a part of one, or a stored form answer) makes no
 	// accept/reject decision, probability, readiness score or guarantee (PROD-09).
 	$stored = array_merge(array_column($run['results'], 'rationale'), array_column($run['results'], 'title'), array_column($run['formAnswers'], 'answer_text'), array_column($run['formAnswers'], 'uncertainty'));
+	$stored = array_map(function ($x) { return $x === null ? null : DoajPaHumanText::text((string) $x); }, $stored);
 	$own = array_filter(DoajPaReportModel::texts($m), function ($t) use ($stored) {
 		foreach ($stored as $s) if ($s !== null && $t !== '' && (strpos((string) $s, $t) !== false || strpos($t, (string) $s) !== false && $s !== '')) return false;
 		return true;
@@ -117,8 +122,8 @@ doajpa_test('S4-M03 Report model of an approved run (activation): independence a
 	foreach ($run['formAnswers'] as &$a) $a['uncertainty'] = str_replace('PENDING APPROVAL', 'approved', (string) $a['uncertainty']);
 	unset($a);
 	$all = implode("\n", DoajPaReportModel::texts(s4_model($run)));
-	foreach (array(DoajPaReportModel::NOT_OFFICIAL, DoajPaAssessmentOrchestrator::APPROVED_DISCLAIMER, 'It is independent of DOAJ', 'not a DOAJ rule set',
-		'Criteria dataset 9.9.9 (APPROVED, approved by A. Owner on 2026-11-01 (product owner of this plugin, not DOAJ))', DoajPaReportModel::ATTRIBUTION, DoajPaReportModel::ENGLISH_ONLY) as $t) {
+	foreach (array(DoajPaReportModel::NOT_OFFICIAL, DoajPaAssessmentOrchestrator::APPROVED_DISCLAIMER, 'It is independent of DOAJ', 'approved by the product owner of this plugin, not by DOAJ',
+		'Approved criteria, version 9.9.9', DoajPaReportModel::ATTRIBUTION, DoajPaReportModel::ENGLISH_ONLY) as $t) {
 		doajpa_assert(strpos($all, $t) !== false, 'contains: ' . substr($t, 0, 60));
 	}
 	doajpa_assert(strpos($all, 'PENDING APPROVAL') === false && strpos($all, 'Candidate criteria') === false, 'no candidate wording');

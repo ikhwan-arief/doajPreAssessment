@@ -54,9 +54,9 @@
 
 			<h2 id="doajPaExcerpts">{translate key="plugins.generic.doajPreAssessment.evidence.excerpts"}</h2>
 			{foreach from=$r.evidence item=ev}
-				<section class="doajPa-evidence" aria-label="{translate key="plugins.generic.doajPreAssessment.common.evidence"} E-{$ev.evidence_id|escape}">
-					<p><strong>E-{$ev.evidence_id|escape}</strong> {include file=$doajPaLink url=$ev.source_url isLink=$ev.sourceUrlIsLink}{if $ev.source_title}, &ldquo;{$ev.source_title|escape}&rdquo;{/if}
-					({$ev.source_type|escape}, {translate key="plugins.generic.doajPreAssessment.evidence.location"}: {$ev.location|escape}, {translate key="plugins.generic.doajPreAssessment.evidence.method"}: {$ev.detection_method|escape}, {translate key="plugins.generic.doajPreAssessment.common.retrieved"} {$ev.retrieved_at_utc|escape} UTC)</p>
+				<section class="doajPa-evidence" aria-label="{translate key="plugins.generic.doajPreAssessment.common.evidence"} {$ev.evidence_id|escape}">
+					<p><strong>{translate key="plugins.generic.doajPreAssessment.common.evidence"} {$ev.evidence_id|escape}</strong> {include file=$doajPaLink url=$ev.source_url isLink=$ev.sourceUrlIsLink}{if $ev.source_title}, &ldquo;{$ev.source_title|escape}&rdquo;{/if}
+					({$ev.source_type|doajpa_code|escape}, {translate key="plugins.generic.doajPreAssessment.evidence.location"}: {$ev.location|doajpa_code|escape}, {translate key="plugins.generic.doajPreAssessment.evidence.method"}: {$ev.detection_method|doajpa_code|escape}, {translate key="plugins.generic.doajPreAssessment.common.retrieved"} {$ev.retrieved_at_utc|escape} UTC)</p>
 					<blockquote class="doajPa-quote">{$ev.quote|escape}</blockquote>
 				</section>
 			{foreachelse}

@@ -90,6 +90,6 @@ class DoajPaSchema {
 		'gate_acknowledged', 'access_denied', 'run_created', 'run_status_changed', 'run_completed',
 		'finding_transition', 'corrective_action_created', 'corrective_action_updated', 'report_export_recorded', 'report_export_downloaded',
 		'criterion_definition_registered', 'crawl_started', 'crawl_finished', 'dev_private_destination_allowed', 'preproduction_private_destination_allowed',
-		'run_interrupted', 'assessment_evaluated',
+		'run_interrupted', 'assessment_evaluated', 'run_deleted',
 	);
 }

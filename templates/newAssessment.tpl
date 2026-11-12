@@ -33,13 +33,13 @@
 			<h2 id="doajPaScopeHeading">{translate key="plugins.generic.doajPreAssessment.newAssessment.scopeHeading"}</h2>
 			<p>{translate key="plugins.generic.doajPreAssessment.newAssessment.scope"}</p>
 			{if $doajPaApprovedRulebook}
-			<p>{translate key="plugins.generic.doajPreAssessment.newAssessment.approvedScope"} <code>{$doajPaApprovedRulebook|escape}</code></p>
+			<p>{translate key="plugins.generic.doajPreAssessment.newAssessment.approvedScope"}</p>
 			{else}
 			<p><strong>{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</strong> {translate key="plugins.generic.doajPreAssessment.newAssessment.notImplemented"}</p>
 			<ul>{foreach from=$doajPaFutureModules key=k item=title}<li><span class="doajPa-badge doajPa-badge--not_implemented">{translate key="plugins.generic.doajPreAssessment.common.notImplemented"}</span> {$title|escape}</li>{/foreach}</ul>
 			{/if}
 			<p>{translate key="plugins.generic.doajPreAssessment.newAssessment.pdf"}
-			{if $doajPaPdfAvailable}<code>{$doajPaPdfTool|escape}</code>{else}<strong>{translate key="plugins.generic.doajPreAssessment.newAssessment.pdfUnavailable"}</strong>{/if}</p>
+			{if $doajPaPdfTool == 'php-reader/1'}{translate key="plugins.generic.doajPreAssessment.run.pdfBuiltIn"}{elseif $doajPaPdfAvailable}{$doajPaPdfTool|escape}{else}<strong>{translate key="plugins.generic.doajPreAssessment.newAssessment.pdfUnavailable"}</strong>{/if}</p>
 		</section>
 
 		<section class="doajPa-notice doajPa-notice--warning" aria-labelledby="doajPaWarningHeading">

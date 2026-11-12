@@ -12,6 +12,7 @@ be changed at run time.
 | PHP | 7.3 and 8.2 | 7.3.33 and 8.2.34 (Apache, MariaDB) |
 | PHP extensions | curl, dom, mbstring | |
 | Optional program | Poppler `pdftotext` at `/usr/bin/pdftotext` or `/usr/local/bin/pdftotext` | 20.09.0 and 25.03.0 |
+| Built-in PDF reader | Used automatically when `pdftotext` is absent (since 1.2.0.0); reads text-based PDFs, not scanned ones | PHP 7.3 and 8.2 |
 
 **Not supported:**
 - OJS 3.4 or 3.5;

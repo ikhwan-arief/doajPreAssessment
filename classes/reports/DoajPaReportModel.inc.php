@@ -20,6 +20,7 @@
  */
 
 require_once(dirname(__FILE__) . '/DoajPaActionPlan.inc.php');
+require_once(dirname(__FILE__) . '/../ui/DoajPaHumanText.inc.php');
 
 class DoajPaReportModel {
 
@@ -34,6 +35,8 @@ class DoajPaReportModel {
 		array('Principles of Transparency and Best Practice in Scholarly Publishing', 'https://doaj.org/apply/transparency/'),
 		array('DOAJ Licensing & copyright', 'https://doaj.org/apply/copyright-and-licensing/'),
 	);
+	const ACQUISITION = array('retrieved' => 'read', 'not_found' => 'not found', 'inaccessible' => 'not reachable', 'parse_failed' => 'could not be read',
+		'unsupported_language' => 'not in English', 'ambiguous' => 'language unclear');
 	const STATUS = array('pass' => 'Pass', 'fail' => 'Fail', 'warning' => 'Warning', 'contradiction' => 'Contradiction', 'unverifiable' => 'Unverifiable',
 		'for_doaj_review' => 'For DOAJ review', 'not_applicable' => 'Not applicable');
 	const STATUS_ORDER = array('contradiction', 'fail', 'warning', 'unverifiable', 'for_doaj_review', 'pass', 'not_applicable');
@@ -73,15 +76,13 @@ class DoajPaReportModel {
 		$kv = array(
 			array('Journal', (string) $in['journal']['name']),
 			array('Journal website', (string) (isset($coverage['homepage']) ? $coverage['homepage'] : $in['journal']['url'])),
-			array('Assessment run', 'Run ' . $run['run_number'] . ' (ID ' . $run['run_id'] . '), status ' . $run['status']),
+			array('Assessment run', 'Run ' . $run['run_number'] . ', ' . $run['status']),
 			array('Started (UTC)', (string) $run['started_at_utc']),
 			array('Completed (UTC)', (string) $run['completed_at_utc']),
 			array('Executed by', (string) $run['executor_username']),
-			array('Rule set', $run['rulebook_version'] . ($approved ? ' (approved by the product owner of this plugin; not a DOAJ rule set)' : ($candidate ? ' (candidate, PENDING APPROVAL)' : ' (no approved DOAJ rule set)'))),
-			array('Normative baseline', $dataset ? 'Criteria dataset ' . $dataset['version'] . ' (' . strtoupper((string) $dataset['status']) . ', ' . $dataset['approval'] . '); engine ' . $dataset['engine'] . '; DOAJ sources captured 2026-10-10'
-				: ($approved ? 'Approved criteria of rule set ' . $run['rulebook_version'] : 'None: no criteria were evaluated')),
-			array('Extraction version', (string) $run['extraction_version']),
-			array('Sealed snapshot (SHA-256)', (string) $run['snapshot_digest'] . ($run['snapshotVerified'] === true ? ' (verified when the report was generated)' : ($run['snapshotVerified'] === false ? ' (VERIFICATION FAILED)' : ''))),
+			array('Criteria', $approved ? 'Approved criteria, version ' . ($dataset ? $dataset['version'] : $run['rulebook_version']) . ' (approved by the product owner of this plugin, not by DOAJ), based on the DOAJ texts of 10 October 2026'
+				: ($candidate ? 'Proposed criteria (not yet approved)' : 'None: no criteria were evaluated')),
+			array('Record integrity', $run['snapshotVerified'] === true ? 'The stored record of this run was unchanged when the report was generated' : ($run['snapshotVerified'] === false ? 'FAILED: the stored record of this run has changed' : 'Not checked')),
 			array('Previous run', $run['previousRunNumber'] !== null ? 'Run ' . $run['previousRunNumber'] : 'None'),
 			array('Report generated (UTC)', (string) $in['generatedAtUtc'] . ' by ' . $in['generatedBy'] . ', plugin ' . $in['pluginVersion'] . ', ' . self::VERSION),
 		);
@@ -99,17 +100,19 @@ class DoajPaReportModel {
 		$m = array(array('type' => 'p', 'text' => self::METHOD));
 		$m[] = array('type' => 'kv', 'rows' => array(
 			array('Pages and files recorded', (string) count($resources)),
-			array('Read as verified English', (string) $read),
-			array('Not read as verified English', (string) count($notRead)),
-			array('All pages by acquisition status', self::pairs($byStatus)),
-			array('Crawl limits reached', isset($coverage['limitsHit']) && $coverage['limitsHit'] ? implode(', ', $coverage['limitsHit']) : 'None'),
-			array('PDF text extraction', !isset($coverage['pdfTool']) || !is_string($coverage['pdfTool']) ? 'Not recorded'
-				: ($coverage['pdfTool'] === 'unavailable' ? 'pdftotext not installed: PDF files were recorded but their text was not read' : $coverage['pdfTool'])),
+			array('Read and confirmed as English', (string) $read),
+			array('Not read, or not confirmed as English', (string) count($notRead)),
+			array('All pages by status', self::pairs(self::labelled($byStatus, self::ACQUISITION))),
+			array('Crawl limits reached', isset($coverage['limitsHit']) && $coverage['limitsHit'] ? implode(', ', array_map(array('DoajPaHumanText', 'code'), $coverage['limitsHit'])) : 'None'),
+			array('PDF text', !isset($coverage['pdfTool']) || !is_string($coverage['pdfTool']) ? 'Not recorded'
+				: ($coverage['pdfTool'] === 'unavailable' ? 'No PDF reader was available: PDF files were recorded but their text was not read'
+				: ($coverage['pdfTool'] === 'php-reader/1' ? 'Read with the built-in PDF reader of the plugin' : 'Read with ' . $coverage['pdfTool']))),
 		));
 		if ($notRead) {
 			$rows = array();
-			foreach (array_slice($notRead, 0, self::MAX_GAPS) as $r) $rows[] = array((string) $r['url'], (string) $r['acquisition_status'], (string) $r['skip_reason']);
-			$m[] = array('type' => 'subheading', 'text' => 'Pages not read as verified English (sources not inspected)');
+			foreach (array_slice($notRead, 0, self::MAX_GAPS) as $r) $rows[] = array((string) $r['url'],
+				isset(self::ACQUISITION[$r['acquisition_status']]) ? self::ACQUISITION[$r['acquisition_status']] : (string) $r['acquisition_status'], DoajPaHumanText::reason($r['skip_reason']));
+			$m[] = array('type' => 'subheading', 'text' => 'Pages not read, or not confirmed as English (their text was not used as evidence)');
 			$m[] = array('type' => 'table', 'head' => array('Page', 'Status', 'Reason'), 'rows' => $rows, 'widths' => array(0.55, 0.15, 0.30));
 			if (count($notRead) > self::MAX_GAPS) $m[] = array('type' => 'p', 'text' => (count($notRead) - self::MAX_GAPS) . ' more pages are listed on the run\'s Evidence page.');
 		}
@@ -152,11 +155,11 @@ class DoajPaReportModel {
 				if ($r['evidence_id'] !== null && isset($in['quotes'][(int) $r['evidence_id']]) && $in['quotes'][(int) $r['evidence_id']] !== '') {
 					$evidence .= ($evidence !== '' ? ' ' : '') . '(evidence ' . $r['evidence_id'] . ')';
 				}
-				$rows[] = array($r['criterion_key'] . "\n" . $r['title'], self::LEVEL[$r['level']] . ' (' . $r['level'] . ')', self::STATUS[$r['machine_status']]
-					. ($r['human_status'] ? "\nHuman: " . $r['human_status'] : ''), (string) $r['rationale'], $evidence);
+				$rows[] = array((string) $r['title'], self::LEVEL[$r['level']], self::STATUS[$r['machine_status']]
+					. ($r['human_status'] ? "\nReviewer: " . (isset(self::STATUS[$r['human_status']]) ? self::STATUS[$r['human_status']] : $r['human_status']) : ''), (string) $r['rationale'], $evidence);
 			}
 			$sections[] = array('heading' => 'Criterion results', 'blocks' => array(
-				array('type' => 'p', 'text' => 'Each rationale is stored with the result and is shown here unchanged, including its verbatim quotes, the pages cited and the corrective recommendation with the DOAJ clause.'),
+				array('type' => 'p', 'text' => 'Each explanation is stored with the result, with the exact quotes from the website, the pages cited and the recommended correction with the DOAJ text it relies on.'),
 				array('type' => 'table', 'head' => array('Criterion', 'Level', 'Status', 'Rationale', 'Evidence page'), 'rows' => $rows, 'widths' => array(0.21, 0.10, 0.13, 0.38, 0.18))));
 		}
 
@@ -165,12 +168,12 @@ class DoajPaReportModel {
 		if ($run['observations']) {
 			$rows = array();
 			foreach ($run['observations'] as $o) {
-				$rows[] = array('F-' . $o['finding_id'], (string) $o['criterion_key'], (string) $o['subtype'] . ($o['target'] ? "\n" . $o['target'] : ''),
+				$rows[] = array(DoajPaHumanText::criterion($o['criterion_key']), DoajPaHumanText::code($o['subtype']) . ($o['target'] && $o['target_type'] !== 'journal' ? "\n" . $o['target'] : ''),
 					isset(self::LIFECYCLE[$o['lifecycle_status']]) ? self::LIFECYCLE[$o['lifecycle_status']] : (string) $o['lifecycle_status'],
 					isset(self::STATUS[$o['criterion_status']]) ? self::STATUS[$o['criterion_status']] : (string) $o['criterion_status']);
 			}
-			$f[] = array('type' => 'p', 'text' => 'Finding IDs are stable across runs. "Resolved (verified)" needs new public evidence; a page that could not be read again gives "Needs verification", never "Resolved". Completing a corrective action is not evidence.');
-			$f[] = array('type' => 'table', 'head' => array('Finding', 'Criterion', 'Subtype and target', 'Status in this run', 'Criterion status'), 'rows' => $rows, 'widths' => array(0.10, 0.27, 0.33, 0.15, 0.15));
+			$f[] = array('type' => 'p', 'text' => 'A finding is followed from run to run. "Resolved (verified)" needs new public evidence; a page that could not be read again gives "Needs verification", never "Resolved". Completing a corrective action is not evidence.');
+			$f[] = array('type' => 'table', 'head' => array('Finding', 'Problem and place', 'Status in this run', 'Result'), 'rows' => $rows, 'widths' => array(0.40, 0.30, 0.15, 0.15));
 		} else {
 			$f[] = array('type' => 'p', 'text' => 'No finding was observed in this run.');
 		}
@@ -179,8 +182,9 @@ class DoajPaReportModel {
 			$changes = array();
 			foreach ($c['rows'] as $row) $changes[$row['change']] = (isset($changes[$row['change']]) ? $changes[$row['change']] : 0) + 1;
 			ksort($changes);
+			$changes = self::labelled($changes, array('unchanged' => 'unchanged', 'changed' => 'changed', 'not_observed_in_to' => 'not seen in this run', 'not_observed_in_from' => 'new in this run'));
 			$f[] = array('type' => 'p', 'text' => 'Comparison with run ' . $c['from']['run_number'] . ': ' . ($changes ? self::pairs($changes) : 'no findings in either run') . '.'
-				. ($c['differentRulebooks'] ? ' The two runs used different rule sets (' . $c['from']['rulebook_version'] . ' and ' . $c['to']['rulebook_version'] . '); their results are not directly comparable.' : ''));
+				. ($c['differentRulebooks'] ? ' The two runs used different versions of the criteria; their results are not directly comparable.' : ''));
 		}
 		$sections[] = array('heading' => 'Findings and history', 'blocks' => $f);
 
@@ -195,12 +199,12 @@ class DoajPaReportModel {
 				$rows = array();
 				foreach ($g['tasks'] as $t) {
 					$acts = array();
-					foreach ($t['actions'] as $a) $acts[] = 'A-' . $a['action_id'] . ' ' . (isset(self::ACTION[$a['status']]) ? self::ACTION[$a['status']] : $a['status']) . ', priority ' . $a['priority']
+					foreach ($t['actions'] as $a) $acts[] = (isset(self::ACTION[$a['status']]) ? self::ACTION[$a['status']] : $a['status']) . ', priority ' . $a['priority']
 						. ($a['owner_text'] ? ', owner ' . $a['owner_text'] : '') . ($a['due_date'] ? ', due ' . $a['due_date'] : '');
-					$rows[] = array($t['criterionKey'] . ($t['findingId'] ? "\nF-" . $t['findingId'] : ''), self::STATUS[$t['status']] . ' (' . $t['level'] . ')',
+					$rows[] = array((string) $t['title'], self::STATUS[$t['status']] . ' (' . self::LEVEL[$t['level']] . ')',
 						(string) ($t['recommendation'] !== null ? $t['recommendation'] : $t['rationale']), (string) $t['clause'], $acts ? implode("\n", $acts) : 'No action yet (suggested priority: ' . $t['suggestedPriority'] . ')');
 				}
-				$b[] = array('type' => 'table', 'head' => array('Criterion and finding', 'Status', 'Recommended correction', 'DOAJ clause', 'Corrective action'), 'rows' => $rows, 'widths' => array(0.20, 0.13, 0.29, 0.20, 0.18));
+				$b[] = array('type' => 'table', 'head' => array('Criterion', 'Status', 'Recommended correction', 'DOAJ text', 'Corrective action'), 'rows' => $rows, 'widths' => array(0.20, 0.13, 0.29, 0.20, 0.18));
 			}
 		}
 		if ($plan['verify']) {
@@ -208,7 +212,7 @@ class DoajPaReportModel {
 			foreach ($plan['verify'] as $g) $n += count($g['tasks']);
 			$b[] = array('type' => 'subheading', 'text' => 'Needs verification (' . $n . ' criteria; not deficiencies)');
 			$items = array();
-			foreach ($plan['verify'] as $g) foreach ($g['tasks'] as $t) $items[] = $t['criterionKey'] . ' (' . $t['level'] . ') - ' . ($g['page'] !== null ? $g['page'] : 'no single page') . ': ' . $t['rationale'];
+			foreach ($plan['verify'] as $g) foreach ($g['tasks'] as $t) $items[] = $t['title'] . ' (' . self::LEVEL[$t['level']] . ') - ' . ($g['page'] !== null ? $g['page'] : 'whole website') . ': ' . $t['rationale'];
 			$b[] = array('type' => 'list', 'items' => $items);
 		}
 		$sections[] = array('heading' => 'Before You Apply: corrections by page', 'blocks' => $b);
@@ -218,12 +222,12 @@ class DoajPaReportModel {
 		if ($in['actions']) {
 			$rows = array();
 			foreach ($in['actions'] as $a) {
-				$rows[] = array('A-' . $a['action_id'] . ($a['finding_id'] ? "\nF-" . $a['finding_id'] : ''), (string) $a['recommendation'], (string) $a['target_url'],
+				$rows[] = array(isset($a['criterion_key']) && $a['criterion_key'] ? DoajPaHumanText::criterion($a['criterion_key']) : 'Action without a finding', (string) $a['recommendation'], (string) $a['target_url'],
 					trim(($a['owner_text'] ? $a['owner_text'] : '-') . "\n" . ($a['due_date'] ? 'Due ' . $a['due_date'] : '')), $a['priority'] . "\n" . (isset(self::ACTION[$a['status']]) ? self::ACTION[$a['status']] : $a['status']),
 					(string) $a['completion_evidence']);
 			}
 			$ar[] = array('type' => 'p', 'text' => 'Owners are recorded as free text; naming an owner grants no access to the plugin or this report.');
-			$ar[] = array('type' => 'table', 'head' => array('Action', 'Recommendation', 'Target page', 'Owner and due date', 'Priority and status', 'Completion evidence'), 'rows' => $rows,
+			$ar[] = array('type' => 'table', 'head' => array('Finding', 'Action', 'Target page', 'Owner and due date', 'Priority and status', 'Completion evidence'), 'rows' => $rows,
 				'widths' => array(0.10, 0.28, 0.20, 0.14, 0.12, 0.16));
 		} else {
 			$ar[] = array('type' => 'p', 'text' => 'No corrective action has been recorded for this journal.');
@@ -233,11 +237,11 @@ class DoajPaReportModel {
 		// 9. DOAJ Form Guide
 		$rows = array();
 		foreach ($in['formGuide'] as $q) {
-			$rows[] = array($q['question_key'] . ($q['title'] ? "\n" . $q['title'] : ''), isset(self::ANSWER[$q['answer_status']]) ? self::ANSWER[$q['answer_status']] : (string) $q['answer_status'],
+			$rows[] = array(DoajPaHumanText::question($q['question_key']), isset(self::ANSWER[$q['answer_status']]) ? self::ANSWER[$q['answer_status']] : (string) $q['answer_status'],
 				(string) $q['answer_text'], (string) $q['uncertainty']);
 		}
-		$sections[] = array('heading' => 'DOAJ Form Guide (FQ-01 to FQ-20)', 'blocks' => array(
-			array('type' => 'p', 'text' => 'Answers come only from evidence read in this run, with the page. "Not found" is shown only when the governing criterion established the absence; otherwise "Needs verification". FQ-08 is never answered automatically.'),
+		$sections[] = array('heading' => 'DOAJ application form guide', 'blocks' => array(
+			array('type' => 'p', 'text' => 'Answers come only from evidence read in this run, with the page. "Not found" is shown only when the governing criterion established the absence; otherwise "Needs verification". Subject keywords are never chosen automatically.'),
 			array('type' => 'table', 'head' => array('Question', 'Answer status', 'Answer from the website', 'Uncertainty'), 'rows' => $rows, 'widths' => array(0.18, 0.15, 0.37, 0.30))));
 
 		// 10. Limitations
@@ -245,11 +249,11 @@ class DoajPaReportModel {
 		$limits = array(
 			'English-only, deterministic patterns: unusual wording gives "unverifiable" or "for DOAJ review", never a pass.',
 			'The crawl reads a sample of issues, articles and files; it cannot prove "all content".',
-			$unverifiable . ' criteria are unverifiable in this run; ' . (int) $run['languageNotVerifiedCount'] . ' pages were read but their language is not verified English.',
+			$unverifiable . ' criteria are unverifiable in this run; ' . (int) $run['languageNotVerifiedCount'] . ' pages were read but could not be confirmed as English.',
 			'External registries (ISSN Portal, DOI resolution) were not consulted; registry criteria are unverifiable.',
 			'Human-judgement criteria are listed for DOAJ review with the extracted text; the plugin never decides them.',
 		);
-		if ($candidate || $approved) $limits[] = ($candidate ? 'Candidate criteria are PENDING APPROVAL. ' : '') . 'Results marked "Language-neutral facts (ADR-013)" rest on names, dates, ISSNs or counts read from short pages without a language verdict.';
+		if ($candidate || $approved) $limits[] = ($candidate ? 'Candidate criteria are PENDING APPROVAL. ' : '') . 'Results marked "Based on names, dates, ISSNs or counts" rest on such facts read from short pages whose language could not be confirmed.';
 		$sections[] = array('heading' => 'Limitations', 'blocks' => array(array('type' => 'list', 'items' => $limits)));
 
 		// 11. References and attribution
@@ -266,8 +270,15 @@ class DoajPaReportModel {
 			'title' => 'DOAJ Pre-Assessment Report: ' . $in['journal']['name'],
 			'subtitle' => 'Run ' . $run['run_number'] . ', completed ' . $run['completed_at_utc'] . ' UTC' . ($candidate ? ' - candidate criteria, PENDING APPROVAL' : ($approved ? '' : ' - no approved DOAJ rule set')),
 			'fileStem' => 'doaj-preassessment-run-' . (int) $run['run_number'],
-			'sections' => $sections,
+			'sections' => DoajPaHumanText::deep($sections),
 		);
+	}
+
+	/** @return array counts with their keys replaced by labels */
+	private static function labelled($counts, $labels) {
+		$out = array();
+		foreach ($counts as $k => $v) $out[isset($labels[$k]) ? $labels[$k] : $k] = $v;
+		return $out;
 	}
 
 	/** @return string[] Every text of the model, in order, for parity checks between formats */

@@ -315,7 +315,13 @@ class DoajPaReadService {
 	public static function actions($contextId) {
 		$rows = self::rowsArray(DoajPaDb::table(DoajPaSchema::T_ACTION)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))
 			->orderBy('action_id', 'desc')->limit(self::LIST_LIMIT)->get()->all());
-		foreach ($rows as &$row) $row['targetUrlIsLink'] = self::isHttpUrl($row['target_url']);
+		$keys = array();
+		$ids = array_values(array_filter(array_map(function ($r) { return $r['finding_id']; }, $rows)));
+		if ($ids) foreach (DoajPaDb::table(DoajPaSchema::T_FINDING)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))->whereIn('finding_id', $ids)->get(array('finding_id', 'criterion_key'))->all() as $f) $keys[(int) $f->finding_id] = (string) $f->criterion_key;
+		foreach ($rows as &$row) {
+			$row['targetUrlIsLink'] = self::isHttpUrl($row['target_url']);
+			$row['criterion_key'] = $row['finding_id'] !== null && isset($keys[(int) $row['finding_id']]) ? $keys[(int) $row['finding_id']] : null;
+		}
 		unset($row);
 		return $rows;
 	}
@@ -331,7 +337,7 @@ class DoajPaReadService {
 	public static function findingChoices($contextId) {
 		return self::rowsArray(DoajPaDb::table(DoajPaSchema::T_FINDING)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))
 			->where('current_status', '!=', 'superseded')->orderBy('finding_id')->limit(self::LIST_LIMIT)
-			->get(array('finding_id', 'criterion_key', 'subtype', 'target'))->all());
+			->get(array('finding_id', 'criterion_key', 'subtype', 'target_type', 'target'))->all());
 	}
 
 	/** @return array Latest audit events of the journal */

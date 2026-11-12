@@ -31,9 +31,11 @@ require_once(dirname(__FILE__) . '/../classes/services/DoajPaAcknowledgementServ
 require_once(dirname(__FILE__) . '/../classes/services/DoajPaReadService.inc.php');
 require_once(dirname(__FILE__) . '/../classes/services/DoajPaCorrectiveActionService.inc.php');
 require_once(dirname(__FILE__) . '/../classes/ui/DoajPaLabels.inc.php');
+require_once(dirname(__FILE__) . '/../classes/ui/DoajPaHumanText.inc.php');
 require_once(dirname(__FILE__) . '/../classes/framework/DoajPaAssessmentOrchestrator.inc.php');
 require_once(dirname(__FILE__) . '/../classes/services/DoajPaReportExportService.inc.php');
 require_once(dirname(__FILE__) . '/../classes/reports/DoajPaActionPlan.inc.php');
+require_once(dirname(__FILE__) . '/../classes/services/DoajPaHistoryDeletionService.inc.php');
 
 class DoajPreAssessmentHandler extends Handler {
 
@@ -59,6 +61,8 @@ class DoajPreAssessmentHandler extends Handler {
 		'actionEdit' => array('GET', 'HEAD'),
 		'actionUpdate' => array('POST'),
 		'history' => array('GET', 'HEAD'),
+		'runDelete' => array('POST'),
+		'historyDelete' => array('POST'),
 		'run' => array('GET', 'HEAD'),
 		'compare' => array('GET', 'HEAD'),
 		'reports' => array('GET', 'HEAD'),
@@ -208,7 +212,7 @@ class DoajPreAssessmentHandler extends Handler {
 		return $this->_render($request, 'formGuide.tpl', 'formGuide', array(
 			'doajPaFormGuide' => DoajPaReadService::formGuide(self::_contextId($request)),
 			'doajPaFormGuideNote' => DoajPaAssessmentOrchestrator::FQ_NOT_YET_ASSESSED,
-			'doajPaApprovedQuestions' => implode(', ', array_keys(DoajPaReadService::fqTitles(DoajPaAssessmentOrchestrator::liveRulebook()))),
+			'doajPaApprovedQuestions' => implode('; ', array_map(array('DoajPaHumanText', 'question'), array_keys(DoajPaReadService::fqTitles(DoajPaAssessmentOrchestrator::liveRulebook())))),
 			'doajPaCandidateRulebook' => DoajPaAssessmentOrchestrator::CANDIDATE_RULEBOOK,
 		));
 	}
@@ -277,7 +281,46 @@ class DoajPreAssessmentHandler extends Handler {
 	/** Assessment History. */
 	public function history($args, $request) {
 		$this->_requireGate($request, $args);
-		return $this->_render($request, 'history.tpl', 'history', array('doajPaRuns' => DoajPaReadService::runs(self::_contextId($request))));
+		return $this->_renderHistory($request, null, 200);
+	}
+
+	/** Delete one run (POST + CSRF; confirmed in the page). Only runs that no later run builds on (1.2.0.0). */
+	public function runDelete($args, $request) {
+		$this->_requireGate($request, array());
+		$runId = self::_idArg($args);
+		try {
+			$number = DoajPaHistoryDeletionService::deleteRun(self::_contextId($request), $runId, self::_actor($request), (string) Config::getVar('files', 'files_dir'));
+		} catch (DoajPaNotFoundException $e) {
+			DoajPaResponse::notFound();
+		} catch (DoajPaStateException $e) {
+			return $this->_renderHistory($request, 'deleteBlocked', 409);
+		}
+		$request->redirect(null, DoajPreAssessmentPlugin::PAGE, 'history', null, array('deleted' => $number));
+	}
+
+	/** Delete the whole assessment history of the journal (POST + CSRF + typed confirmation). */
+	public function historyDelete($args, $request) {
+		$this->_requireGate($request, $args);
+		if ($request->getUserVar('confirmDeleteAll') !== 'DELETE') return $this->_renderHistory($request, 'confirmMissing', 400);
+		try {
+			$n = DoajPaHistoryDeletionService::deleteAll(self::_contextId($request), self::_actor($request), (string) Config::getVar('files', 'files_dir'));
+		} catch (DoajPaStateException $e) {
+			return $this->_renderHistory($request, 'deleteAllBlocked', 409);
+		}
+		$request->redirect(null, DoajPreAssessmentPlugin::PAGE, 'history', null, array('deletedAll' => $n));
+	}
+
+	private function _renderHistory($request, $error, $status) {
+		$contextId = self::_contextId($request);
+		$deleted = self::_idValue($request->getUserVar('deleted'));
+		$deletedAll = $request->getUserVar('deletedAll');
+		return $this->_render($request, 'history.tpl', 'history', array(
+			'doajPaRuns' => DoajPaReadService::runs($contextId),
+			'doajPaDeletable' => DoajPaHistoryDeletionService::deletableRuns($contextId),
+			'doajPaError' => $error,
+			'doajPaDeleted' => $deleted ?: null,
+			'doajPaDeletedAll' => is_string($deletedAll) && preg_match('/^[0-9]{1,6}$/', $deletedAll) ? (int) $deletedAll : null,
+		), $status);
 	}
 
 	/** One run: progress and controls while active; snapshot, coverage, results and observations. */
@@ -361,7 +404,7 @@ class DoajPreAssessmentHandler extends Handler {
 		exit;
 	}
 
-	/** Settings: plugin and schema status, acknowledgements and the audit log (read-only). */
+	/** Settings: plugin and schema status and acknowledgements (read-only). The audit log is recorded but not shown (1.2.0.0). */
 	public function settings($args, $request) {
 		$this->_requireGate($request, $args);
 		$contextId = self::_contextId($request);
@@ -371,7 +414,6 @@ class DoajPreAssessmentHandler extends Handler {
 			'doajPaSchemaVersion' => DoajPaSchema::VERSION,
 			'doajPaPluginVersionFull' => $pluginVersion ? $pluginVersion->getVersionString(false) : '',
 			'doajPaAcknowledgements' => DoajPaReadService::firstUseAcknowledgements($contextId),
-			'doajPaAudit' => DoajPaReadService::auditEvents($contextId),
 		));
 	}
 
@@ -581,6 +623,12 @@ class DoajPreAssessmentHandler extends Handler {
 				'current' => $op === $navKey);
 		}
 		$pluginVersion = self::$_plugin->getCurrentVersion();
+		// Plain-language display (1.2.0.0): stored codes stay unchanged; the page shows names and sentences.
+		foreach (array('doajpa_criterion' => array('DoajPaHumanText', 'criterion'), 'doajpa_question' => array('DoajPaHumanText', 'question'),
+			'doajpa_reason' => array('DoajPaHumanText', 'reason'), 'doajpa_code' => array('DoajPaHumanText', 'code')) as $name => $callable) {
+			if (!isset($templateMgr->registered_plugins['modifier'][$name])) $templateMgr->registerPlugin('modifier', $name, $callable);
+		}
+		$vars = DoajPaHumanText::deep($vars);
 		$templateMgr->assign(array_merge(array(
 			'pageTitle' => __('plugins.generic.doajPreAssessment.displayName'),
 			'doajPaNav' => self::$_plugin->getTemplateResource('partials/nav.tpl'),

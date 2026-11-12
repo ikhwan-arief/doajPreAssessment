@@ -41,7 +41,7 @@
 			<tbody>
 			{foreach from=$g.entries item=e}
 				<tr>
-					<th scope="row">{$e.questionKey|escape}{if $e.title}: {$e.title|escape}{/if}</th>
+					<th scope="row">{$e.questionKey|doajpa_question|escape}</th>
 					<td>{include file=$doajPaBadge group="formAnswer" code=$e.answerStatus}</td>
 					<td>{if $e.answerText}{$e.answerText|escape}{else}{translate key="plugins.generic.doajPreAssessment.common.none"}{/if}
 					{if $e.source_url}<br />{translate key="plugins.generic.doajPreAssessment.common.evidence"}: {include file=$doajPaLink url=$e.source_url isLink=$e.sourceUrlIsLink}{/if}</td>

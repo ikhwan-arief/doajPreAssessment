@@ -123,7 +123,7 @@ msgid "plugins.generic.doajPreAssessment.actions.noFinding"
 msgstr "Not linked to a finding"
 
 msgid "plugins.generic.doajPreAssessment.actions.none"
-msgstr "No corrective actions have been recorded for this journal."
+msgstr "No corrective actions yet. Since version 1.2, a completed assessment adds one planned action for every problem it finds; you can also add actions yourself below."
 
 msgid "plugins.generic.doajPreAssessment.actions.notEvidence"
 msgstr "Marking an action as done does not resolve a finding. A finding is resolved only when a new assessment finds public evidence that the problem is corrected."
@@ -144,7 +144,7 @@ msgid "plugins.generic.doajPreAssessment.actions.register"
 msgstr "Corrective action register"
 
 msgid "plugins.generic.doajPreAssessment.actions.saved"
-msgstr "Saved:"
+msgstr "The corrective action was saved."
 
 msgid "plugins.generic.doajPreAssessment.actions.statusHelp"
 msgstr "Status of the work only. It does not change any finding."
@@ -195,7 +195,7 @@ msgid "plugins.generic.doajPreAssessment.common.retrieved"
 msgstr "retrieved"
 
 msgid "plugins.generic.doajPreAssessment.common.ruleSet"
-msgstr "Rule set"
+msgstr "Criteria"
 
 msgid "plugins.generic.doajPreAssessment.common.run"
 msgstr "Run"
@@ -210,10 +210,10 @@ msgid "plugins.generic.doajPreAssessment.common.show"
 msgstr "Show"
 
 msgid "plugins.generic.doajPreAssessment.common.snapshotFailed"
-msgstr "Snapshot verification FAILED"
+msgstr "Integrity check FAILED: the stored record of this run has changed"
 
 msgid "plugins.generic.doajPreAssessment.common.snapshotVerified"
-msgstr "Snapshot verified"
+msgstr "Record unchanged since the run was completed"
 
 msgid "plugins.generic.doajPreAssessment.common.sourceState"
 msgstr "Source state"
@@ -369,7 +369,7 @@ msgid "plugins.generic.doajPreAssessment.history.gaps"
 msgstr "Pages not read"
 
 msgid "plugins.generic.doajPreAssessment.history.intro"
-msgstr "Completed runs are sealed and never change. Open a run to see its own record, or compare two completed runs."
+msgstr "Completed runs are sealed and never change. Open a run to see its record, compare two completed runs, or delete runs you no longer need."
 
 msgid "plugins.generic.doajPreAssessment.nav.actions"
 msgstr "Corrective Actions"
@@ -501,13 +501,13 @@ msgid "plugins.generic.doajPreAssessment.run.extraction"
 msgstr "Extraction version"
 
 msgid "plugins.generic.doajPreAssessment.run.humanStatus"
-msgstr "human confirmation"
+msgstr "Reviewer's decision"
 
 msgid "plugins.generic.doajPreAssessment.run.limit"
 msgstr "Interpretation limit"
 
 msgid "plugins.generic.doajPreAssessment.run.machineStatus"
-msgstr "Machine status"
+msgstr "Automatic result"
 
 msgid "plugins.generic.doajPreAssessment.run.noResults"
 msgstr "No criterion results were recorded in this run."
@@ -534,7 +534,7 @@ msgid "plugins.generic.doajPreAssessment.run.results"
 msgstr "Criterion results"
 
 msgid "plugins.generic.doajPreAssessment.run.snapshot"
-msgstr "Sealed snapshot"
+msgstr "Record integrity"
 
 msgid "plugins.generic.doajPreAssessment.run.statusInRun"
 msgstr "Status in this run"
@@ -567,7 +567,7 @@ msgid "plugins.generic.doajPreAssessment.settings.noRuleSets"
 msgstr "None. No approved DOAJ rule set is installed in this build."
 
 msgid "plugins.generic.doajPreAssessment.settings.ruleSets"
-msgstr "Approved DOAJ rule sets"
+msgstr "Criteria"
 
 msgid "plugins.generic.doajPreAssessment.settings.schema"
 msgstr "Database schema level"
@@ -636,7 +636,7 @@ msgid "plugins.generic.doajPreAssessment.newAssessment.pdf"
 msgstr "PDF text extraction uses the optional external Poppler pdftotext program. On this server:"
 
 msgid "plugins.generic.doajPreAssessment.newAssessment.pdfUnavailable"
-msgstr "not installed. PDF files are still listed, but their text is not read; each one is recorded as a coverage gap (pdf_extractor_unavailable)."
+msgstr "No PDF reader is available. PDF files are still listed, but their text is not read."
 
 msgid "plugins.generic.doajPreAssessment.formGuide.fromRun"
 msgstr "Entries recorded by the latest completed run:"
@@ -645,7 +645,7 @@ msgid "plugins.generic.doajPreAssessment.formGuide.noRun"
 msgstr "No completed run yet. Every question is not yet assessed."
 
 msgid "plugins.generic.doajPreAssessment.formGuide.caption"
-msgstr "DOAJ application form questions FQ-01 to FQ-20"
+msgstr "Questions of the DOAJ application form"
 
 msgid "plugins.generic.doajPreAssessment.formGuide.question"
 msgstr "Question"
@@ -744,10 +744,10 @@ msgid "plugins.generic.doajPreAssessment.run.gaps"
 msgstr "Pages not retrieved"
 
 msgid "plugins.generic.doajPreAssessment.run.languageNotVerified"
-msgstr "Language not verified as English"
+msgstr "Language not confirmed as English"
 
 msgid "plugins.generic.doajPreAssessment.run.languageNote"
-msgstr "These pages were read, but the language check (an advisory heuristic) did not establish English: undetermined, mixed or other language. They are never treated as verified English evidence."
+msgstr "These pages were read, but the language check could not confirm that they are in English (usually because they contain mostly names, titles or lists). Their text is not used as evidence for criteria that need English text."
 
 msgid "plugins.generic.doajPreAssessment.run.limitsHit"
 msgstr "Limits reached"
@@ -759,7 +759,7 @@ msgid "plugins.generic.doajPreAssessment.run.pdfTool"
 msgstr "PDF text tool"
 
 msgid "plugins.generic.doajPreAssessment.run.pdfUnavailable"
-msgstr "PDF text was not read; PDF files are coverage gaps (pdf_extractor_unavailable)."
+msgstr "No PDF reader was available: the text of PDF files was not read."
 
 msgid "plugins.generic.doajPreAssessment.run.assessment"
 msgstr "Assessment framework"
@@ -789,13 +789,13 @@ msgid "plugins.generic.doajPreAssessment.run.items"
 msgstr "excerpts"
 
 msgid "plugins.generic.doajPreAssessment.run.verifiedEnglish"
-msgstr "verified English"
+msgstr "confirmed English"
 
 msgid "plugins.generic.doajPreAssessment.run.provenanceFailures"
-msgstr "failed provenance checks"
+msgstr "quotes that could not be traced back to their page"
 
 msgid "plugins.generic.doajPreAssessment.run.manifest"
-msgstr "crawl manifest verified"
+msgstr "list of pages read is intact"
 
 msgid "plugins.generic.doajPreAssessment.run.diff"
 msgstr "Changes since the previous completed run"
@@ -843,10 +843,10 @@ msgid "plugins.generic.doajPreAssessment.run.candidateModulesHeading"
 msgstr "Modules evaluated as candidates (pending approval)"
 
 msgid "plugins.generic.doajPreAssessment.run.statusCounts"
-msgstr "Machine results"
+msgstr "Results"
 
 msgid "plugins.generic.doajPreAssessment.formGuide.candidate"
-msgstr "These answers come from the candidate profile of the latest completed run. The FQ mapping is pending approval (decision D-03-2). A supported answer quotes verified English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. FQ-08 (keywords) is never answered automatically."
+msgstr "These answers come from the latest completed run with the proposed (not yet approved) question mapping. A supported answer quotes English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. Subject keywords are never chosen automatically."
 
 msgid "plugins.generic.doajPreAssessment.attribution.doaj"
 msgstr "DOAJ text quoted in the results: excerpts, wording unchanged, from the DOAJ Guide to applying, Licensing & copyright and Application form (© DOAJ, CC BY-SA 4.0) and from the Principles of Transparency and Best Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME, CC BY 4.0). DOAJ has not reviewed or endorsed this plugin. Full attribution: NOTICE.md in the plugin package."
@@ -897,7 +897,7 @@ msgid "plugins.generic.doajPreAssessment.reports.saved"
 msgstr "Report generated:"
 
 msgid "plugins.generic.doajPreAssessment.reports.notReady"
-msgstr "A report can be generated only for a completed run whose sealed snapshot verifies."
+msgstr "A report can be generated only for a completed run whose stored record is intact."
 
 msgid "plugins.generic.doajPreAssessment.reports.invalid"
 msgstr "Choose a completed run of this journal and a format (HTML, PDF or DOCX)."
@@ -948,16 +948,73 @@ msgid "plugins.generic.doajPreAssessment.criteria.approvedInstalled"
 msgstr "The criteria below come from the approved dataset (approved by the product owner of this plugin, not by DOAJ), or, for older runs, from candidate, development or test datasets as marked."
 
 msgid "plugins.generic.doajPreAssessment.settings.approvedRuleSet"
-msgstr "(approved by the product owner of this plugin; not a DOAJ rule set)"
+msgstr "Approved criteria, version 1.0.0 (approved by the product owner of this plugin; these are not DOAJ rules)"
 
 msgid "plugins.generic.doajPreAssessment.newAssessment.approvedScope"
 msgstr "The assessment evaluates the approved criteria, and answers the DOAJ Form Guide questions whose mapping was approved; the others are recorded as not yet assessed. Approved rule set:"
 
 msgid "plugins.generic.doajPreAssessment.formGuide.approved"
-msgstr "These answers come from the latest completed run and the approved FQ mapping. A supported answer quotes verified English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. Questions whose mapping was not approved are not answered. Confirm every answer before use in a DOAJ application."
+msgstr "These answers come from the latest completed run. A supported answer quotes English text from the journal website with its address; anything the plugin could not establish is shown as needs verification or not found, never guessed. Questions that this version does not cover are not answered. Check every answer before you use it in a DOAJ application."
 
 msgid "plugins.generic.doajPreAssessment.formGuide.noApprovedRunLabel"
 msgstr "No completed assessment with the approved criteria yet."
 
 msgid "plugins.generic.doajPreAssessment.formGuide.noApprovedRun"
-msgstr "Complete an assessment to view evidence-supported Form Guide assistance. This release covers {$questions} only; the other questions are not assessed."
+msgstr "Complete an assessment to see website-supported answers. This version answers these questions only: {$questions}. The other questions are not assessed."
+
+msgid "plugins.generic.doajPreAssessment.run.pdfBuiltIn"
+msgstr "Built-in PDF reader of the plugin (install pdftotext on the server for the most accurate results)"
+
+msgid "plugins.generic.doajPreAssessment.history.delete"
+msgstr "Delete"
+
+msgid "plugins.generic.doajPreAssessment.history.deleteRun"
+msgstr "Delete"
+
+msgid "plugins.generic.doajPreAssessment.history.deleteConfirm"
+msgstr "Delete run {$number} with all its results, evidence, findings seen only in this run and their corrective actions? This cannot be undone."
+
+msgid "plugins.generic.doajPreAssessment.history.deleteLater"
+msgstr "Delete newer runs first"
+
+msgid "plugins.generic.doajPreAssessment.history.deleteActive"
+msgstr "Cancel the run first"
+
+msgid "plugins.generic.doajPreAssessment.history.deleteAll"
+msgstr "Delete all assessment history"
+
+msgid "plugins.generic.doajPreAssessment.history.deleteAllText"
+msgstr "Deletes every assessment run of this journal, with all results, evidence, findings, corrective actions linked to findings and report files. Corrective actions without a finding are kept. This cannot be undone."
+
+msgid "plugins.generic.doajPreAssessment.history.deleteAllType"
+msgstr "Type DELETE to confirm"
+
+msgid "plugins.generic.doajPreAssessment.history.deleteAllConfirm"
+msgstr "Delete the whole assessment history of this journal? This cannot be undone."
+
+msgid "plugins.generic.doajPreAssessment.history.deleted"
+msgstr "Run {$number} was deleted."
+
+msgid "plugins.generic.doajPreAssessment.history.deletedAll"
+msgstr "{$count} run(s) were deleted."
+
+msgid "plugins.generic.doajPreAssessment.history.error.deleteBlocked"
+msgstr "This run cannot be deleted: it is still active, or a newer run builds on it. Delete the newer runs first."
+
+msgid "plugins.generic.doajPreAssessment.history.error.deleteAllBlocked"
+msgstr "An assessment is still running. Cancel it before deleting the history."
+
+msgid "plugins.generic.doajPreAssessment.history.error.confirmMissing"
+msgstr "Type DELETE to confirm that the whole history should be deleted."
+
+msgid "plugins.generic.doajPreAssessment.history.approvedCriteria"
+msgstr "Approved criteria"
+
+msgid "plugins.generic.doajPreAssessment.common.view"
+msgstr "View"
+
+msgid "plugins.generic.doajPreAssessment.common.viewFinding"
+msgstr "View finding"
+
+msgid "plugins.generic.doajPreAssessment.actions.edit"
+msgstr "Edit"

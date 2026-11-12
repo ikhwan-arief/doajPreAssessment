@@ -12,7 +12,7 @@
 {block name="page"}
 <div lang="en" dir="ltr" class="doajPa__page">
 	{assign var=a value=$doajPaAction}
-	<h1 class="app__pageHeading">{translate key="plugins.generic.doajPreAssessment.actions.action"} A-{$a.action_id|escape}</h1>
+	<h1 class="app__pageHeading">{translate key="plugins.generic.doajPreAssessment.actions.action"}</h1>
 	{include file=$doajPaNav}
 	<div class="app__contentPanel doajPa">
 		{if $doajPaError == 'conflict'}
@@ -21,7 +21,7 @@
 			<p class="doajPa-notice doajPa-notice--error" role="alert"><strong>{translate key="plugins.generic.doajPreAssessment.gate.errorLabel"}</strong> {translate key="plugins.generic.doajPreAssessment.actions.invalid"}</p>
 		{/if}
 		<p class="doajPa-notice doajPa-notice--info">{translate key="plugins.generic.doajPreAssessment.actions.notEvidence"}</p>
-		<p>{translate key="plugins.generic.doajPreAssessment.common.finding"}: {if $a.finding_id}<a href="{url page=$doajPaPage op="finding" path=$a.finding_id}">F-{$a.finding_id|escape}</a>{else}{translate key="plugins.generic.doajPreAssessment.common.none"}{/if}.
+		<p>{translate key="plugins.generic.doajPreAssessment.common.finding"}: {if $a.finding_id}<a href="{url page=$doajPaPage op="finding" path=$a.finding_id}">{translate key="plugins.generic.doajPreAssessment.common.viewFinding"}</a>{else}{translate key="plugins.generic.doajPreAssessment.common.none"}{/if}.
 		{translate key="plugins.generic.doajPreAssessment.actions.lastUpdated"} {$a.updated_at_utc|escape} UTC.</p>
 		{if $doajPaError == 'conflict' || !$doajPaForm}
 			{assign var=v value=['recommendation' => $a.recommendation, 'targetUrl' => $a.target_url, 'ownerText' => $a.owner_text, 'dueDate' => $a.due_date, 'priority' => $a.priority, 'status' => $a.status, 'completionEvidence' => $a.completion_evidence]}
