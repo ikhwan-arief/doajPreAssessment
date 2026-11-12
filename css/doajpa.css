@@ -10,7 +10,7 @@
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-.doajPa__page { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+.doajPa__page { max-width: 100%; min-width: 0; overflow-wrap: break-word; }
 .doajPa__page select, .doajPa__page input, .doajPa__page textarea, .doajPa__page button { max-width: 100%; box-sizing: border-box; }
 .doajPa { overflow-wrap: anywhere; }
 .doajPa h2 { margin-top: 1.5rem; }
@@ -32,6 +32,9 @@
 .doajPa-table caption { text-align: left; font-weight: bold; padding: 0.5rem 0; }
 .doajPa-table th, .doajPa-table td { border: 1px solid #cbd5e1; padding: 0.4rem 0.5rem; text-align: left; vertical-align: top; }
 .doajPa-table thead th { background: #f1f5f9; }
+/* Column headings never split a word; columns widen to their longest heading word (1.2.0.0). */
+.doajPa-table th { overflow-wrap: normal; word-break: normal; hyphens: none; }
+.doajPa-table td { overflow-wrap: break-word; }
 
 .doajPa-badge { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 3px; font-size: 0.875rem; font-weight: bold; color: #1e293b; background: #e2e8f0; border: 1px solid #64748b; }
 .doajPa-badge--open, .doajPa-badge--reopened, .doajPa-badge--fail, .doajPa-badge--failed, .doajPa-badge--contradiction, .doajPa-badge--inaccessible, .doajPa-badge--high { color: #7f1d1d; background: #fee2e2; border-color: #b91c1c; }

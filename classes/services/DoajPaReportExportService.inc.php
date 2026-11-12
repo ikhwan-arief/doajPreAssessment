@@ -57,7 +57,7 @@ class DoajPaReportExportService {
 		}
 		$prev = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))->where('run_id', '=', (int) $run['run_id'])->value('previous_run_id');
 		return array('journal' => $journal, 'run' => $run, 'actions' => DoajPaReadService::actions($contextId), 'quotes' => $quotes,
-			'comparison' => $prev ? DoajPaReadService::compare($contextId, (int) $prev, (int) $run['run_id']) : null, 'formGuide' => $form,
+			'comparison' => $prev && $run['previousRunNumber'] !== null ? DoajPaReadService::compare($contextId, (int) $prev, (int) $run['run_id']) : null, 'formGuide' => $form,
 			'generatedAtUtc' => DoajPaDb::now(), 'generatedBy' => $actor['username'], 'pluginVersion' => (string) $pluginVersion);
 	}
 

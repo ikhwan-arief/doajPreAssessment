@@ -332,10 +332,15 @@ class DoajPaReportPdf {
 				if ($this->width_($try, $bold, $size) <= $width) { $line = $try; continue; }
 				if ($line !== '') $lines[] = $line;
 				$line = '';
-				// A word longer than the line is broken by characters.
-				foreach (preg_split('//u', $word, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
-					if ($line !== '' && $this->width_($line . $ch, $bold, $size) > $width) { $lines[] = $line; $line = ''; }
-					$line .= $ch;
+				// A word longer than the line (usually a URL) is broken after "/", "-", ".", "?", "&" or "=" where possible,
+				// otherwise by characters.
+				foreach (preg_split('/(?<=[\/\-.?&=_])/u', $word, -1, PREG_SPLIT_NO_EMPTY) as $part) {
+					if ($line !== '' && $this->width_($line . $part, $bold, $size) > $width) { $lines[] = $line; $line = ''; }
+					if ($this->width_($part, $bold, $size) <= $width) { $line .= $part; continue; }
+					foreach (preg_split('//u', $part, -1, PREG_SPLIT_NO_EMPTY) as $ch) {
+						if ($line !== '' && $this->width_($line . $ch, $bold, $size) > $width) { $lines[] = $line; $line = ''; }
+						$line .= $ch;
+					}
 				}
 			}
 			$lines[] = $line;

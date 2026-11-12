@@ -99,3 +99,14 @@ doajpa_test('R120 Editorial team: profile-link labels, group headings, country l
 	doajpa_same('Universitas Andalas, Indonesia', $b['people'][0]['affiliation'], 'country joined to the affiliation');
 	doajpa_same('Pacific Coastal University, United States', $b['people'][4]['affiliation'], 'two-word country is not a person');
 });
+
+doajpa_test('R120 Report tables: column widths keep heading words and ordinary cell words whole', function () {
+	require_once __DIR__ . '/../../classes/reports/DoajPaReportModel.inc.php';
+	$sec = array(array('heading' => 'x', 'blocks' => array(array('type' => 'table', 'head' => array('Finding', 'Recommendation', 'Status in this run', 'Result'),
+		'rows' => array(array('A', 'Short', 'Contradiction', 'https://localhost:8445/index.php/jaes/copyright-policy')), 'widths' => array(0.70, 0.05, 0.15, 0.10)))));
+	$w = DoajPaReportModel::fitTables($sec)[0]['blocks'][0]['widths'];
+	doajpa_assert(abs(array_sum($w) - 1) < 0.001, 'widths sum to 1');
+	doajpa_assert($w[1] * 499 >= 14 * 5.2 + 8 - 0.5, '"Recommendation" fits: ' . json_encode($w));
+	doajpa_assert($w[2] * 499 >= 13 * 4.7 + 8 - 0.5, '"Contradiction" fits');
+	doajpa_assert($w[0] > $w[1], 'widths taken from the widest column');
+});

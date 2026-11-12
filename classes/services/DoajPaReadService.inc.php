@@ -56,7 +56,7 @@ class DoajPaReadService {
 	/** @return array Dashboard figures, all from stored records */
 	public static function dashboard($contextId) {
 		$ctx = DoajPaDb::id($contextId, 'context');
-		$runs = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $ctx);
+		$runs = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $ctx)->where('status', '!=', 'deleted');
 		$out = array(
 			'runCount' => (int) (clone $runs)->count(),
 			'completedCount' => (int) (clone $runs)->where('status', '=', 'completed')->count(),
@@ -78,7 +78,7 @@ class DoajPaReadService {
 	/** @return array Runs of the journal, newest first */
 	public static function runs($contextId) {
 		$ctx = DoajPaDb::id($contextId, 'context');
-		$rows = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $ctx)->orderBy('run_number', 'desc')->limit(self::LIST_LIMIT)->get()->all();
+		$rows = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $ctx)->where('status', '!=', 'deleted')->orderBy('run_number', 'desc')->limit(self::LIST_LIMIT)->get()->all();
 		$out = array();
 		foreach ($rows as $row) {
 			$summary = self::runSummary($row, false);
@@ -96,8 +96,10 @@ class DoajPaReadService {
 		$runId = (int) $run->run_id;
 		$detail = self::runSummary($run, true);
 		$detail['acknowledgement'] = self::rowArray(DoajPaDb::table(DoajPaSchema::T_ACK)->where('context_id', '=', $ctx)->where('run_id', '=', $runId)->first());
-		$detail['previousRunNumber'] = $run->previous_run_id === null ? null
-			: DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $ctx)->where('run_id', '=', (int) $run->previous_run_id)->value('run_number');
+		$previous = $run->previous_run_id === null ? null
+			: DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $ctx)->where('run_id', '=', (int) $run->previous_run_id)->first(array('run_number', 'status'));
+		$detail['previousRunNumber'] = $previous && $previous->status !== 'deleted' ? $previous->run_number : null;
+		$detail['previousRunDeleted'] = $previous && $previous->status === 'deleted' ? (int) $previous->run_number : null;
 		$detail['resources'] = self::resources($ctx, $runId);
 		$detail['evidence'] = self::evidence($ctx, $runId);
 		$detail['results'] = self::rowsArray(DoajPaDb::table(DoajPaSchema::T_RESULT . ' as r')

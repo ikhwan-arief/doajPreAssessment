@@ -21,6 +21,8 @@
 			<p class="doajPa-empty">{translate key="plugins.generic.doajPreAssessment.overview.noRuns.text"}</p>
 		{else}
 			<p>{translate key="plugins.generic.doajPreAssessment.history.intro"}</p>
+			<form class="doajPa-form" method="post" action="{url page=$doajPaPage op="runDelete"}" onsubmit="return confirm('{translate key="plugins.generic.doajPreAssessment.history.deleteSelectedConfirm"|escape:"javascript"|escape}');">
+			{csrf}
 			<div class="doajPa-tableWrap">
 			<table class="doajPa-table">
 				<caption>{translate key="plugins.generic.doajPreAssessment.history.caption"}</caption>
@@ -32,7 +34,7 @@
 					<th scope="col">{translate key="plugins.generic.doajPreAssessment.common.executor"}</th>
 					<th scope="col">{translate key="plugins.generic.doajPreAssessment.common.ruleSet"}</th>
 					<th scope="col">{translate key="plugins.generic.doajPreAssessment.history.gaps"}</th>
-					<th scope="col">{translate key="plugins.generic.doajPreAssessment.history.delete"}</th>
+					<th scope="col">{translate key="plugins.generic.doajPreAssessment.history.select"}</th>
 				</tr></thead>
 				<tbody>
 				{foreach from=$doajPaRuns item=r}
@@ -44,17 +46,14 @@
 						<td>{$r.executor_username|escape}</td>
 						<td>{if $r.rulebookApproved}{translate key="plugins.generic.doajPreAssessment.history.approvedCriteria"}{else}{$r.rulebook_version|escape} <span class="doajPa-badge doajPa-badge--failed">{translate key="plugins.generic.doajPreAssessment.common.notApproved"}</span>{/if}</td>
 						<td>{$r.gapCount|escape}</td>
-						<td>{if isset($doajPaDeletable[$r.run_id])}
-							<form class="doajPa-inlineForm" method="post" action="{url page=$doajPaPage op="runDelete" path=$r.run_id}" onsubmit="return confirm('{translate key="plugins.generic.doajPreAssessment.history.deleteConfirm" number=$r.run_number|escape:"javascript"|escape}');">
-								{csrf}
-								<button type="submit" class="pkpButton pkpButton--isWarnable">{translate key="plugins.generic.doajPreAssessment.history.deleteRun"}</button>
-							</form>
-						{else}<span class="doajPa-muted">{if $r.status == 'completed'}{translate key="plugins.generic.doajPreAssessment.history.deleteLater"}{else}{translate key="plugins.generic.doajPreAssessment.history.deleteActive"}{/if}</span>{/if}</td>
+						<td>{if isset($doajPaDeletable[$r.run_id])}<input type="checkbox" name="runIds[]" value="{$r.run_id|escape}" id="doajPaDel{$r.run_id|escape}" /> <label for="doajPaDel{$r.run_id|escape}">{translate key="plugins.generic.doajPreAssessment.history.selectRun" number=$r.run_number|escape}</label>{else}<span class="doajPa-muted">{translate key="plugins.generic.doajPreAssessment.history.deleteActive"}</span>{/if}</td>
 					</tr>
 				{/foreach}
 				</tbody>
 			</table>
 			</div>
+			{if $doajPaDeletable}<p><button type="submit" class="pkpButton pkpButton--isWarnable">{translate key="plugins.generic.doajPreAssessment.history.deleteSelected"}</button></p>{/if}
+			</form>
 
 			<form class="doajPa-form" method="get" action="{url page=$doajPaPage op="compare"}">
 				<fieldset>

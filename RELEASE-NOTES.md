@@ -1,10 +1,26 @@
+# Release Notes — DOAJ Pre-Assessment 1.2.1.0 (production release)
+
+**Release type:** production release. **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner).
+**Target:** OJS 3.3.0-23, PHP 7.3 to 8.2.
+
+**Production release 1.2.1.0: approved criteria only; the candidate profile is disabled.** Changes from 1.2.0.0:
+
+- **Delete any runs, in any order.** Assessment History has a checkbox per run and "Delete selected runs". When a
+  later run refers to a deleted run as its previous run, an empty hidden placeholder keeps the later run's sealed
+  record intact; the later run shows "Run N (deleted)". "Delete all assessment history" is unchanged.
+- **Tidier tables.** Column headings never split a word: on the pages (CSS), in HTML reports (fixed layout) and in
+  PDF/DOCX reports (column widths fitted to the longest heading and cell word). Long URLs in PDF cells break after
+  "/", "-", "." and similar characters instead of in the middle of a word.
+
+---
+
 # Release Notes — DOAJ Pre-Assessment 1.2.0.0 (production release)
 
 **Release type:** production release. **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner), of
 the user-friendliness changes listed below (decisions of 2026-11-13).
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
 
-**Production release 1.2.0.0: approved criteria only; the candidate profile is disabled.** The approved criteria and
+**Release 1.2.0.0: approved criteria only; the candidate profile is disabled.** The approved criteria and
 the question mapping are unchanged; stored (sealed) runs are not modified.
 
 ## New in 1.2.0.0

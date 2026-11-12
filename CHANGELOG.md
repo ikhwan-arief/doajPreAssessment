@@ -4,6 +4,15 @@ All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are de
 candidates; 1.0.0.0 is the first production release. Approved criteria are approved by the product owner of this
 plugin, not by DOAJ.
 
+## [1.2.1.0] - 2026-11-13 (production release; accepted by the product owner)
+
+### Changed
+
+- History deletion: any selection of runs (`runIds[]`), any order; referenced runs become hidden placeholders
+  (status `deleted`) that are removed once nothing refers to them.
+- Tables: headings never break inside a word (UI CSS, HTML report fixed layout, fitted report column widths);
+  PDF cells break long URLs at separators.
+
 ## [1.2.0.0] - 2026-11-13 (production release; accepted by the product owner)
 
 ### Added

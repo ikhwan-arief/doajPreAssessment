@@ -96,7 +96,7 @@ class DoajPaAssessmentRunService {
 			->where('context_id', '=', DoajPaDb::id($contextId, 'context'))
 			->where('run_id', '=', DoajPaDb::id($runId, 'run'))
 			->first();
-		if (!$run) throw new DoajPaNotFoundException('Assessment run not found.');
+		if (!$run || $run->status === 'deleted') throw new DoajPaNotFoundException('Assessment run not found.');
 		return $run;
 	}
 

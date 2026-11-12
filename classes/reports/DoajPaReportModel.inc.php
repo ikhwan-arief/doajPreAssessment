@@ -83,7 +83,7 @@ class DoajPaReportModel {
 			array('Criteria', $approved ? 'Approved criteria, version ' . ($dataset ? $dataset['version'] : $run['rulebook_version']) . ' (approved by the product owner of this plugin, not by DOAJ), based on the DOAJ texts of 10 October 2026'
 				: ($candidate ? 'Proposed criteria (not yet approved)' : 'None: no criteria were evaluated')),
 			array('Record integrity', $run['snapshotVerified'] === true ? 'The stored record of this run was unchanged when the report was generated' : ($run['snapshotVerified'] === false ? 'FAILED: the stored record of this run has changed' : 'Not checked')),
-			array('Previous run', $run['previousRunNumber'] !== null ? 'Run ' . $run['previousRunNumber'] : 'None'),
+			array('Previous run', $run['previousRunNumber'] !== null ? 'Run ' . $run['previousRunNumber'] : (!empty($run['previousRunDeleted']) ? 'Run ' . $run['previousRunDeleted'] . ' (deleted)' : 'None')),
 			array('Report generated (UTC)', (string) $in['generatedAtUtc'] . ' by ' . $in['generatedBy'] . ', plugin ' . $in['pluginVersion'] . ', ' . self::VERSION),
 		);
 		$sections[] = array('heading' => 'Assessment run', 'blocks' => array(array('type' => 'kv', 'rows' => $kv)));
@@ -270,8 +270,44 @@ class DoajPaReportModel {
 			'title' => 'DOAJ Pre-Assessment Report: ' . $in['journal']['name'],
 			'subtitle' => 'Run ' . $run['run_number'] . ', completed ' . $run['completed_at_utc'] . ' UTC' . ($candidate ? ' - candidate criteria, PENDING APPROVAL' : ($approved ? '' : ' - no approved DOAJ rule set')),
 			'fileStem' => 'doaj-preassessment-run-' . (int) $run['run_number'],
-			'sections' => DoajPaHumanText::deep($sections),
+			'sections' => self::fitTables(DoajPaHumanText::deep($sections)),
 		);
+	}
+
+	/**
+	 * Column widths that keep every word of a column heading, and every ordinary word of its cells (not URLs or
+	 * other long tokens), on one line in all three formats (1.2.0.0). Width is estimated for 8 pt bold Helvetica
+	 * on the 499 pt text width of the A4 PDF, the narrowest of the formats.
+	 */
+	public static function fitTables($sections) {
+		foreach ($sections as &$sec) foreach ($sec['blocks'] as &$b) {
+			if ($b['type'] !== 'table' || empty($b['widths'])) continue;
+			$n = count($b['widths']); $min = array_fill(0, $n, 0.0);
+			$measure = function ($text, $bold) {
+				$w = 0;
+				foreach (preg_split('/\s+/u', (string) $text) as $word) {
+					$len = mb_strlen($word, 'UTF-8');
+					if ($len === 0 || $len > 24 || preg_match('#@|^https?:|^www\.#', $word)) continue;
+					$w = max($w, $len * ($bold ? 5.2 : 4.7) + 8);
+				}
+				return $w / 499;
+			};
+			foreach ($b['head'] as $i => $h) if ($i < $n) $min[$i] = max($min[$i], $measure($h, true));
+			foreach ($b['rows'] as $r) foreach ($r as $i => $c) if ($i < $n) $min[$i] = max($min[$i], $measure($c, false));
+			$w = $b['widths'];
+			for ($pass = 0; $pass < 4; $pass++) {
+				$deficit = 0.0;
+				foreach ($w as $i => $x) if ($x < $min[$i]) { $deficit += $min[$i] - $x; $w[$i] = $min[$i]; }
+				if ($deficit <= 0.0001) break;
+				$spare = 0.0;
+				foreach ($w as $i => $x) $spare += max(0.0, $x - $min[$i]);
+				if ($spare <= 0.0) break;
+				foreach ($w as $i => $x) $w[$i] = $x - $deficit * max(0.0, $x - $min[$i]) / $spare;
+			}
+			$sum = array_sum($w);
+			$b['widths'] = array_map(function ($x) use ($sum) { return round($x / $sum, 4); }, $w);
+		}
+		return $sections;
 	}
 
 	/** @return array counts with their keys replaced by labels */

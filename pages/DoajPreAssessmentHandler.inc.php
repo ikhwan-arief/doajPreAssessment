@@ -284,18 +284,22 @@ class DoajPreAssessmentHandler extends Handler {
 		return $this->_renderHistory($request, null, 200);
 	}
 
-	/** Delete one run (POST + CSRF; confirmed in the page). Only runs that no later run builds on (1.2.0.0). */
+	/** Delete the selected runs (POST + CSRF; confirmed in the page), in any order (1.2.0.0). */
 	public function runDelete($args, $request) {
-		$this->_requireGate($request, array());
-		$runId = self::_idArg($args);
+		$this->_requireGate($request, $args);
+		$ids = $request->getUserVar('runIds');
+		if (!is_array($ids) || !$ids || count($ids) > 500) return $this->_renderHistory($request, 'noneSelected', 400);
+		$runIds = array();
+		foreach ($ids as $v) { $id = self::_idValue(is_string($v) ? $v : ''); if (!$id) return $this->_renderHistory($request, 'noneSelected', 400); $runIds[] = $id; }
 		try {
-			$number = DoajPaHistoryDeletionService::deleteRun(self::_contextId($request), $runId, self::_actor($request), (string) Config::getVar('files', 'files_dir'));
+			$numbers = DoajPaHistoryDeletionService::deleteRuns(self::_contextId($request), $runIds, self::_actor($request), (string) Config::getVar('files', 'files_dir'));
 		} catch (DoajPaNotFoundException $e) {
 			DoajPaResponse::notFound();
 		} catch (DoajPaStateException $e) {
 			return $this->_renderHistory($request, 'deleteBlocked', 409);
 		}
-		$request->redirect(null, DoajPreAssessmentPlugin::PAGE, 'history', null, array('deleted' => $number));
+		sort($numbers);
+		$request->redirect(null, DoajPreAssessmentPlugin::PAGE, 'history', null, array('deleted' => implode('-', $numbers)));
 	}
 
 	/** Delete the whole assessment history of the journal (POST + CSRF + typed confirmation). */
@@ -312,7 +316,8 @@ class DoajPreAssessmentHandler extends Handler {
 
 	private function _renderHistory($request, $error, $status) {
 		$contextId = self::_contextId($request);
-		$deleted = self::_idValue($request->getUserVar('deleted'));
+		$deleted = $request->getUserVar('deleted');
+		$deleted = is_string($deleted) && preg_match('/^[1-9][0-9]{0,9}(-[1-9][0-9]{0,9}){0,499}$/', $deleted) ? str_replace('-', ', ', $deleted) : null;
 		$deletedAll = $request->getUserVar('deletedAll');
 		return $this->_render($request, 'history.tpl', 'history', array(
 			'doajPaRuns' => DoajPaReadService::runs($contextId),

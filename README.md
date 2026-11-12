@@ -2,7 +2,7 @@
 
 > **ENGLISH-ONLY JOURNAL CONTENT.** This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. Do not rely on its findings for policies written in other languages. If essential non-English content is encountered, the affected check will be marked Unsupported Language / Needs Verification. This limitation applies to the plugin, not to DOAJ eligibility.
 
-> **Version 1.2.0.0 — production release.** Approved criteria only; the candidate profile is disabled. Plain-language
+> **Version 1.2.1.0 — production release.** Approved criteria only; the candidate profile is disabled. Plain-language
 > interface and reports, a built-in PDF reader, deletion of assessment history and automatic corrective actions.
 > Accepted by the product owner on 2026-11-13. The plugin is **independent of DOAJ**: no result is a DOAJ decision, a
 > compliance claim or a prediction of an application outcome. See `RELEASE-NOTES.md`.
@@ -20,7 +20,7 @@ gaps before applying to the Directory of Open Access Journals (DOAJ).
 - sealed assessment history, with comparisons between runs;
 - HTML, PDF and DOCX reports.
 
-**Scope of 1.2.0.0:** **24 criteria** and the DOAJ Form Guide questions **FQ-07, FQ-08, FQ-15 and FQ-17**. The other
+**Scope of 1.2.1.0:** **24 criteria** and the DOAJ Form Guide questions **FQ-07, FQ-08, FQ-15 and FQ-17**. The other
 113 criteria and 16 questions are not assessed, so a result is never a complete DOAJ eligibility check.
 
 ## Documentation
@@ -86,7 +86,7 @@ All other users are denied, including other site administrators, editors and any
 1. **Verify the archive** against the published SHA-256:
 
    ```sh
-   shasum -a 256 doajPreAssessment-1.2.0.0.tar.gz
+   shasum -a 256 doajPreAssessment-1.2.1.0.tar.gz
    ```
 
    It contains one directory, `doajPreAssessment/`, with `MANIFEST.sha256` listing every file's SHA-256.

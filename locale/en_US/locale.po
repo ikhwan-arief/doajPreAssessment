@@ -369,7 +369,7 @@ msgid "plugins.generic.doajPreAssessment.history.gaps"
 msgstr "Pages not read"
 
 msgid "plugins.generic.doajPreAssessment.history.intro"
-msgstr "Completed runs are sealed and never change. Open a run to see its record, compare two completed runs, or delete runs you no longer need."
+msgstr "Completed runs are sealed and never change. Open a run to see its record, compare two completed runs, or select runs to delete. Any run can be deleted, in any order."
 
 msgid "plugins.generic.doajPreAssessment.nav.actions"
 msgstr "Corrective Actions"
@@ -965,20 +965,12 @@ msgstr "Complete an assessment to see website-supported answers. This version an
 msgid "plugins.generic.doajPreAssessment.run.pdfBuiltIn"
 msgstr "Built-in PDF reader of the plugin (install pdftotext on the server for the most accurate results)"
 
-msgid "plugins.generic.doajPreAssessment.history.delete"
-msgstr "Delete"
 
-msgid "plugins.generic.doajPreAssessment.history.deleteRun"
-msgstr "Delete"
 
-msgid "plugins.generic.doajPreAssessment.history.deleteConfirm"
-msgstr "Delete run {$number} with all its results, evidence, findings seen only in this run and their corrective actions? This cannot be undone."
 
-msgid "plugins.generic.doajPreAssessment.history.deleteLater"
-msgstr "Delete newer runs first"
 
 msgid "plugins.generic.doajPreAssessment.history.deleteActive"
-msgstr "Cancel the run first"
+msgstr "Active: cancel it first"
 
 msgid "plugins.generic.doajPreAssessment.history.deleteAll"
 msgstr "Delete all assessment history"
@@ -993,13 +985,13 @@ msgid "plugins.generic.doajPreAssessment.history.deleteAllConfirm"
 msgstr "Delete the whole assessment history of this journal? This cannot be undone."
 
 msgid "plugins.generic.doajPreAssessment.history.deleted"
-msgstr "Run {$number} was deleted."
+msgstr "Deleted: run {$number}."
 
 msgid "plugins.generic.doajPreAssessment.history.deletedAll"
 msgstr "{$count} run(s) were deleted."
 
 msgid "plugins.generic.doajPreAssessment.history.error.deleteBlocked"
-msgstr "This run cannot be deleted: it is still active, or a newer run builds on it. Delete the newer runs first."
+msgstr "A selected run is still active. Cancel it before deleting it."
 
 msgid "plugins.generic.doajPreAssessment.history.error.deleteAllBlocked"
 msgstr "An assessment is still running. Cancel it before deleting the history."
@@ -1018,3 +1010,21 @@ msgstr "View finding"
 
 msgid "plugins.generic.doajPreAssessment.actions.edit"
 msgstr "Edit"
+
+msgid "plugins.generic.doajPreAssessment.history.select"
+msgstr "Select"
+
+msgid "plugins.generic.doajPreAssessment.history.selectRun"
+msgstr "Run {$number}"
+
+msgid "plugins.generic.doajPreAssessment.history.deleteSelected"
+msgstr "Delete selected runs"
+
+msgid "plugins.generic.doajPreAssessment.history.deleteSelectedConfirm"
+msgstr "Delete the selected runs with all their results, evidence, findings seen only in those runs and their corrective actions? This cannot be undone."
+
+msgid "plugins.generic.doajPreAssessment.history.error.noneSelected"
+msgstr "Select at least one run to delete."
+
+msgid "plugins.generic.doajPreAssessment.run.previousDeleted"
+msgstr "Run {$number} (deleted)"

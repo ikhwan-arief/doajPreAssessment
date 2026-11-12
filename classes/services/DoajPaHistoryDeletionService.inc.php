@@ -7,9 +7,10 @@
  * @brief Deleting assessment history on request (1.2.0.0, product-owner decision 2026-11-13; revises the retention
  *  rule R1.1 "no purge" to: no AUTOMATIC purge; a Journal Manager may delete runs explicitly).
  *
- *  - One run can be deleted when it is not active and no later run refers to it as its previous run (a sealed later
- *    run records that reference in its snapshot, so the newest runs are deleted first). "Delete all" deletes the
- *    runs of the journal from the newest to the oldest.
+ *  - Any run that is not active can be deleted, in any order. When a later run refers to it as its previous run
+ *    (that reference is part of the later run's sealed record), the deleted run keeps an empty, hidden placeholder
+ *    row (status "deleted", no content) so the later record stays intact; the placeholder disappears as soon as no
+ *    run refers to it any more. "Delete all" deletes every run of the journal.
  *  - Everything of the run goes: results, evidence, pages read, form answers, finding observations and transitions,
  *    report files and the private crawl files. Findings seen only in that run are deleted with their corrective
  *    actions; findings seen in other runs fall back to their latest remaining observation.
@@ -25,14 +26,26 @@ require_once(dirname(__FILE__) . '/DoajPaAuditService.inc.php');
 
 class DoajPaHistoryDeletionService {
 
-	/** @return array run_id => true for the runs of a journal that can be deleted now */
+	const DELETED = 'deleted';
+
+	/** @return array run_id => true for the runs of a journal that can be deleted now (every visible, inactive run) */
 	public static function deletableRuns($contextId) {
-		$runs = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))->get(array('run_id', 'status', 'previous_run_id'))->all();
-		$referenced = array();
-		foreach ($runs as $r) if ($r->previous_run_id !== null) $referenced[(int) $r->previous_run_id] = true;
+		$runs = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', DoajPaDb::id($contextId, 'context'))->get(array('run_id', 'status'))->all();
 		$out = array();
-		foreach ($runs as $r) if (!in_array($r->status, DoajPaSchema::RUN_ACTIVE, true) && !isset($referenced[(int) $r->run_id])) $out[(int) $r->run_id] = true;
+		foreach ($runs as $r) if ($r->status !== self::DELETED && !in_array($r->status, DoajPaSchema::RUN_ACTIVE, true)) $out[(int) $r->run_id] = true;
 		return $out;
+	}
+
+	/**
+	 * Delete several runs (newest first, so placeholders are needed only where a kept run refers to a deleted one).
+	 * @return array run numbers deleted
+	 */
+	public static function deleteRuns($contextId, $runIds, $actor, $filesDir) {
+		$ids = array_values(array_unique(array_map(function ($id) { return DoajPaDb::id($id, 'run'); }, $runIds)));
+		rsort($ids);
+		$numbers = array();
+		foreach ($ids as $id) $numbers[] = self::deleteRun($contextId, $id, $actor, $filesDir);
+		return $numbers;
 	}
 
 	/**
@@ -44,11 +57,9 @@ class DoajPaHistoryDeletionService {
 		$runId = DoajPaDb::id($runId, 'run');
 		$runNumber = DoajPaDb::transaction(function () use ($contextId, $runId, $actor) {
 			$run = DoajPaDb::table(DoajPaSchema::T_RUN)->where('run_id', '=', $runId)->where('context_id', '=', $contextId)->lockForUpdate()->first();
-			if (!$run) throw new DoajPaNotFoundException('Assessment run not found.');
+			if (!$run || $run->status === self::DELETED) throw new DoajPaNotFoundException('Assessment run not found.');
 			if (in_array($run->status, DoajPaSchema::RUN_ACTIVE, true)) throw new DoajPaStateException('An active run cannot be deleted; cancel it first.');
-			if (DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $contextId)->where('previous_run_id', '=', $runId)->exists()) {
-				throw new DoajPaStateException('A later run builds on this run; delete the later runs first.');
-			}
+			$referenced = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $contextId)->where('previous_run_id', '=', $runId)->exists();
 			$t = function ($table) use ($contextId) { return DoajPaDb::table($table)->where('context_id', '=', $contextId); };
 			$findingIds = array_map('intval', $t(DoajPaSchema::T_OBSERVATION)->where('run_id', '=', $runId)->pluck('finding_id')->all());
 			$findingIds = array_values(array_unique(array_merge($findingIds,
@@ -64,9 +75,16 @@ class DoajPaHistoryDeletionService {
 			$t(DoajPaSchema::T_EVIDENCE)->where('run_id', '=', $runId)->delete();
 			$t(DoajPaSchema::T_RESOURCE)->where('run_id', '=', $runId)->delete();
 			$t(DoajPaSchema::T_ACK)->where('run_id', '=', $runId)->delete();
-			$t(DoajPaSchema::T_RUN)->where('run_id', '=', $runId)->delete();
+			if ($referenced) {
+				// placeholder: a later sealed run records this run as its previous run
+				$t(DoajPaSchema::T_RUN)->where('run_id', '=', $runId)->update(array('status' => self::DELETED, 'coverage' => null, 'result_counts' => null,
+					'source_scope' => '{}', 'snapshot_digest' => null, 'updated_at_utc' => DoajPaDb::now()));
+			} else {
+				$t(DoajPaSchema::T_RUN)->where('run_id', '=', $runId)->delete();
+				self::dropUnreferencedPlaceholders($contextId);
+			}
 			DoajPaAuditService::record($contextId, 'run_deleted', $actor, null, 'run', $runId,
-				array('runNumber' => (int) $run->run_number, 'status' => (string) $run->status, 'findingsAffected' => count($findingIds)));
+				array('runNumber' => (int) $run->run_number, 'status' => (string) $run->status, 'findingsAffected' => count($findingIds), 'placeholderKept' => $referenced));
 			return (int) $run->run_number;
 		});
 		if (is_string($filesDir) && $filesDir !== '') {
@@ -78,20 +96,32 @@ class DoajPaHistoryDeletionService {
 		return $runNumber;
 	}
 
-	/** Delete every run of the journal, newest first. @return int number of runs deleted */
+	/** Delete every run of the journal. @return int number of runs deleted */
 	public static function deleteAll($contextId, $actor, $filesDir) {
 		$contextId = DoajPaDb::id($contextId, 'context');
 		$runs = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $contextId)->get(array('run_id', 'status'))->all();
 		foreach ($runs as $r) if (in_array($r->status, DoajPaSchema::RUN_ACTIVE, true)) throw new DoajPaStateException('An assessment is still active; cancel it first.');
-		$deleted = 0;
+		$n = count(self::deleteRuns($contextId, array_keys(self::deletableRuns($contextId)), $actor, $filesDir));
+		self::dropUnreferencedPlaceholders($contextId);
+		return $n;
+	}
+
+	/** Remove placeholder rows that no run refers to any more (repeated, because removing one can free another). */
+	private static function dropUnreferencedPlaceholders($contextId) {
 		for ($guard = 0; $guard < 10000; $guard++) {
-			$ids = array_keys(self::deletableRuns($contextId));
-			if (!$ids) break;
-			rsort($ids);
-			self::deleteRun($contextId, $ids[0], $actor, $filesDir);
-			$deleted++;
+			$referenced = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $contextId)->whereNotNull('previous_run_id')->pluck('previous_run_id')->all();
+			$q = DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $contextId)->where('status', '=', self::DELETED);
+			if ($referenced) $q->whereNotIn('run_id', array_map('intval', $referenced));
+			$ids = array_map('intval', $q->pluck('run_id')->all());
+			if (!$ids) return;
+			// a placeholder can still be a finding's first/last run only if the finding was refreshed elsewhere; keep those
+			$used = array_map('intval', array_merge(
+				DoajPaDb::table(DoajPaSchema::T_FINDING)->where('context_id', '=', $contextId)->whereIn('first_run_id', $ids)->pluck('first_run_id')->all(),
+				DoajPaDb::table(DoajPaSchema::T_FINDING)->where('context_id', '=', $contextId)->whereIn('last_run_id', $ids)->pluck('last_run_id')->all()));
+			$ids = array_values(array_diff($ids, $used));
+			if (!$ids) return;
+			DoajPaDb::table(DoajPaSchema::T_RUN)->where('context_id', '=', $contextId)->whereIn('run_id', $ids)->delete();
 		}
-		return $deleted;
 	}
 
 	/** A finding loses the deleted run: delete it if nothing remains, otherwise fall back to its latest observation. */
