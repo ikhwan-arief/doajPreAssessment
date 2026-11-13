@@ -302,8 +302,9 @@ class DoajPaFormGuideBuilder {
 		$amount = array_values(array_filter($apc, function ($x) { return $x['amount'] !== null; }));
 		if ($no && $amount) return $this->verify('Conflicting: ' . self::q($no[0]) . ' and ' . self::q($amount[0]) . '.', $no[0], 'Fee statements conflict across pages.');
 		if ($amount) return $this->supported('Yes: ' . $amount[0]['amount'] . ' ' . self::q($amount[0]) . '.' . $waiver, $amount[0], $w ? '' : 'No waiver statement was found.');
+		// an explicit "no charge" statement outweighs fee words without an amount (often policy wording, not a charge)
+		if ($no) return $this->supported('No: ' . self::q($no[0]) . '.' . $waiver, $no[0], $apc ? 'Fee wording without an amount also appears: ' . self::q($apc[0]) . '; check it is not a charge.' : '');
 		if ($apc) return $this->verify('APC mentioned without an amount: ' . self::q($apc[0]) . '.' . $waiver, $apc[0], 'The amount is not stated.');
-		if ($no) return $this->supported('No: ' . self::q($no[0]) . '.' . $waiver, $no[0]);
 		return $this->notFound('guide.disclosure-author-charges', 'No statement of publication fees was found.');
 	}
 

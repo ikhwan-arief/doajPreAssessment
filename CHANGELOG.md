@@ -4,6 +4,14 @@ All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are de
 candidates; 1.0.0.0 is the first production release. Approved criteria are approved by the product owner of this
 plugin, not by DOAJ.
 
+## [1.3.1.0] - 2026-11-13 (production release; accepted by the product owner)
+
+### Fixed
+
+- AC-08: `DoajPaText::negatedOrMentioned()` (negation before, inside or after the phrase; quoted or introduced
+  mentions). Applied to "All rights reserved" and to fee mentions. Form Guide FQ-18 prefers an explicit no-charge
+  statement over fee words without an amount. Engine `doajpa-checks/4`.
+
 ## [1.3.0.0] - 2026-11-13 (production release; accepted by the product owner)
 
 ### Added

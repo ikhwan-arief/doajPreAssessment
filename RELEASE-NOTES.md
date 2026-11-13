@@ -1,10 +1,28 @@
+# Release Notes — DOAJ Pre-Assessment 1.3.1.0 (production release)
+
+**Release type:** production release (correction). **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner).
+**Target:** OJS 3.3.0-23, PHP 7.3 to 8.2.
+
+**Production release 1.3.1.0: approved criteria only; the candidate profile is disabled.** Corrections of Stage 01
+AC-08 ("negations handled or abstained"); engine `doajpa-checks/4`:
+
+- **"All rights reserved"** counts only where it is applied. A policy sentence that negates or merely mentions it
+  ('The notice "All rights reserved" is not used', 'Instead of All rights reserved, ...') no longer gives a
+  contradiction or a failure.
+- **Fees:** fee words that are negated or incidental ("payment of a publication charge is not a condition",
+  "withdraw without penalty") are no longer read as charges. In the Form Guide, an explicit no-charge statement now
+  answers the publication-fee question, with a note when other fee wording appears.
+- Unit tests use generic wording only (`tests/unit/Release131Test.php`).
+
+---
+
 # Release Notes — DOAJ Pre-Assessment 1.3.0.0 (production release)
 
 **Release type:** production release. **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner), of
 reading published OJS content and of answering all 20 Form Guide questions.
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2.
 
-**Production release 1.3.0.0: approved criteria only; the candidate profile is disabled.** The 24 approved criteria
+**Release 1.3.0.0: approved criteria only; the candidate profile is disabled.** The 24 approved criteria
 are unchanged.
 
 ## New in 1.3.0.0

@@ -71,6 +71,27 @@ class DoajPaText {
 		return preg_match('/\b(no|not|never|without|none|cannot|can\'t|don\'t|doesn\'t|isn\'t|aren\'t|won\'t)\b/i', $text) === 1;
 	}
 
+	/**
+	 * Whether a matched phrase is negated or only mentioned rather than stated (1.3.1.0, AC-08): a negation shortly
+	 * before it, inside it ("without penalty"), or right after it ("... is not used", "is never applied", "is no
+	 * longer used"); or the phrase is in quotation marks / introduced as a phrase, term, notice or wording
+	 * ('the phrase "All rights reserved"'), which talks about the words instead of applying them.
+	 * @param $sentence string
+	 * @param $pos int byte offset of the match
+	 * @param $match string the matched text
+	 */
+	public static function negatedOrMentioned($sentence, $pos, $match) {
+		if (self::negatedAt($sentence, $pos) || self::negatedWithin($match)) return true;
+		$after = substr($sentence, $pos + strlen($match), 60);
+		if (preg_match('/^\W{0,3}\s*(?:\w+\s+){0,3}?(?:is|are|was|were|will|shall|must|should|may|can|would|does|do)?\s*(?:not|never|no longer|n\'t)\b/i', $after)) return true;
+		$before = substr($sentence, max(0, $pos - 2), min(2, $pos));
+		if (preg_match('/["\x{201C}\x{2018}\']\s*$/u', $before) && preg_match('/^["\x{201D}\x{2019}\']/u', $after)) return true;
+		$lead = substr($sentence, max(0, $pos - 40), min(40, $pos));
+		if (preg_match('/\b(?:the\s+)?(?:phrase|words?|term|wording|notice|label|expression|statement)\s*[:"\x{201C}\x{2018}\']?\s*$/iu', $lead)) return true;
+		if (preg_match('/\b(?:instead of|rather than|replace[sd]?|remove[sd]?|avoid(?:s|ed)?|do not use|never use)\b[^.!?]{0,30}$/i', $lead)) return true;
+		return false;
+	}
+
 	/** @return boolean Whether a negation word appears shortly before byte offset $pos in the sentence */
 	public static function negatedAt($sentence, $pos) {
 		$before = substr($sentence, max(0, $pos - 80), min(80, $pos));

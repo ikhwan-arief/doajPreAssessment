@@ -342,6 +342,8 @@ class DoajPaFacts {
 					if (!preg_match($rx, $s, $m, PREG_OFFSET_CAPTURE)) continue;
 					if ($heading && $kind !== 'arr') continue; // "Copyright Notice" is a heading, not copyright terms
 					if ($kind !== 'arr' && $kind !== 'statement' && (DoajPaText::negatedAt($s, $m[0][1]) || DoajPaText::negatedWithin($m[0][0]))) continue;
+					// "All rights reserved" counts only where it is applied, not where a policy says it is not used (AC-08)
+					if ($kind === 'arr' && DoajPaText::negatedOrMentioned($s, $m[0][1], $m[0][0])) continue;
 					$chrome = $e['method'] === 'html_text_extraction' && (!isset($main[$e['resourceId']]) || strpos($main[$e['resourceId']], $s) === false);
 					if ($e['method'] === 'html_text_extraction' && !$chrome) continue; // already found in the main region
 					$out[] = array('kind' => $kind, 'evidence' => $e, 'quote' => DoajPaText::snippet($s, $m[0][1]), 'sentence' => $s, 'chrome' => $chrome);
@@ -390,7 +392,8 @@ class DoajPaFacts {
 				}
 				foreach (self::FEE_TYPES as $type => $rx) {
 					if (!preg_match($rx, $s, $m, PREG_OFFSET_CAPTURE)) continue;
-					if (DoajPaText::negatedAt($s, $m[0][1])) continue;
+					// a negated or merely mentioned fee is not a charge ("... is not funding", "withdraw without penalty")
+					if (DoajPaText::negatedOrMentioned($s, $m[0][1], $m[0][0])) continue;
 					$amount = preg_match(self::AMOUNT, $s, $a) ? trim($a[0]) : null;
 					$out['fees'][] = array('type' => $type, 'amount' => $amount, 'evidence' => $e, 'quote' => DoajPaText::snippet($s, $m[0][1]), 'sentence' => $s);
 				}
