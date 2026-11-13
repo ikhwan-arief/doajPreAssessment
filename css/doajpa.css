@@ -1,75 +1,454 @@
 /**
  * css/doajpa.css
  *
- * DOAJ Pre-Assessment backend styles. Badges always carry a text label; colours meet WCAG 2.1 AA contrast
- * (4.5:1) against their backgrounds. Layout reflows on narrow screens; wide tables scroll inside their wrapper.
- * Note: below about 768 px the OJS 3.3 backend keeps its side menu, leaving the page content a narrow column
- * (about 103 px at 375 px wide, the same for core OJS pages); plugin content must still fit inside it.
+ * DOAJ Pre-Assessment backend styles harmonised with OJS 3.3 pkp-lib theme.
+ * Badges always carry a text label; colours meet WCAG 2.1 AA contrast (4.5:1) against their backgrounds.
+ * Layout reflows on narrow screens; wide tables scroll inside their wrapper.
+ * Matches OJS backend conventions: tabs, notifications, tables, and buttons.
  *
  * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-.doajPa__page { max-width: 100%; min-width: 0; overflow-wrap: break-word; }
-.doajPa__page select, .doajPa__page input, .doajPa__page textarea, .doajPa__page button { max-width: 100%; box-sizing: border-box; }
-.doajPa { overflow-wrap: anywhere; }
-.doajPa h2 { margin-top: 1.5rem; }
 
-.doajPa-nav__list { display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; list-style: none; margin: 0 0 1rem; padding: 0; }
-.doajPa-nav__link { display: inline-block; padding: 0.4rem 0.7rem; border: 1px solid #1d4ed8; border-radius: 4px; color: #1d4ed8; background: #ffffff; text-decoration: none; }
-.doajPa-nav__link[aria-current="page"] { background: #1d4ed8; color: #ffffff; font-weight: bold; }
-.doajPa a:focus, .doajPa-nav__link:focus, .doajPa button:focus, .doajPa input:focus, .doajPa select:focus, .doajPa textarea:focus,
-.doajPa__page a:focus { outline: 3px solid #b45309; outline-offset: 2px; }
+.doajPa__page {
+	max-width: 100%;
+	min-width: 0;
+	overflow-wrap: break-word;
+	font-family: "Noto Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	color: #222222;
+}
 
-.doajPa-notice { border-left: 6px solid #1d4ed8; background: #eff6ff; color: #1e293b; padding: 0.75rem 1rem; margin: 0 0 1rem; }
-.doajPa-notice--warning { border-color: #b45309; background: #fffbeb; }
-.doajPa-notice--error { border-color: #b91c1c; background: #fef2f2; }
-.doajPa-notice--success { border-color: #15803d; background: #f0fdf4; }
-.doajPa-empty { padding: 1rem; border: 1px dashed #64748b; }
+.doajPa__page select,
+.doajPa__page input,
+.doajPa__page textarea,
+.doajPa__page button {
+	max-width: 100%;
+	box-sizing: border-box;
+}
 
-.doajPa-tableWrap { overflow-x: auto; margin: 0 0 1rem; }
-.doajPa-table { border-collapse: collapse; width: 100%; min-width: 32rem; }
-.doajPa-table caption { text-align: left; font-weight: bold; padding: 0.5rem 0; }
-.doajPa-table th, .doajPa-table td { border: 1px solid #cbd5e1; padding: 0.4rem 0.5rem; text-align: left; vertical-align: top; }
-.doajPa-table thead th { background: #f1f5f9; }
+.doajPa {
+	overflow-wrap: anywhere;
+}
+
+.doajPa h2 {
+	margin-top: 1.5rem;
+	margin-bottom: 0.75rem;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: #002c40;
+}
+
+.doajPa h3 {
+	font-size: 1.1rem;
+	font-weight: 700;
+	color: #002c40;
+}
+
+/* ==========================================================================
+   Navigation Tabs (harmonised with OJS .pkpTabs / .ui-tabs-nav)
+   ========================================================================== */
+.doajPa-nav {
+	margin-bottom: 1.5rem;
+}
+
+.doajPa-nav__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem 0.35rem;
+	list-style: none;
+	margin: 0 0 1rem;
+	padding: 0;
+	border-bottom: 1px solid #ddd;
+}
+
+.doajPa-nav__link {
+	position: relative;
+	display: inline-block;
+	padding: 0.5rem 0.9rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+	line-height: 1.4;
+	color: #006798;
+	background: #eaedee;
+	border: 1px solid #ddd;
+	border-bottom: none;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+	text-decoration: none;
+	transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.doajPa-nav__link:before {
+	content: '';
+	position: absolute;
+	top: -1px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 25%;
+	height: 2px;
+	background: transparent;
+	transition: all 0.2s ease;
+}
+
+.doajPa-nav__link:hover {
+	color: #008acb;
+	background: #f4f6f7;
+	text-decoration: none;
+}
+
+.doajPa-nav__link:hover:before {
+	background: #008acb;
+	width: 100%;
+}
+
+.doajPa-nav__link[aria-current="page"] {
+	background: #ffffff;
+	color: #222222;
+	font-weight: 700;
+	border-color: #ddd;
+	border-bottom: 1px solid #ffffff;
+	margin-bottom: -1px;
+}
+
+.doajPa-nav__link[aria-current="page"]:before {
+	background: #006798;
+	width: 100%;
+	border-top-left-radius: 3px;
+	border-top-right-radius: 3px;
+}
+
+.doajPa a:focus,
+.doajPa-nav__link:focus,
+.doajPa button:focus,
+.doajPa input:focus,
+.doajPa select:focus,
+.doajPa textarea:focus,
+.doajPa__page a:focus {
+	outline: 3px solid #b45309;
+	outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Notices & Callouts (harmonised with OJS pkp_notification / callouts)
+   ========================================================================== */
+.doajPa-notice {
+	border-left: 4px solid #006798;
+	background: #e8f3f8;
+	color: #002c40;
+	padding: 0.75rem 1rem;
+	margin: 0 0 1rem;
+	border-radius: 0 3px 3px 0;
+	font-size: 0.875rem;
+	line-height: 1.5;
+}
+
+.doajPa-notice--warning {
+	border-color: #b45309;
+	background: #fffbeb;
+	color: #78350f;
+}
+
+.doajPa-notice--error {
+	border-color: #d00a0a;
+	background: #fef2f2;
+	color: #7f1d1d;
+}
+
+.doajPa-notice--success {
+	border-color: #00b24e;
+	background: #f0fdf4;
+	color: #14532d;
+}
+
+.doajPa-empty {
+	padding: 1.25rem;
+	background: #f8fafc;
+	border: 1px dashed #bbb;
+	border-radius: 3px;
+	color: #555555;
+}
+
+/* ==========================================================================
+   Tables & Data Grids (harmonised with OJS .pkpTable / data grids)
+   ========================================================================== */
+.doajPa-tableWrap {
+	overflow-x: auto;
+	margin: 0 0 1.25rem;
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	background: #ffffff;
+}
+
+.doajPa-table {
+	border-collapse: collapse;
+	width: 100%;
+	min-width: 32rem;
+	font-size: 0.875rem;
+}
+
+.doajPa-table caption {
+	text-align: left;
+	font-weight: 700;
+	padding: 0.65rem 0.75rem;
+	color: #002c40;
+	background: #eaedee;
+	border-bottom: 1px solid #ddd;
+}
+
+.doajPa-table th,
+.doajPa-table td {
+	border: 1px solid #e5e7eb;
+	padding: 0.5rem 0.75rem;
+	text-align: left;
+	vertical-align: top;
+	line-height: 1.45;
+}
+
+.doajPa-table thead th {
+	background: #f4f6f7;
+	color: #002c40;
+	font-weight: 700;
+	border-bottom: 1px solid #cbd5e1;
+}
+
+.doajPa-table tbody tr:hover td {
+	background-color: #fcfdfe;
+}
+
 /* Column headings never split a word; columns widen to their longest heading word (1.2.0.0). */
-.doajPa-table th { overflow-wrap: normal; word-break: normal; hyphens: none; }
-.doajPa-table td { overflow-wrap: break-word; }
+.doajPa-table th {
+	overflow-wrap: normal;
+	word-break: normal;
+	hyphens: none;
+}
 
-.doajPa-badge { display: inline-block; padding: 0.1rem 0.45rem; border-radius: 3px; font-size: 0.875rem; font-weight: bold; color: #1e293b; background: #e2e8f0; border: 1px solid #64748b; }
-.doajPa-badge--open, .doajPa-badge--reopened, .doajPa-badge--fail, .doajPa-badge--failed, .doajPa-badge--contradiction, .doajPa-badge--inaccessible, .doajPa-badge--high { color: #7f1d1d; background: #fee2e2; border-color: #b91c1c; }
-.doajPa-badge--not_implemented, .doajPa-badge--candidate, .doajPa-badge--candidate_pending_approval, .doajPa-badge--not_yet_assessed, .doajPa-badge--still_open, .doajPa-badge--warning, .doajPa-badge--needs_verification, .doajPa-badge--unverifiable, .doajPa-badge--not_found, .doajPa-badge--parse_failed, .doajPa-badge--interrupted, .doajPa-badge--changed { color: #78350f; background: #fef3c7; border-color: #b45309; }
-.doajPa-badge--resolved_verified, .doajPa-badge--verified, .doajPa-badge--retrieved, .doajPa-badge--completed, .doajPa-badge--pass, .doajPa-badge--done_pending_verification { color: #14532d; background: #dcfce7; border-color: #15803d; }
+.doajPa-table td {
+	overflow-wrap: break-word;
+}
 
-.doajPa-quote { margin: 0.5rem 0 1rem; padding: 0.5rem 1rem; border-left: 4px solid #64748b; background: #f8fafc; white-space: pre-wrap; }
-.doajPa-url { word-break: break-all; }
-.doajPa-digest, .doajPa-details { word-break: break-all; font-size: 0.8rem; }
-.doajPa-counts { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
-.doajPa-timeline > li { margin-bottom: 1rem; }
-.doajPa-crosscheck { margin-top: 1rem; }
-.doajPa-crosscheck__label { font-weight: bold; }
-.doajPa-criterion { border-top: 1px solid #cbd5e1; padding-top: 0.5rem; }
+/* ==========================================================================
+   Badges (harmonised with OJS .pkpBadge)
+   ========================================================================== */
+.doajPa-badge {
+	display: inline-block;
+	padding: 0.15rem 0.5rem;
+	border-radius: 3px;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	line-height: 1.2;
+	color: #1e293b;
+	background: #e2e8f0;
+	border: 1px solid #94a3b8;
+	white-space: nowrap;
+}
 
-.doajPa-form fieldset { border: 1px solid #cbd5e1; padding: 0.75rem; }
-.doajPa-field { margin-bottom: 0.75rem; }
-.doajPa-field label { display: block; font-weight: bold; margin-bottom: 0.25rem; }
-.doajPa-field input[type="text"], .doajPa-field input[type="url"], .doajPa-field textarea, .doajPa-field select { width: 100%; max-width: 40rem; box-sizing: border-box; }
-.doajPa-help { font-size: 0.875rem; color: #334155; margin: 0.25rem 0 0; }
+.doajPa-badge--open,
+.doajPa-badge--reopened,
+.doajPa-badge--fail,
+.doajPa-badge--failed,
+.doajPa-badge--contradiction,
+.doajPa-badge--inaccessible,
+.doajPa-badge--high {
+	color: #7f1d1d;
+	background: #fee2e2;
+	border-color: #d00a0a;
+}
 
-.doajPa-visuallyHidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.doajPa-badge--not_implemented,
+.doajPa-badge--candidate,
+.doajPa-badge--candidate_pending_approval,
+.doajPa-badge--not_yet_assessed,
+.doajPa-badge--still_open,
+.doajPa-badge--warning,
+.doajPa-badge--needs_verification,
+.doajPa-badge--unverifiable,
+.doajPa-badge--not_found,
+.doajPa-badge--parse_failed,
+.doajPa-badge--interrupted,
+.doajPa-badge--changed {
+	color: #78350f;
+	background: #fef3c7;
+	border-color: #b45309;
+}
+
+.doajPa-badge--resolved_verified,
+.doajPa-badge--verified,
+.doajPa-badge--retrieved,
+.doajPa-badge--completed,
+.doajPa-badge--pass,
+.doajPa-badge--done_pending_verification {
+	color: #14532d;
+	background: #dcfce7;
+	border-color: #00b24e;
+}
+
+/* ==========================================================================
+   Forms, Quotes, and Fieldsets (harmonised with OJS .pkp_form)
+   ========================================================================== */
+.doajPa-quote {
+	margin: 0.5rem 0 1rem;
+	padding: 0.5rem 1rem;
+	border-left: 4px solid #006798;
+	background: #f8fafc;
+	white-space: pre-wrap;
+	border-radius: 0 3px 3px 0;
+	font-size: 0.875rem;
+}
+
+.doajPa-url {
+	word-break: break-all;
+	color: #006798;
+}
+
+.doajPa-digest,
+.doajPa-details {
+	word-break: break-all;
+	font-size: 0.8rem;
+}
+
+.doajPa-counts {
+	list-style: none;
+	padding: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1rem;
+}
+
+.doajPa-timeline > li {
+	margin-bottom: 1rem;
+}
+
+.doajPa-crosscheck {
+	margin-top: 1rem;
+}
+
+.doajPa-crosscheck__label {
+	font-weight: 700;
+	color: #002c40;
+}
+
+.doajPa-criterion {
+	border-top: 1px solid #ddd;
+	padding-top: 0.75rem;
+}
+
+.doajPa-form fieldset {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1rem;
+	background: #ffffff;
+	margin-bottom: 1.25rem;
+}
+
+.doajPa-field {
+	margin-bottom: 0.9rem;
+}
+
+.doajPa-field label {
+	display: block;
+	font-weight: 700;
+	margin-bottom: 0.35rem;
+	color: #222222;
+}
+
+.doajPa-field input[type="text"],
+.doajPa-field input[type="url"],
+.doajPa-field input[type="date"],
+.doajPa-field textarea,
+.doajPa-field select {
+	width: 100%;
+	max-width: 40rem;
+	box-sizing: border-box;
+	border: 1px solid #bbb;
+	border-radius: 2px;
+	padding: 0.4rem 0.5rem;
+	font-size: 0.875rem;
+	font-family: inherit;
+	background: #ffffff;
+}
+
+.doajPa-field input:focus,
+.doajPa-field textarea:focus,
+.doajPa-field select:focus {
+	border-color: #006798;
+	outline: 2px solid #006798;
+	outline-offset: 1px;
+}
+
+.doajPa-help {
+	font-size: 0.8125rem;
+	color: #555555;
+	margin: 0.25rem 0 0;
+	line-height: 1.4;
+}
+
+.doajPa-visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip: rect(0 0 0 0);
+	white-space: nowrap;
+}
 
 @media (max-width: 40rem) {
-	.doajPa-nav__list { flex-direction: column; }
-	.doajPa-nav__link { display: block; padding: 0.3rem 0.4rem; overflow-wrap: anywhere; }
-	.doajPa-table { min-width: 0; }
+	.doajPa-nav__list {
+		flex-direction: column;
+		border-bottom: none;
+	}
+	.doajPa-nav__link {
+		display: block;
+		padding: 0.4rem 0.6rem;
+		overflow-wrap: anywhere;
+		border-radius: 3px;
+		border-bottom: 1px solid #ddd;
+	}
+	.doajPa-nav__link[aria-current="page"] {
+		margin-bottom: 0;
+	}
+	.doajPa-table {
+		min-width: 0;
+	}
 }
 
 /* Stage 04: Before You Apply groups, action rows, report form */
-.doajPa-group { margin: 1.5rem 0; }
-.doajPa-group h2 { overflow-wrap: anywhere; }
-.doajPa-actionRow { margin: 0 0 0.5rem; }
-.doajPa-form--inline { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin: 0.5rem 0 1rem; }
-.doajPa-form--inline select { max-width: 100%; }
-.doajPa-choice { display: block; margin: 0.25rem 0; }
-.doajPa-list li { margin: 0 0 0.4rem; overflow-wrap: anywhere; }
-.doajPa-meta { color: #555; font-size: 0.875rem; overflow-wrap: anywhere; }
+.doajPa-group {
+	margin: 1.5rem 0;
+}
+
+.doajPa-group h2 {
+	overflow-wrap: anywhere;
+}
+
+.doajPa-actionRow {
+	margin: 0 0 0.5rem;
+}
+
+.doajPa-form--inline {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0.5rem 0 1rem;
+}
+
+.doajPa-form--inline select {
+	max-width: 100%;
+}
+
+.doajPa-choice {
+	display: block;
+	margin: 0.25rem 0;
+}
+
+.doajPa-list li {
+	margin: 0 0 0.4rem;
+	overflow-wrap: anywhere;
+}
+
+.doajPa-meta {
+	color: #555555;
+	font-size: 0.875rem;
+	overflow-wrap: anywhere;
+}
