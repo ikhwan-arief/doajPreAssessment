@@ -1,9 +1,23 @@
+# Release Notes — DOAJ Pre-Assessment 1.3.2.0 (production release)
+
+**Release type:** production release (correction). **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner).
+**Target:** OJS 3.3.0-23, PHP 7.3 to 8.2.
+
+**Production release 1.3.2.0: approved criteria only; the candidate profile is disabled.** Engine `doajpa-checks/5`:
+
+- **Zero APC.** "No APC", "No publication fee", "No fee" and fees stated as zero, free or none ("APC: 0",
+  "APC: USD 0.00", "Publication fee: Rp 0,-", "APC: Free", "APCs: none") are read as no charge, also when they stand
+  alone on a short line. A zero fee of one kind ("Submission fee: 0") covers only that kind.
+- **Short fee lines with an amount** ("APC: USD 500") are read as charges; before, they were skipped as headings.
+
+---
+
 # Release Notes — DOAJ Pre-Assessment 1.3.1.0 (production release)
 
 **Release type:** production release (correction). **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner).
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2.
 
-**Production release 1.3.1.0: approved criteria only; the candidate profile is disabled.** Corrections of Stage 01
+**Release 1.3.1.0: approved criteria only; the candidate profile is disabled.** Corrections of Stage 01
 AC-08 ("negations handled or abstained"); engine `doajpa-checks/4`:
 
 - **"All rights reserved"** counts only where it is applied. A policy sentence that negates or merely mentions it

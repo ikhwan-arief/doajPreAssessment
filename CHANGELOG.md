@@ -4,6 +4,13 @@ All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are de
 candidates; 1.0.0.0 is the first production release. Approved criteria are approved by the product owner of this
 plugin, not by DOAJ.
 
+## [1.3.2.0] - 2026-11-13 (production release; accepted by the product owner)
+
+### Fixed
+
+- Fees: `DoajPaFacts::ZERO_FEE`; "No APC"/"No fee" and zero/free/none fees are no-charge statements, also on
+  heading-like lines; heading-like lines with an amount are charges. Engine `doajpa-checks/5`.
+
 ## [1.3.1.0] - 2026-11-13 (production release; accepted by the product owner)
 
 ### Fixed

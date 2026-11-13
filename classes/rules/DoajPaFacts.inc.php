@@ -368,6 +368,8 @@ class DoajPaFacts {
 		'withdrawal' => '/\bwithdraw(?:al|ing)?\b[^.!?\n]{0,40}\b(?:fees?|charges?|penalty)\b/i',
 	);
 	const NO_FEE = '/\b(?:no|without|free of)\s+(?:any\s+)?(?:article processing charges?|APCs?|publication (?:fees?|charges?)|submission (?:fees?|charges?)|charges?|fees?|author(?:\'s)? (?:fees?|charges?)|costs? (?:to|for) (?:the )?authors?)\b|\bdoes not charge\b|\b(?:do|will) not charge\b|\bnot charge (?:any|authors)\b|\bfree of charge\b|\bno (?:cost|charge) to (?:the )?authors?\b|\b(?:fees?|charges?|APCs?)\b[^.!?\n]{0,30}\b(?:is|are)\s+(?:free|waived for all|zero|0)\b/i';
+	/** A fee stated as zero, free or none ("APC: 0", "APC: USD 0.00", "Publication fee: Rp 0,-", "APC: Free", "APCs: none"). */
+	const ZERO_FEE = '/\b(?:article processing (?:charges?|fees?)|APCs?|publication (?:fees?|charges?)|publishing (?:fees?|charges?)|submission (?:fees?|charges?)|author (?:fees?|charges?)|fees?|charges?)\b\s*(?:\([^)]{0,30}\)\s*)?(?:is|are|:|=|-|\x{2013}|amounts? to|of)?\s*(?:(?:USD|US\$|\$|EUR|\x{20AC}|GBP|\x{00A3}|IDR|Rp\.?|INR|\x{20B9}|MYR|RM|NGN|\x{20A6})\s?)?(?:0+(?:[.,]0+)?(?![.,]?\d)(?:\s?,-)?(?:\s?(?:USD|EUR|IDR|INR|MYR|NGN|rupiah))?|zero\b|nil\b|none\b|free\b)/iu';
 	const AMOUNT = '/(?:USD|US\$|\$|EUR|\x{20AC}|GBP|\x{00A3}|IDR|Rp\.?|INR|\x{20B9}|MYR|RM|NGN|\x{20A6}|CAD|AUD|CHF|JPY|\x{00A5}|CNY|TRY|BRL|R\$)\s?\d[\d.,]*|\d[\d.,]*\s?(?:USD|EUR|GBP|IDR|INR|MYR|NGN|CAD|AUD|CHF|TRY|BRL|dollars|euros|rupiah)\b/iu';
 
 	/**
@@ -382,14 +384,16 @@ class DoajPaFacts {
 		$out['items'] = $items;
 		foreach ($items as $e) {
 			foreach (DoajPaText::sentences($e['quote']) as $s) {
-				if (DoajPaText::headingLike($s)) continue; // "Article Processing Charges" as a heading states nothing
-				if (preg_match(self::NO_FEE, $s, $m, PREG_OFFSET_CAPTURE)) {
+				// "No APC", "APC: 0" and "APC: Free" are zero fees, also as short heading-like lines (1.3.2.0)
+				if (preg_match(self::NO_FEE, $s, $m, PREG_OFFSET_CAPTURE) || preg_match(self::ZERO_FEE, $s, $m, PREG_OFFSET_CAPTURE)) {
 					// Scope: the fee types the statement names ("no submission fee"), or all charges ("does not charge any fees").
 					$scope = array();
 					foreach (self::FEE_TYPES as $type => $rx) if (preg_match($rx, $m[0][0])) $scope[] = $type;
 					$out['noFee'][] = array('evidence' => $e, 'quote' => DoajPaText::snippet($s, $m[0][1]), 'sentence' => $s, 'scope' => $scope ?: array('all'));
 					continue;
 				}
+				// "Article Processing Charges" as a heading states nothing, unless the line also states an amount ("APC: USD 500")
+				if (DoajPaText::headingLike($s) && !preg_match(self::AMOUNT, $s)) continue;
 				foreach (self::FEE_TYPES as $type => $rx) {
 					if (!preg_match($rx, $s, $m, PREG_OFFSET_CAPTURE)) continue;
 					// a negated or merely mentioned fee is not a charge ("... is not funding", "withdraw without penalty")
