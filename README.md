@@ -14,12 +14,44 @@ DOAJ Pre-Assessment is a generic plugin for Open Journal Systems (OJS) 3.3. It r
 evaluates it with deterministic rules against criteria approved for this plugin, and helps the journal correct
 gaps before applying to the Directory of Open Access Journals (DOAJ).
 
-**What it produces:**
-- findings with verbatim evidence;
-- a Before You Apply list of corrections by page;
-- a corrective action register;
-- sealed assessment history, with comparisons between runs;
-- HTML, PDF and DOCX reports.
+## Key Features
+
+1. **Deterministic Assessment Engine (No AI / No Hallucinations)**
+   - Operates strictly on deterministic heuristics, exact pattern matching, and rulebook criteria approved by the product owner.
+   - Extracts verbatim textual quotes from published journal pages and policies as auditable evidence.
+
+2. **Dual-Source Evidence Extraction**
+   - **Public Website Crawl**: Crawls public journal policy pages, editorial boards, author guidelines, indexing notices, and announcement sections.
+   - **Internal OJS Database Inspection**: Directly inspects journal settings, custom/static pages, sections, and published issues/articles.
+
+3. **Built-in Document & PDF Processing**
+   - Built-in PDF reader for parsing and analyzing full-text article galleys and guidelines.
+   - Optional external integration with Poppler `pdftotext` for environments requiring high-volume legacy PDF extraction.
+
+4. **DOAJ Form Guide Mapping & Questions**
+   - Answers DOAJ application questions (including Form Guide questions FQ-07, FQ-08, FQ-15, and FQ-17) backed by verified quotes and page references.
+
+5. **Actionable "Before You Apply" Matrix**
+   - Groups identified gaps, warnings, and contradictions by the exact page where corrections need to be made.
+   - Provides verbatim corrective recommendations citing official DOAJ requirements.
+
+6. **Accountable Corrective Action Register**
+   - Built-in task tracking for editorial teams: assign findings to team members, set due dates, track priority levels, and record completion evidence.
+
+7. **Tamper-Evident Assessment History & Diff Comparisons**
+   - Sealed, immutable assessment run history with SHA-256 snapshot hashes.
+   - Interactive side-by-side run comparisons to track improvements, resolved issues, and newly introduced gaps across editorial cycles.
+
+8. **Multi-Format Export Reports**
+   - Generate self-contained, audit-ready reports in **HTML**, **PDF** (with embedded DejaVu Sans fonts for full multilingual Unicode support), and **DOCX** (standard WordprocessingML).
+
+9. **Seamless OJS 3.3 Backend Theme Integration**
+   - Native integration with OJS backend tabs (`.pkpTabs`), data tables, notices, and modal forms.
+   - Fully accessible design conforming to WCAG 2.1 AA contrast requirements and complete keyboard navigability.
+
+10. **Pre-Production Staging Mode & Strict Access Control**
+    - Secure staging mode allowing journals on private/staging domains (or local Docker containers) to run pre-assessments before public launch.
+    - Strict role authorization restricted strictly to the primary Site Administrator (User ID 1) and Journal Managers in their own journal.
 
 **Scope of 1.3.2.0:** **24 criteria** and the DOAJ Form Guide questions **FQ-07, FQ-08, FQ-15 and FQ-17**. The other
 113 criteria and 16 questions are not assessed, so a result is never a complete DOAJ eligibility check.
