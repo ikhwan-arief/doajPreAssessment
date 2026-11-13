@@ -10,7 +10,7 @@
  *  Since 1.2.0.0 (product-owner decision 2026-11-13) a completed run creates one "Planned" action for every open
  *  finding that has no action yet, prefilled with the run's recommended correction, page and suggested priority.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

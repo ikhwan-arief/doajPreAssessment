@@ -16,7 +16,7 @@
  * Pre-production mode (since 1.1.0.0): an optional DoajPaPreProductionPolicy, enabled by the administrator in
  * config.inc.php, allows the journal's own origin on a loopback/private address (see that class).
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

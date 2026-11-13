@@ -24,7 +24,7 @@ Tested on OJS 3.3.0-23 with PHP 7.3 and 8.2:
    default). That gives HTTP 500 with "Undefined constant DoajPaSchema::…" or a similar missing class or method.
    - **Do this:** upgrade or roll back when nobody is using the plugin. Then reload PHP before anyone uses it:
      `apache2ctl -k graceful` for Apache with mod_php, or restart PHP-FPM.
-   - **Measured on OJS 3.3.0-23** (`tests/integration/opcache_window_0601.py`, 20 file replacements per PHP version
+   - **Measured on OJS 3.3.0-23** (internal integration test, 20 file replacements per PHP version
      under continuous load; `package_0208` checks U00 and B00):
      - every error ended within 0.6 s of the start of the copy, during the copy or within the OPcache interval after it;
      - errors occurred in every trial on PHP 8.2 with OPcache, and in 6–9 of 20 trials on PHP 7.3 without OPcache;

@@ -7,7 +7,7 @@
  * @brief English text labels for stored status codes. Every badge shows its text label, never colour
  *  alone (Stage 01 F5). The plugin interface is English-only (PROD-04).
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

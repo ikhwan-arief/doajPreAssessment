@@ -10,7 +10,7 @@
  *  - resolve(): RFC 3986 section 5.2 reference resolution;
  *  - key(): deduplication key (DoajPaFindingKey::normalizeUrl form) - never used as the URL to fetch.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

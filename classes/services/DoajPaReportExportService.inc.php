@@ -10,7 +10,7 @@
  *  (HTML, PDF or DOCX, all from the same DoajPaReportModel) into the private reports directory and records it;
  *  file() returns an export for a guarded download after checking journal, run and the file's SHA-256.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

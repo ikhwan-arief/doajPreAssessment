@@ -32,6 +32,11 @@ FORBIDDEN_PATHS = re.compile(r"(^|/)(tests|tools|docs|dist|build|vendor|node_mod
                              r"DevPrivateAllowance|TestFixtureRules|\.DS_Store|~$|\.(orig|rej|bak|swp|sql|dump|env|zip|tar|tgz|gz|phar|sh|py|exe|so|dylib)$|"
                              r"(^|/)pdftotext", re.I)
 FORBIDDEN_CONTENT = [rb"-----BEGIN [A-Z ]*PRIVATE KEY"]
+# Local test-stack passwords are listed in an untracked file (one literal per line), so they are checked without
+# being published in this repository.
+_local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "forbidden-content.local")
+if os.path.exists(_local):
+    FORBIDDEN_CONTENT += [re.escape(l.strip()).encode() for l in open(_local, encoding="utf-8") if l.strip() and not l.startswith("#")]
 SWITCH = b"I-UNDERSTAND-THIS-IS-A-TEST-STACK"  # the loader's comparison constant; allowed in the loader only
 WARNING = ("ENGLISH-ONLY JOURNAL CONTENT. This plugin evaluates only publicly accessible English-language journal websites. "
            "It uses deterministic rules, not Artificial Intelligence or automatic translation.")
@@ -40,11 +45,11 @@ FONTS = {"classes/reports/fonts/DejaVuSans.ttf": "57f73e11f51999432bf7ab22ce55b6
          "classes/reports/fonts/DejaVuSans-Bold.ttf": "a4c5bc453ca281d90ea079e596da7ae0dfeb5777497c29ec254e76d97ff6f890"}
 FONT_LICENCE = "classes/reports/fonts/LICENSE-DejaVu.txt"
 GPL3_SHA256 = "3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986"  # FSF text of GPL v3, 29 June 2007
-COPYRIGHT = "Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>"
+COPYRIGHT = "Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)"
 DATASET = "classes/rules/data/DoajPaCandidateDataset.inc.php"
 APPROVED = "classes/rules/data/DoajPaApprovedDataset.inc.php"
 SYNTHETIC = b"SYNTHETIC-TEST-NOT-AN-APPROVAL"
-RELEASE_PHRASE = "Production release 1.3.2.0: approved criteria only; the candidate profile is disabled"
+RELEASE_PHRASE = "Production release 1.3.3.0: approved criteria only; the candidate profile is disabled"
 results = []
 
 
@@ -121,7 +126,7 @@ licence = sorted(n for n in files if re.search(r"(^|/)(LICEN[CS]E|COPYING)(\.|$)
 notice = " ".join(files.get("NOTICE.md", b"").decode().split())
 check("D07", "Licence (D7): LICENSE is the verbatim GNU GPL v3 text; NOTICE.md: copyright holder, GPL-3.0-or-later, separate CC BY-SA 4.0 licence and attribution of the DOAJ-derived dataset; no other licence file",
       licence == ["LICENSE"] and hashlib.sha256(files.get("LICENSE", b"")).hexdigest() == GPL3_SHA256
-      and all(t in notice for t in ("Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>", "either version 3 of the License, or (at your option) any later version", "GPL-3.0-or-later",
+      and all(t in notice for t in ("Copyright © 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)", "either version 3 of the License, or (at your option) any later version", "GPL-3.0-or-later",
                                     "classes/rules/data/DoajPaCandidateDataset.inc.php", APPROVED, "CC BY-SA 4.0", "https://creativecommons.org/licenses/by-sa/4.0/",
                                     "COPE, DOAJ, OASPA, WAME", "https://creativecommons.org/licenses/by/4.0/", "Changes made", "No endorsement")),
       {"licenceFiles": licence, "licenceSha256": hashlib.sha256(files.get("LICENSE", b"")).hexdigest()[:16]})

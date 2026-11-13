@@ -25,7 +25,7 @@
  *  "unverifiable". Verified-clear items need verified-English evidence and an outcome without downgrades;
  *  otherwise they are dropped, so the finding becomes "needs verification", never "resolved".
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

@@ -8,7 +8,7 @@
  *  Every sentence or snippet returned is a verbatim substring of the evidence text, so DoajPaOutcomeGuard can verify
  *  quotes. Patterns are bounded (no nested unbounded quantifiers) and inputs are capped at the extractor limits.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

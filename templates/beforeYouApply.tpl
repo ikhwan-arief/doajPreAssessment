@@ -4,7 +4,7 @@
  * Before You Apply (Stage 01 F7 item 4, AC-14): corrections of one completed run, grouped by the website page to
  * correct, with the accountable corrective-action rows of each finding. Unverifiable items are listed separately.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  *}

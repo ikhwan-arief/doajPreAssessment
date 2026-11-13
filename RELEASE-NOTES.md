@@ -1,9 +1,24 @@
+# Release Notes — DOAJ Pre-Assessment 1.3.3.0 (production release)
+
+**Release type:** production release (maintenance). **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner).
+**Target:** OJS 3.3.0-23, PHP 7.3 to 8.2.
+
+**Production release 1.3.3.0: approved criteria only; the candidate profile is disabled.** No change to the
+assessment, the criteria or the data.
+
+- The developer's e-mail in copyright headers is written as `ikhwan[at]unand.ac.id`.
+- The public repository contains the plugin, the user and administrator guides, the unit tests and the build tools.
+  Internal project records (stage reports, approval package, criteria sources, integration tests and test-stack
+  scripts) are kept privately.
+
+---
+
 # Release Notes — DOAJ Pre-Assessment 1.3.2.0 (production release)
 
 **Release type:** production release (correction). **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner).
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2.
 
-**Production release 1.3.2.0: approved criteria only; the candidate profile is disabled.** Engine `doajpa-checks/5`:
+**Release 1.3.2.0: approved criteria only; the candidate profile is disabled.** Engine `doajpa-checks/5`:
 
 - **Zero APC.** "No APC", "No publication fee", "No fee" and fees stated as zero, free or none ("APC: 0",
   "APC: USD 0.00", "Publication fee: Rp 0,-", "APC: Free", "APCs: none") are read as no charge, also when they stand
@@ -147,7 +162,7 @@ the tested release candidate `v0.10.0.0-rc3`. Version 1.0.0.0 is that accepted b
 The assessment, security and data logic are unchanged. Technical testing and an independent security audit are
 complete.
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2. OJS 3.4 and 3.5 are not supported.
-**Licence:** GPL-3.0-or-later (plugin code), Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>. The DOAJ-derived
+**Licence:** GPL-3.0-or-later (plugin code), Copyright © 2026 Ikhwan Arief (ikhwan[at]unand.ac.id). The DOAJ-derived
 reference material is licensed separately (CC BY-SA 4.0), and the PDF report fonts (DejaVu Sans) are under the
 Bitstream Vera/Arev licence. Attribution is in `NOTICE.md`.
 
@@ -164,7 +179,7 @@ eligibility or acceptance.
 
 - Everything in 0.9.0.0 (tag `v0.9.0.0-rc1`, archive SHA-256 `a69f1b91a1c25a1eb99328302e8c9c4a050ff399bc87b4ff2c1c9646e1920c7a`).
 - **Approved criteria dataset 1.0.0**, written by `tools/apply-approval.py` from the signed approval record
-  (`docs/stage05/normative-approval-package/signed/`): the criteria of the first activation wave and the approved
+  (internal record, not published): the criteria of the first activation wave and the approved
   FQ mapping rows, unchanged from the reviewed dataset 0.1.0-draft. They are registered as version 2 of the same
   criterion lineage, so stored candidate results are never mixed with approved ones.
 - The default assessment profile evaluates the approved criteria; the Form Guide answers only the questions whose
@@ -205,7 +220,7 @@ eligibility or acceptance.
 - **Coverage:** every later change up to 1.0.0.0 was reviewed the same way.
 - **Results:** no Critical or High findings. One Low finding (only the root administrator, user ID 1, is admitted as
   site administrator) is the specified behaviour.
-- **Reports:** `docs/stage05/independent-audit/` in the source repository.
+- **Reports:** kept as internal records (not published).
 
 **Not included in this release:** deployment and publication. Both need the product owner's separate authorization.
 

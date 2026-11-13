@@ -4,7 +4,7 @@
 
 DOAJ Pre-Assessment, a generic plugin for Open Journal Systems 3.3
 
-Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+Copyright © 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public
 License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later

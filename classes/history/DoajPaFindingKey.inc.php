@@ -10,7 +10,7 @@
  * The lineage is the first criterion version whose findings remain comparable. An incompatible criterion
  * change starts a new lineage, so its findings get new IDs and the old ones become "superseded".
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

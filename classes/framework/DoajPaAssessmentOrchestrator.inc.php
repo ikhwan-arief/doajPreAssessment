@@ -27,7 +27,7 @@
  * are labelled as candidate, and the report states "Not a DOAJ assessment result". The test entry points (startForTests, advanceForTests) work only on the command line, only for runs created
  * with TEST_RULEBOOK, and only with rules whose dataset starts with TEST_DATASET_PREFIX.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

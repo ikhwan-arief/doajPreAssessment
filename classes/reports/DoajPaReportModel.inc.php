@@ -14,7 +14,7 @@
  *    {type: notice, text} | {type: p, text} | {type: kv, rows: [[label, value]]} | {type: list, items: [text]}
  *    | {type: table, head: [text], rows: [[text]], widths: [fraction]} | {type: subheading, text}
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

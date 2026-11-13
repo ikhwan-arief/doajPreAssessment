@@ -16,3 +16,25 @@ tests/output/
 
 # Python bytecode
 __pycache__/
+
+# Internal records and tooling (kept locally, not published)
+docs/stage01/
+docs/stage02/
+docs/stage03/
+docs/stage04/
+docs/stage05/
+docs/documentation-verification.md
+docs/release-1.0.0.0-report.md
+tests/integration/
+tests/crawler/
+tests/db/
+tests/package/
+tests/qa/
+tests/stage05/
+tests/stage03/*
+!tests/stage03/fixtures/
+tests/stage03/fixtures/*
+!tests/stage03/fixtures/sites.json
+tools/runtime/
+tools/apply-approval.py
+tools/forbidden-content.local

@@ -8,7 +8,7 @@
  *  Unicode-to-glyph lookup (cmap formats 4 and 12), advance widths (hmtx) and the font descriptor values (head, hhea,
  *  OS/2, post). Pure; reads only the given file; no third-party code. Used by DoajPaReportPdf for readable Unicode text.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

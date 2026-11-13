@@ -47,7 +47,7 @@ They are in the source repository under `docs/user-guide/` and `docs/administrat
 
 ## Licence
 
-**Plugin code:** GPL-3.0-or-later, Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>.
+**Plugin code:** GPL-3.0-or-later, Copyright © 2026 Ikhwan Arief (ikhwan[at]unand.ac.id).
 
 **DOAJ-derived material:** the criteria text quoted from DOAJ and from the Principles of Transparency and Best
 Practice is licensed separately under CC BY-SA 4.0, with attribution in `NOTICE.md`.

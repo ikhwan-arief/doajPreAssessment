@@ -7,7 +7,7 @@
  * @brief Append-only record of English-only acknowledgements (PROD-05). Per-run acknowledgements are
  *  written by DoajPaAssessmentRunService::createDraftRun(); this class records the first-use gate.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

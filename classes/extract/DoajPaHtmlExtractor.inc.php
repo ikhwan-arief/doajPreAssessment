@@ -15,7 +15,7 @@
  *  facts that rules can quote: citation and Dublin Core metadata, the issue table of contents (section, title,
  *  authors, link), Creative Commons links, language-switch links, image alternative texts and the site name.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

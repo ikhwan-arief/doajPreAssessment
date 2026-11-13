@@ -7,7 +7,7 @@
  * @brief Deterministic page type from the OJS 3.3 public URL pattern (path relative to the journal).
  *  The type only guides crawling order and later rule lookup; it is never evidence of content.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

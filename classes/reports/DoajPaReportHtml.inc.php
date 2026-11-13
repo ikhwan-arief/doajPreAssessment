@@ -7,7 +7,7 @@
  * @brief Renders a report model (DoajPaReportModel) as one self-contained HTML document: every text escaped, no script,
  *  no external resource (a restrictive Content-Security-Policy), A4 print layout. Pure; deterministic for a model.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

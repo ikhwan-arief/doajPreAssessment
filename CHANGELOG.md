@@ -4,6 +4,13 @@ All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are de
 candidates; 1.0.0.0 is the first production release. Approved criteria are approved by the product owner of this
 plugin, not by DOAJ.
 
+## [1.3.3.0] - 2026-11-13 (production release; accepted by the product owner)
+
+### Changed
+
+- Copyright headers: `Ikhwan Arief (ikhwan[at]unand.ac.id)`. Internal records removed from the public repository
+  (kept locally); test-stack passwords checked from an untracked local list (`tools/forbidden-content.local`).
+
 ## [1.3.2.0] - 2026-11-13 (production release; accepted by the product owner)
 
 ### Fixed

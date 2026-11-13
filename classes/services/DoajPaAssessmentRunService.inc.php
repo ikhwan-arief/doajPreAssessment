@@ -16,7 +16,7 @@
  *    run with a SHA-256 snapshot digest. A completed run is never modified again;
  *  - all multi-row writes, and their audit events, happen in one transaction.
  *
- * Copyright (c) 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+ * Copyright (c) 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  */

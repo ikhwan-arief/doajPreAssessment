@@ -2,7 +2,7 @@
 
 > **ENGLISH-ONLY JOURNAL CONTENT.** This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. Do not rely on its findings for policies written in other languages. If essential non-English content is encountered, the affected check will be marked Unsupported Language / Needs Verification. This limitation applies to the plugin, not to DOAJ eligibility.
 
-> **Version 1.3.2.0 — production release.** Reads the published content of the OJS database as well as the website;
+> **Version 1.3.3.0 — production release.** Reads the published content of the OJS database as well as the website;
 > all 20 DOAJ Form Guide questions are answered. Approved criteria only; the candidate profile is disabled. Plain-language
 > interface and reports, a built-in PDF reader, deletion of assessment history and automatic corrective actions.
 > Accepted by the product owner on 2026-11-13. The plugin is **independent of DOAJ**: no result is a DOAJ decision, a
@@ -53,7 +53,7 @@ gaps before applying to the Directory of Open Access Journals (DOAJ).
     - Secure staging mode allowing journals on private/staging domains (or local Docker containers) to run pre-assessments before public launch.
     - Strict role authorization restricted strictly to the primary Site Administrator (User ID 1) and Journal Managers in their own journal.
 
-**Scope of 1.3.2.0:** **24 criteria** and the DOAJ Form Guide questions **FQ-07, FQ-08, FQ-15 and FQ-17**. The other
+**Scope of 1.3.3.0:** **24 criteria** and the DOAJ Form Guide questions **FQ-07, FQ-08, FQ-15 and FQ-17**. The other
 113 criteria and 16 questions are not assessed, so a result is never a complete DOAJ eligibility check.
 
 ## Documentation
@@ -119,7 +119,7 @@ All other users are denied, including other site administrators, editors and any
 1. **Verify the archive** against the published SHA-256:
 
    ```sh
-   shasum -a 256 doajPreAssessment-1.3.2.0.tar.gz
+   shasum -a 256 doajPreAssessment-1.3.3.0.tar.gz
    ```
 
    It contains one directory, `doajPreAssessment/`, with `MANIFEST.sha256` listing every file's SHA-256.
@@ -179,7 +179,7 @@ The plugin has no data purge.
 
 ## License and Copyright
 
-Copyright © 2026 Ikhwan Arief <ikhwan@unand.ac.id>
+Copyright © 2026 Ikhwan Arief (ikhwan[at]unand.ac.id)
 
 **Plugin code:** free software under the GNU General Public License, version 3 or (at your option) any later version
 (GPL-3.0-or-later). The full text is in `LICENSE`.
