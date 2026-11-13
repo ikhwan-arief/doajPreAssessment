@@ -7,4 +7,4 @@
  * Distributed under the GNU General Public License, version 3 or later. See the files LICENSE and NOTICE.md.
  * SPDX-License-Identifier: GPL-3.0-or-later
  *}
-{if $url === 'journal'}{'journal'|doajpa_code|escape}{else}{if $isLink}<a href="{$url|escape}" target="_blank" rel="noopener noreferrer nofollow" class="doajPa-url">{$url|escape}</a>{else}<span class="doajPa-url">{$url|escape}</span>{/if}{/if}
+{if $url === 'journal'}{'journal'|doajpa_code|escape}{else}{if $isLink}<a href="{$url|escape}" target="_blank" rel="noopener noreferrer nofollow" class="doajPa-url">{$url|doajpa_url|escape}</a>{else}<span class="doajPa-url">{$url|doajpa_url|escape}</span>{/if}{/if}

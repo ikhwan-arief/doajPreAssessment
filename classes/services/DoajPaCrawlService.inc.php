@@ -33,6 +33,7 @@ require_once(dirname(__FILE__) . '/../crawler/DoajPaCrawlScope.inc.php');
 require_once(dirname(__FILE__) . '/../crawler/DoajPaRobots.inc.php');
 require_once(dirname(__FILE__) . '/../crawler/DoajPaHttpFetcher.inc.php');
 require_once(dirname(__FILE__) . '/../crawler/DoajPaPreProductionPolicy.inc.php');
+require_once(dirname(__FILE__) . '/../crawler/DoajPaBackendSource.inc.php');
 require_once(dirname(__FILE__) . '/../crawler/DoajPaPageClassifier.inc.php');
 require_once(dirname(__FILE__) . '/../extract/DoajPaHtmlExtractor.inc.php');
 require_once(dirname(__FILE__) . '/../extract/DoajPaPdfExtractor.inc.php');
@@ -160,6 +161,10 @@ class DoajPaCrawlService {
 			if (!$state['queue'] || isset($state['limitsHit']['maxPages']) || isset($state['limitsHit']['maxSeconds'])) {
 				if ($state['queue']) foreach ($state['queue'] as $left) self::skip($state, $left['u'], 'not_fetched_limit_reached', $left['from']);
 				$state['queue'] = array();
+				if (empty($state['backendDone'])) {
+					self::ingestBackend($contextId, $runId, $actor, $state, $scope);
+					$state['backendDone'] = true;
+				}
 				self::finish($contextId, $runId, $actor, $state, $dir);
 			}
 			self::saveState($dir, $state);
@@ -186,15 +191,24 @@ class DoajPaCrawlService {
 	// Internals
 	//
 
-	private static function process($contextId, $runId, $actor, &$state, $scope, $fetcher, $item) {
+	/**
+	 * Fetch one page and store it; or, with $given, store a page read from the OJS database (1.3.0.0) through the same
+	 * extraction and language check, without fetching and without following its links.
+	 */
+	private static function process($contextId, $runId, $actor, &$state, $scope, $fetcher, $item, $given = null) {
 		$type = DoajPaPageClassifier::classify($scope->relativePath($item['u']));
 		$isFile = in_array($type, array('file', 'issue_file', 'galley'), true);
-		$res = $fetcher->fetch($item['u'], $isFile ? $state['limits']['maxPdfBytes'] : $state['limits']['maxHtmlBytes']);
-		$state['counts']['fetched']++;
-		if ($type === 'issue') $state['counts']['issues']++;
-		if ($type === 'article') $state['counts']['articles']++;
-		if ($isFile) $state['counts']['files']++;
-		if ($res['devException']) self::recordDevException($contextId, $runId, $actor, $res['devHosts'], $state, $res['preProduction']);
+		if ($given !== null) {
+			$res = $given;
+			$state['backendCount'] = (isset($state['backendCount']) ? $state['backendCount'] : 0) + 1;
+		} else {
+			$res = $fetcher->fetch($item['u'], $isFile ? $state['limits']['maxPdfBytes'] : $state['limits']['maxHtmlBytes']);
+			$state['counts']['fetched']++;
+			if ($type === 'issue') $state['counts']['issues']++;
+			if ($type === 'article') $state['counts']['articles']++;
+			if ($isFile) $state['counts']['files']++;
+			if ($res['devException']) self::recordDevException($contextId, $runId, $actor, $res['devHosts'], $state, $res['preProduction']);
+		}
 
 		$acq = 'inaccessible'; $reason = null; $kind = null; $text = ''; $title = null; $extractNote = null; $language = null; $links = array();
 		$mainText = ''; $mainRegion = null; $structured = array();
@@ -279,8 +293,40 @@ class DoajPaCrawlService {
 			'mainRegion' => $mainRegion, 'mainWords' => $mainText === '' ? 0 : preg_match_all('/\p{L}+/u', $mainText),
 			'language' => $language === null ? null : array('verdict' => $language['verdict'], 'detected' => $language['detected'], 'words' => $language['words'], 'attr' => $language['langAttribute']));
 
-		if ($kind === 'html' && $links && $item['d'] < $state['limits']['maxDepth']) {
+		if ($given === null && $kind === 'html' && $links && $item['d'] < $state['limits']['maxDepth']) {
 			foreach ($links as $link) self::enqueue($state, $scope, $link['url'], $item['d'] + 1, $res['finalUrl'], $link['location'], $link['text'], $link['href']);
+		}
+	}
+
+	/**
+	 * Add the published content of the OJS database as pages (1.3.0.0). A failure here never stops the run: the
+	 * assessment then rests on the website only, and the reason is noted.
+	 */
+	private static function ingestBackend($contextId, $runId, $actor, &$state, $scope) {
+		$state['backendCount'] = 0;
+		try {
+			$pages = DoajPaBackendSource::pages($contextId, $state['homepage']);
+		} catch (\Throwable $e) {
+			$state['notes'][] = 'ojs_backend_unavailable: ' . get_class($e);
+			return;
+		}
+		$crawled = array();
+		foreach ($state['resources'] as $r) {
+			if ($r['acquisition'] !== 'retrieved' || DoajPaBackendSource::sourceOf($r['url']) !== null) continue;
+			try { $crawled[DoajPaFindingKey::normalizeUrl(preg_replace('/[?#].*$/', '', $r['finalUrl'] ?: $r['url']))] = (int) $r['depth']; } catch (\Throwable $e) {}
+		}
+		foreach ($pages as $p) {
+			$public = rtrim($state['homepage'], '/') . '/' . $p['path'];
+			try { $key = DoajPaFindingKey::normalizeUrl($public); } catch (\Throwable $e) { continue; }
+			$linked = isset($crawled[$key]);
+			$url = DoajPaBackendSource::markedUrl($state['homepage'], $p['path'], $linked);
+			if ($scope->reason($url) !== null || DoajPaAssessmentRunService::hasCrawlResource($contextId, $runId, $url)) continue;
+			$body = $p['html'];
+			$res = array('requestedUrl' => $url, 'finalUrl' => $url, 'status' => 200, 'mediaType' => 'text/html', 'charset' => 'utf-8', 'body' => $body,
+				'bytes' => strlen($body), 'sha256' => hash('sha256', $body), 'error' => null, 'errorDetail' => null, 'hops' => array(),
+				'devException' => false, 'preProduction' => false, 'devHosts' => array(), 'primaryIp' => null, 'fetchedAtUtc' => gmdate('Y-m-d H:i:s'));
+			$item = array('u' => $url, 'from' => 'ojs-backend', 't' => $p['title'], 'd' => $linked ? $crawled[$key] : 99);
+			self::process($contextId, $runId, $actor, $state, $scope, null, $item, $res);
 		}
 	}
 
@@ -380,6 +426,7 @@ class DoajPaCrawlService {
 		$coverage = array('manifestSha256' => hash('sha256', $json), 'homepage' => $state['homepage'], 'limits' => $state['limits'],
 			'limitsHit' => $manifest['limitsHit'], 'robots' => $state['robots']['status'], 'pdfTool' => $state['pdfTool'], 'extractor' => $state['extractor'],
 			'devExceptionUsed' => $state['devException'], 'preProductionMode' => !empty($state['preProduction']),
+			'backendPages' => isset($state['backendCount']) ? (int) $state['backendCount'] : 0, 'backendSource' => DoajPaBackendSource::VERSION,
 			'counts' => $state['counts'], 'statusCounts' => $state['statusCounts'],
 			'typeCounts' => $state['typeCounts'], 'skippedCounts' => $state['skippedCounts'], 'languageCounts' => self::languageCounts($state['resources']),
 			'crawlSeconds' => isset($state['elapsed']) ? round($state['elapsed'], 1) : null, 'startedAtUtc' => $state['startedAtUtc'],

@@ -28,7 +28,7 @@ class DoajPaReportModel {
 	const NOT_OFFICIAL = 'This is an internal quality-improvement report produced by the DOAJ Pre-Assessment plugin. It is not a DOAJ decision, not an application to DOAJ and not a prediction of the outcome of an application. Only DOAJ is authorized to make official decisions on journal applications.';
 	const PRE_PRODUCTION = 'PRE-PRODUCTION MODE. This run read the journal website on a private or loopback network address, as enabled by the server administrator, before the website is published on its production server. The results describe that non-public copy of the website, not the public journal website. Run the assessment again on the public website after installation.';
 	const ENGLISH_ONLY = 'ENGLISH-ONLY JOURNAL CONTENT. This plugin evaluates only publicly accessible English-language journal websites. It uses deterministic rules, not Artificial Intelligence or automatic translation. This limitation applies to the plugin, not to DOAJ eligibility: DOAJ accepts qualifying journals published in any language.';
-	const METHOD = 'The plugin read the public pages of the journal website (HTML pages and public PDF files) in one bounded crawl, stored them as evidence and evaluated them with deterministic rules: curated English patterns, verbatim quotes, date and ISSN checks and cross-page comparisons. It does not read OJS private data, editorial workflows or submissions, and it makes no external registry lookups. A result is "unverifiable" when the relevant pages could not be read as verified English text or the crawl was incomplete; an unread page is never treated as a missing fact.';
+	const METHOD = 'The plugin read the public pages of the journal website (HTML pages and public PDF files) in one bounded crawl, and the published content of the OJS database (journal settings, custom and static pages, published issues and articles; marked "from the OJS database"), stored them as evidence and evaluated them with deterministic rules: curated English patterns, verbatim quotes, date and ISSN checks and cross-page comparisons. It does not read unpublished OJS data, editorial workflows, reviews or submissions, and it makes no external registry lookups. A result is "unverifiable" when the relevant pages could not be read as verified English text or the crawl was incomplete; an unread page is never treated as a missing fact.';
 	const ATTRIBUTION = 'DOAJ text quoted in the results: excerpts, wording unchanged, from the DOAJ Guide to applying, Licensing & copyright and Application form (© DOAJ, CC BY-SA 4.0, https://creativecommons.org/licenses/by-sa/4.0/) and from the Principles of Transparency and Best Practice in Scholarly Publishing (COPE, DOAJ, OASPA, WAME, CC BY 4.0, https://creativecommons.org/licenses/by/4.0/). DOAJ has not reviewed or endorsed this plugin.';
 	const REFERENCES = array(
 		array('DOAJ Guide to applying (primary reference)', 'https://doaj.org/apply/guide/'),
@@ -99,7 +99,7 @@ class DoajPaReportModel {
 		ksort($byStatus);
 		$m = array(array('type' => 'p', 'text' => self::METHOD));
 		$m[] = array('type' => 'kv', 'rows' => array(
-			array('Pages and files recorded', (string) count($resources)),
+			array('Pages and files recorded', (string) count($resources) . (!empty($coverage['backendPages']) ? ' (' . (int) $coverage['backendPages'] . ' of them read from the OJS database)' : '')),
 			array('Read and confirmed as English', (string) $read),
 			array('Not read, or not confirmed as English', (string) count($notRead)),
 			array('All pages by status', self::pairs(self::labelled($byStatus, self::ACQUISITION))),
@@ -110,7 +110,7 @@ class DoajPaReportModel {
 		));
 		if ($notRead) {
 			$rows = array();
-			foreach (array_slice($notRead, 0, self::MAX_GAPS) as $r) $rows[] = array((string) $r['url'],
+			foreach (array_slice($notRead, 0, self::MAX_GAPS) as $r) $rows[] = array(DoajPaHumanText::url((string) $r['url']),
 				isset(self::ACQUISITION[$r['acquisition_status']]) ? self::ACQUISITION[$r['acquisition_status']] : (string) $r['acquisition_status'], DoajPaHumanText::reason($r['skip_reason']));
 			$m[] = array('type' => 'subheading', 'text' => 'Pages not read, or not confirmed as English (their text was not used as evidence)');
 			$m[] = array('type' => 'table', 'head' => array('Page', 'Status', 'Reason'), 'rows' => $rows, 'widths' => array(0.55, 0.15, 0.30));
@@ -151,7 +151,7 @@ class DoajPaReportModel {
 			});
 			$rows = array();
 			foreach ($results as $r) {
-				$evidence = $r['source_url'] ? $r['source_url'] : '';
+				$evidence = $r['source_url'] ? DoajPaHumanText::url($r['source_url']) : '';
 				if ($r['evidence_id'] !== null && isset($in['quotes'][(int) $r['evidence_id']]) && $in['quotes'][(int) $r['evidence_id']] !== '') {
 					$evidence .= ($evidence !== '' ? ' ' : '') . '(evidence ' . $r['evidence_id'] . ')';
 				}

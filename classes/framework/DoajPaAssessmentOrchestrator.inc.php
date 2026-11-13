@@ -74,6 +74,8 @@ class DoajPaAssessmentOrchestrator {
 	const DISCLAIMER = 'Not a DOAJ assessment result. No approved DOAJ rule set was applied; this run records website coverage and evidence only.';
 	const CANDIDATE_DISCLAIMER = 'Not a DOAJ assessment result. Candidate criteria (dataset 0.1.0-draft, PENDING APPROVAL) were applied for internal testing only; they are not approved DOAJ rules, and no result is a compliance claim.';
 	const APPROVED_DISCLAIMER = 'Pre-assessment with the criteria approved by the product owner of this plugin. It is independent of DOAJ: the criteria are not DOAJ rules, DOAJ has not reviewed or endorsed this plugin, and no result is a DOAJ decision, a compliance claim or a prediction of an application outcome. A human must verify every result.';
+	/** Product-owner decision 2026-11-13 (1.3.0.0): all 20 Form Guide questions use the reviewed mapping 0.1.0. */
+	const FQ_LABEL_ALL = 'Answer from the DOAJ Form Guide mapping approved by the product owner of this plugin on 2026-11-13 (all 20 questions); confirm before use in a DOAJ application.';
 	const FQ_NOT_APPROVED = 'Not yet assessed. The mapping of this question was not approved, so no answer is given or inferred.';
 	/** Stage 03 modules evaluated by the candidate profile (PENDING APPROVAL). */
 	const CANDIDATE_MODULES = array('endogeny', 'publication_history_dates', 'licensing_consistency', 'indexer_claims', 'doaj_criteria', 'form_guide');
@@ -414,8 +416,8 @@ class DoajPaAssessmentOrchestrator {
 			$guarded = array();
 			foreach ($records as $record) $guarded[$record['rule']->key()] = $record['outcome'];
 			if ($approvedRun) require_once(dirname(__FILE__) . '/../rules/data/DoajPaApprovedDataset.inc.php');
-			$data = $approvedRun ? DoajPaApprovedDataset::data() : DoajPaCandidateDataset::data();
-			$builder = $approvedRun ? new DoajPaFormGuideBuilder(DoajPaFacts::of($context), $guarded, $data['fqMapping'], DoajPaApprovedDataset::FQ_LABEL, self::FQ_NOT_APPROVED)
+			$data = DoajPaCandidateDataset::data(); // the reviewed mapping of all 20 questions (approved for answers on 2026-11-13)
+			$builder = $approvedRun ? new DoajPaFormGuideBuilder(DoajPaFacts::of($context), $guarded, $data['fqMapping'], self::FQ_LABEL_ALL, self::FQ_NOT_APPROVED)
 				: new DoajPaFormGuideBuilder(DoajPaFacts::of($context), $guarded, $data['fqMapping']);
 			$formAnswers = $builder->build();
 			$evaluation['formGuide'] = $formAnswers;

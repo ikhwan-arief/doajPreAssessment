@@ -26,7 +26,7 @@ require_once(dirname(__FILE__) . '/DoajPaAddressGuard.inc.php');
 class DoajPaHttpFetcher {
 
 	const MAX_REDIRECTS = 5;
-	const USER_AGENT = 'DOAJPreAssessment/1.2 (OJS plugin; journal self-assessment)';
+	const USER_AGENT = 'DOAJPreAssessment/1.3 (OJS plugin; journal self-assessment)';
 
 	/** @var DoajPaAddressGuard */
 	private $_guard;

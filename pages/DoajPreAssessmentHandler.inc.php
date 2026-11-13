@@ -630,7 +630,7 @@ class DoajPreAssessmentHandler extends Handler {
 		$pluginVersion = self::$_plugin->getCurrentVersion();
 		// Plain-language display (1.2.0.0): stored codes stay unchanged; the page shows names and sentences.
 		foreach (array('doajpa_criterion' => array('DoajPaHumanText', 'criterion'), 'doajpa_question' => array('DoajPaHumanText', 'question'),
-			'doajpa_reason' => array('DoajPaHumanText', 'reason'), 'doajpa_code' => array('DoajPaHumanText', 'code')) as $name => $callable) {
+			'doajpa_reason' => array('DoajPaHumanText', 'reason'), 'doajpa_code' => array('DoajPaHumanText', 'code'), 'doajpa_url' => array('DoajPaHumanText', 'url')) as $name => $callable) {
 			if (!isset($templateMgr->registered_plugins['modifier'][$name])) $templateMgr->registerPlugin('modifier', $name, $callable);
 		}
 		$vars = DoajPaHumanText::deep($vars);

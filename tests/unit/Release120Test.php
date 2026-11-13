@@ -6,6 +6,7 @@
 require_once __DIR__ . '/../../classes/ui/DoajPaHumanText.inc.php';
 require_once __DIR__ . '/../../classes/extract/DoajPaPdfTextReader.inc.php';
 require_once __DIR__ . '/../../classes/crawler/DoajPaCrawlScope.inc.php';
+require_once __DIR__ . '/../../classes/crawler/DoajPaPageClassifier.inc.php';
 require_once __DIR__ . '/../support/DoajPaRuleFixture.inc.php';
 
 /** A minimal PDF: a page tree, one Helvetica font, one Flate content stream; optionally in an object stream. */
@@ -109,4 +110,19 @@ doajpa_test('R120 Report tables: column widths keep heading words and ordinary c
 	doajpa_assert($w[1] * 499 >= 14 * 5.2 + 8 - 0.5, '"Recommendation" fits: ' . json_encode($w));
 	doajpa_assert($w[2] * 499 >= 13 * 4.7 + 8 - 0.5, '"Contradiction" fits');
 	doajpa_assert($w[0] > $w[1], 'widths taken from the widest column');
+});
+
+doajpa_test('R130 Backend source: marker in URLs, source detection and display labels', function () {
+	require_once __DIR__ . '/../../classes/crawler/DoajPaBackendSource.inc.php';
+	$u = DoajPaBackendSource::markedUrl('https://j.org/index.php/jpa', 'about/submissions', true);
+	doajpa_same('https://j.org/index.php/jpa/about/submissions?doajpa-source=ojs', $u, 'marked URL');
+	doajpa_same('ojs', DoajPaBackendSource::sourceOf($u), 'source');
+	doajpa_same('ojs-unlinked', DoajPaBackendSource::sourceOf(DoajPaBackendSource::markedUrl('https://j.org/index.php/jpa', 'x', false)), 'unlinked');
+	doajpa_same(null, DoajPaBackendSource::sourceOf('https://j.org/index.php/jpa/about'), 'website page');
+	doajpa_same('https://j.org/index.php/jpa/about/submissions (from the OJS database)', DoajPaHumanText::url($u), 'display');
+	$t = DoajPaHumanText::text('Verified quotes: "x" (' . $u . ').');
+	doajpa_assert(strpos($t, 'doajpa-source') === false && strpos($t, '(from the OJS database)') !== false, 'text label: ' . $t);
+	$s = new DoajPaCrawlScope('https://j.org/index.php/jpa');
+	doajpa_same(null, $s->reason($u), 'marked URL stays in the journal scope');
+	doajpa_same('author_guidelines', DoajPaPageClassifier::classify($s->relativePath($u)), 'page type from the path');
 });

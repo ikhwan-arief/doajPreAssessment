@@ -149,8 +149,21 @@ class DoajPaHumanText {
 	 * Free text (rationales, uncertainty notes, interpretation limits): criterion keys become names, question keys
 	 * become questions, reason codes become words, internal decision references are removed.
 	 */
+	/** Labels of the backend source marker (1.3.0.0). */
+	const SOURCE_OJS = ' (from the OJS database)';
+	const SOURCE_OJS_UNLINKED = ' (from the OJS database; not found on the public website during the crawl: make sure it is published and linked)';
+
+	/** @return string A URL for display: the backend marker becomes words */
+	public static function url($url) {
+		$url = (string) $url;
+		if (strpos($url, 'doajpa-source=ojs-unlinked') !== false) return preg_replace('/[?&]doajpa-source=ojs-unlinked/', '', $url) . self::SOURCE_OJS_UNLINKED;
+		if (strpos($url, 'doajpa-source=ojs') !== false) return preg_replace('/[?&]doajpa-source=ojs/', '', $url) . self::SOURCE_OJS;
+		return $url;
+	}
+
 	public static function text($s) {
 		if (!is_string($s) || $s === '') return $s;
+		$s = preg_replace_callback('#https?://[^\s"\'<>()]+doajpa-source=ojs(?:-unlinked)?#', function ($m) { return self::url($m[0]); }, $s);
 		$s = str_replace('language_undetermined (advisory heuristic; not verified English)', 'English not confirmed: too little running text', $s);
 		$s = preg_replace_callback('/\blanguage_(undetermined|mixed|non_english)(?::([a-z]{2,3}))?(?:\s*\(advisory heuristic[^)]*\))?/', function ($m) {
 			$t = array('undetermined' => 'English not confirmed: too little running text', 'mixed' => 'mixes English with another language',

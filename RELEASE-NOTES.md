@@ -1,9 +1,36 @@
+# Release Notes — DOAJ Pre-Assessment 1.3.0.0 (production release)
+
+**Release type:** production release. **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner), of
+reading published OJS content and of answering all 20 Form Guide questions.
+**Target:** OJS 3.3.0-23, PHP 7.3 to 8.2.
+
+**Production release 1.3.0.0: approved criteria only; the candidate profile is disabled.** The 24 approved criteria
+are unchanged.
+
+## New in 1.3.0.0
+
+- **Published content from the OJS database.** After the website crawl, the plugin also reads, directly from the OJS
+  database: the journal settings shown on About, Editorial Team and Submissions (about, description, open access
+  policy, publisher, ISSN, licence, mailing address, editorial team, checklist, author guidelines, copyright notice,
+  privacy statement); custom navigation-menu pages; Static Pages; and the latest published issues (4) and articles
+  (40) with dates, authors, affiliations, licence and copyright. Nothing unpublished is read (no submissions in
+  progress, reviews, files, user accounts or e-mail addresses). This revises Stage 01 AC-05 for published content.
+- These pages go through the same extraction, language check and rules as website pages and can support a pass.
+  Every result based on them is labelled "(from the OJS database)", with the public address where OJS shows the
+  content; "not found on the public website during the crawl" is added when the crawl did not reach that page.
+- **All 20 DOAJ Form Guide questions answered** with the reviewed mapping (product-owner decision 2026-11-13).
+  Questions whose criteria are not active are answered from website and database facts where possible, otherwise
+  "Needs verification"; subject keywords are never chosen automatically.
+- User-Agent `DOAJPreAssessment/1.3`. No schema change.
+
+---
+
 # Release Notes — DOAJ Pre-Assessment 1.2.1.0 (production release)
 
 **Release type:** production release. **Product-owner acceptance:** 2026-11-13, by Ikhwan Arief (Product Owner).
 **Target:** OJS 3.3.0-23, PHP 7.3 to 8.2.
 
-**Production release 1.2.1.0: approved criteria only; the candidate profile is disabled.** Changes from 1.2.0.0:
+**Release 1.2.1.0: approved criteria only; the candidate profile is disabled.** Changes from 1.2.0.0:
 
 - **Delete any runs, in any order.** Assessment History has a checkbox per run and "Delete selected runs". When a
   later run refers to a deleted run as its previous run, an empty hidden placeholder keeps the later run's sealed

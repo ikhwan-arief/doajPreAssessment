@@ -4,6 +4,14 @@ All notable changes to the DOAJ Pre-Assessment plugin. Versions below 1.0 are de
 candidates; 1.0.0.0 is the first production release. Approved criteria are approved by the product owner of this
 plugin, not by DOAJ.
 
+## [1.3.0.0] - 2026-11-13 (production release; accepted by the product owner)
+
+### Added
+
+- `DoajPaBackendSource`: published OJS content (journal settings, custom and static pages, published issues and
+  articles) ingested as pages marked `?doajpa-source=ojs|ojs-unlinked`, after the crawl, through the same pipeline.
+- Form Guide: all 20 questions use the reviewed mapping for approved runs (`FQ_LABEL_ALL`).
+
 ## [1.2.1.0] - 2026-11-13 (production release; accepted by the product owner)
 
 ### Changed

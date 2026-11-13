@@ -45,8 +45,9 @@ class DoajPaReadService {
 			require_once(dirname(__FILE__) . '/../rules/data/DoajPaCandidateDataset.inc.php');
 			$data = DoajPaCandidateDataset::data();
 		} elseif (self::isApprovedRulebook($rulebookVersion)) {
-			require_once(dirname(__FILE__) . '/../rules/data/DoajPaApprovedDataset.inc.php');
-			$data = DoajPaApprovedDataset::data();
+			// since 1.3.0.0 every approved run answers all 20 questions with the reviewed mapping
+			require_once(dirname(__FILE__) . '/../rules/data/DoajPaCandidateDataset.inc.php');
+			$data = DoajPaCandidateDataset::data();
 		}
 		$titles = array();
 		if ($data) foreach ($data['fqMapping'] as $m) $titles[$m['fq']] = $m['title'];
